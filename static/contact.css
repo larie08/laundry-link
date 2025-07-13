@@ -1,0 +1,312 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255,255,255,1);
+  overflow: auto;
+}
+
+.v128_49 {
+  width: 1000px;
+  height: 1400px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: relative;
+  overflow: visible;
+}
+
+.v128_50 {
+  width: 800px;
+  height: 1200px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  top: 200px;
+  left: 100px;
+  border: 1px solid rgba(0,0,0,1);
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
+  border-radius: 15px;
+}
+
+/* Progress Bar Container*/
+.v128_51 {
+  width: 600px;
+  height: 50px;
+  opacity: 1;
+  position: absolute;
+  top: 60px;
+  left: 200px;
+  overflow: visible;
+}
+
+/* Progress bar container */
+.v128_51 {
+  width: 727px;
+  height: 39px;
+  background: url("images/v93_72.png"); 
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: 1;
+  position: absolute;
+  top: 60px;
+  left: 136px;
+  overflow: hidden;
+}
+
+/* Progress bar steps */
+.v128_52, .v128_53, .v128_54, .v128_55 {
+  width: 40px;
+  height: 39px;
+  background: rgba(217,217,217,1);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 18px;
+}
+.v128_52 { left: 0; background: rgba(18,45,105,1); }
+.v128_53 { left: 229px; background: rgba(217,217,217,1); } 
+.v128_54 { left: 458px; }
+.v128_55 { left: 687px; }
+
+
+.v128_52::before {
+  content: "1";
+  color: white;
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Progress bar lines */
+.v128_56 {
+  width: 668px;
+  height: 8px;
+  background: rgba(217,217,217,1);
+  position: absolute;
+  top: 15px;
+  left: 40px;
+  z-index: 1;
+}
+.v128_56-fill {
+  width: 458px; 
+  height: 8px;
+  background: rgba(18,45,105,1);
+  position: absolute;
+  top: 15px;
+  left: 40px;
+  z-index: 2;
+}
+
+/* Step Labels */
+.v128_58 {
+  width: 90px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 130px;
+  left: 136px; 
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 25px;
+  opacity: 1;
+  text-align: center;
+}
+
+.v128_59 {
+  width: 90px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 130px;
+  left: 342px; 
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 25px;
+  opacity: 1;
+  text-align: center;
+}
+
+.v128_60 {
+  width: 90px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 130px;
+  left: 572px; 
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 25px;
+  opacity: 1;
+  text-align: center;
+}
+
+.v128_61 {
+  width: 90px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 130px;
+  left: 744px; 
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 25px;
+  opacity: 1;
+  text-align: center;
+}
+
+/* Phone Icon */
+.v128_75 {
+  width: 80px;
+  height: 80px;
+  background: rgba(18,45,105,1);
+  opacity: 1;
+  position: absolute;
+  top: 290px;
+  left: 460px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.v128_75::before {
+  content: "📞";
+  font-size: 40px;
+  color: white;
+}
+
+/* Main Heading */
+.v128_62 {
+  width: 600px;
+  color: rgba(0,0,0,0.7);
+  position: absolute;
+  top: 390px;
+  left: 200px;
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 42px; 
+  opacity: 1;
+  text-align: center;
+}
+
+/* Form Labels */
+.v128_63 {
+  width: 150px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 500px; 
+  left: 200px;
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 30px;
+  opacity: 1;
+  text-align: left;
+}
+
+.v128_64 {
+  width: 400px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 650px; 
+  left: 200px;
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 30px;
+  opacity: 1;
+  text-align: left;
+}
+
+/* Input Fields */
+.v128_67 {
+  width: 600px;
+  height: 80px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  top: 540px; 
+  left: 200px;
+  border: 1px solid rgba(0,0,0,0.45);
+  border-radius: 15px;
+  padding: 25px;
+  font-family: Poppins;
+  font-size: 22px;
+  outline: none;
+}
+
+.v128_70 {
+  width: 600px;
+  height: 80px;
+  background: rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  top: 690px; 
+  left: 200px;
+  border: 1px solid rgba(0,0,0,0.45);
+  border-radius: 15px;
+  padding: 25px;
+  font-family: Poppins;
+  font-size: 22px;
+  outline: none;
+}
+
+.v128_67::placeholder,
+.v128_70::placeholder {
+  color: rgba(51,51,51,0.5);
+  font-family: Poppins;
+  font-weight: 500;
+  font-size: 20px;
+}
+
+/* Button container */
+.button-container {
+  position: absolute;
+  bottom: 40px; 
+  left: 120px;  
+  right: 120px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Previous and Next buttons  */
+.v128_79, .v128_77 {
+  width: 232px;
+  height: 84px;
+  background: rgba(255,193,7,1);
+  padding: 27px 74px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  overflow: hidden;
+}
+
+.v128_79:hover, .v128_77:hover {
+  transform: scale(1.05);
+}
+
+.v128_78, .v128_80 {
+  color: rgba(255,255,255,1);
+  font-family: Poppins;
+  font-weight: 400;
+  font-size: 30px;
+  text-align: center;
+}

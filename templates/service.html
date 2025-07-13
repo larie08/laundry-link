@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='service.css') }}" rel="stylesheet" />
+        <title>Laundrylink - Service Type</title>
+    </head>
+    <body>
+        <div class="v91_130">
+            <div class="v91_154"></div>
+            <div class="v91_155"></div>
+            <div class="v91_156"></div>
+            <div class="v91_157"></div>
+            <div class="v91_158"></div>
+            <div class="v91_163"></div>
+            <a href="{{ url_for('contact') }}" class="v91_164">Self - Service</a>
+            <div class="v91_194"></div>
+            <a href="{{ url_for('contact') }}" class="v91_166">Drop Off</a>
+            <div class="v91_167"></div>
+            <span class="v91_136">Select Service Type</span>
+           <!-- Language Button -->
+            <div class="v91_144" onclick="openLanguageModal()">
+                <div class="v91_145">
+                    <div class="v91_146"></div>
+                    <span class="v91_147">English</span>
+                </div>
+            </div>
+
+            <!-- Language Modal -->
+            <div id="languageModal" class="modal-overlay">
+                <div class="language-modal">
+                    <button class="close-btn" onclick="closeLanguageModal()">&times;</button>
+                    <h2 class="modal-title">Select Your Language</h2>
+                    <div class="language-grid">
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/v91_146.png') }}" alt="UK"> English
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/es.png') }}" alt="Spain"> Español
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/fr.png') }}" alt="France"> Francais
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Cebuano
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/in.png') }}" alt="India"> भाषा
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Tagalog
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/jp.png') }}" alt="Japan"> げんご
+                    </button>
+                    <button class="lang-option">
+                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Waray
+                    </button>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="v91_97"></div>
+        <div class="v197_284"></div>
+    </div>
+</body>
+<script>
+  function openLanguageModal() {
+    document.getElementById('languageModal').style.display = 'block';
+  }
+
+  function closeLanguageModal() {
+    document.getElementById('languageModal').style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('languageModal');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  }
+</script>
+</html>

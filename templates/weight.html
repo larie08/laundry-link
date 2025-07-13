@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Baloo&display=swap" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='weight.css') }}" rel="stylesheet" />
+        <title>Laundrylink - Weight Laundry</title>
+    </head>
+    <body>
+        <div class="v93_70">
+            <!-- Progress bar -->
+            <div class="v93_72">
+                <div class="v93_73"></div>
+                <div class="v93_74"></div>
+                <div class="v93_75"></div>
+                <div class="v93_76"></div>
+                <div class="v93_77"></div>
+                <div class="v93_109"></div>
+                <div class="v96_2"></div>
+                <span class="v96_4">2</span>
+            </div>
+            
+            <!-- Step labels below progress bar -->
+            <div class="step-labels">
+                <span class="v93_78">YOU</span>
+                <span class="v93_79">WEIGH</span>
+                <span class="v93_80">OTHER</span>
+                <span class="v93_81">PAYMENT</span>
+            </div>
+            
+            <!-- Main content container -->
+            <div class="content-container">
+                <div class="v93_144">
+                    <div class="v95_13"></div>
+                    <div class="weight-info">
+                        <span class="v95_24">8 kg = 1 load</span>
+                        <span class="v95_36">Php 10.00</span>
+                    </div>
+                    
+                    <!-- Navigation buttons inside container -->
+                    <div class="button-container">
+                        <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
+                            <span class="v103_10">Previous</span>
+                        </a>
+                        <a href="{{ url_for('other_services') }}" class="v103_7" style="text-decoration: none;">
+                            <span class="v103_8">Next</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

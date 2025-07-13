@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='others.css') }}" rel="stylesheet" />
+        <title>Laundrylink - Others</title>
+    </head>
+    <body>
+        <div class="v100_93">
+            <div class="v100_94"></div>
+            <div class="v100_133"></div>
+            <div class="v100_140"></div>
+            <div class="v100_138"></div>
+            <div class="v100_151"></div>
+            <span class="v100_95">OPTIONS</span>
+            <span class="v100_161">OTHER</span>
+            <div class="v100_96">
+        <form action="{{ url_for('payment') }}" method="get">
+            <button class="v100_97" type="submit">Next</button>
+        </form>
+        </div>
+        <div class="v100_98">
+            <form action="{{ url_for('weight_laundry') }}" method="get">
+                <button class="v100_99" type="submit">Previous</button>
+            </form>
+        </div>
+            <div class="v100_100">
+                <div class="v100_101"></div>
+                <div class="v100_102"></div>
+                <div class="v100_103"></div>
+                <div class="v100_104"></div>
+                <div class="v100_105"></div>
+                <div class="v100_106"></div>
+                <div class="v100_107"></div>
+                <div class="v100_108"></div>
+                <div class="v100_109"></div>
+                <span class="v100_110">3</span>
+            </div>
+            <span class="v100_111">YOU</span>
+            <!-- Trigger Button -->
+            <button class="v100_145"onclick="document.getElementById('detergentModal').style.display='block'">DETERGENT</button>
+            <!-- Modal -->
+            <div id="detergentModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('detergentModal').style.display='none'">&times;</span>
+                <h2>SELECT DETERGENT</h2>
+
+                <form>
+                <div class="detergent-option">
+                    <input type="checkbox" id="tide" />
+                    <label for="tide">
+                    <img src="{{ url_for('static', filename='images/tide.jpg') }}" alt="Tide">
+                    <div class="details">
+                        <strong>TIDE ORIGINAL SCENT</strong>
+                        <span>Php 30.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="ariel" />
+                    <label for="ariel">
+                    <img src="{{ url_for('static', filename='images/ariel.jpg') }}" alt="Ariel"> 
+                    <div class="details">
+                        <strong>ARIEL SUNRISE FRESH</strong>
+                        <span>Php 42.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="ariel" />
+                    <label for="ariel">
+                    <img src="{{ url_for('static', filename='images/champion.jpg') }}" alt="Champion"> 
+                    <div class="details">
+                        <strong>CHAMPION SURF POWDER</strong>
+                        <span>Php 320.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="ariel" />
+                    <label for="ariel">
+                       <img src="{{ url_for('static', filename='images/surf.jpg') }}" alt="Surf">
+                    <div class="details">
+                        <strong>SURF POWDER LIQUID</strong>
+                        <span>Php 198.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="submit">Submit</button>
+                    <button type="button" class="cancel" onclick="document.getElementById('detergentModal').style.display='none'">Cancel</button>
+                </div>
+                </form>
+            </div>
+            </div>
+
+            <div class="v100_158"></div>
+            <div class="v100_159"></div>
+            <button class="v100_149">OWN DETERGENT</button>
+            <button class="v100_154">OWN FABCON</button>
+            <div class="v100_160"></div>
+            <button class="v100_147">FABCON</button>
+            <span class="v100_112">WEIGH</span>
+            <span class="v100_113">OTHER</span>
+            <span class="v100_114">PAYMENT</span>
+            <div class="v91_256"></div>
+            <div class="v100_157"></div>
+            <div class="v100_163"></div>
+            <div class="v100_165"></div>
+            <span class="v100_267">Php 70.00</span>
+            <div class="v100_177"></div>
+            <button class="v100_167">IRON</button>
+            <span class="v100_265">Php 50.00</span>
+            <span class="v100_269">Price: </span>
+            <span class="v100_273">Price: </span>
+            <button class="v100_173">FOLD</button>
+            <div class="v100_176"></div>
+            <div class="v244_284"></div>
+            <div class="v244_285"></div>
+            <button class="v244_288">PRIORITY ORDER</button>
+            <span class="v244_289">Php 50.00</span>
+            <div class="v245_301"></div>
+            <div class="v245_297"></div>
+            <div class="v245_304"></div>
+            <!-- Trigger Button -->
+            <button class="v245_298"onclick="document.getElementById('scheduleModal').style.display='block'">SCHEDULE PICKUP</button>            
+            <!-- Schedule Pickup Modal -->
+            <div id="scheduleModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeScheduleModal()">&times;</span>
+                <h2>Schedule Pickup</h2>
+                <p class="note">*No Pickups on Tuesdays/Holidays – Please select another day.</p>
+
+                <div class="form-group">
+                <label for="pickup-date">Date</label>
+                <div class="input-icon">
+                    <input type="date" id="pickup-date" name="pickup-date" required />
+                    <span class="icon">&#128197;</span> <!-- calendar emoji as placeholder tempo -->
+                </div>
+                </div>
+
+                <div class="form-group">
+                <label for="pickup-time">Time</label>
+                <div class="input-icon">
+                    <input type="time" id="pickup-time" name="pickup-time" required />
+                    <span class="icon">&#128337;</span> <!-- clock emoji as placeholder tempo -->
+                </div>
+                </div>
+
+                <div class="modal-buttons">
+                <button class="submit">Submit</button>
+                <button class="cancel" onclick="closeScheduleModal()">Cancel</button>
+                </div>
+            </div>
+            </div>
+            <button class="v244_290">ADD NOTE</button>
+            <div class="v245_296"></div>
+        </div>
+</body>
+<script>
+    function openScheduleModal() {
+        document.getElementById('scheduleModal').style.display = 'block';
+    }
+
+    function closeScheduleModal() {
+        document.getElementById('scheduleModal').style.display = 'none';
+    }
+
+</script>
+</html>
