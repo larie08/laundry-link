@@ -31,6 +31,11 @@ def other_services():
 def payment():
     return render_template('payment.html')
 
+# added Staff Log in Route
+@app.route('/staff_login')
+def staff_login():
+    return render_template('staff_login.html')
+
 # STAFF DASHBOARD
 @app.route('/staff_dashboard')
 def staff_dashboard():
@@ -159,6 +164,13 @@ def fabric_conditioner():
         out_of_stock_count=out_of_stock_count,
         total_value=total_value
     )
+
+
+# added Admin Log in Route
+@app.route('/admin_login')
+def admin_login():
+    return render_template('admin_login.html')
+
 
 # SCANNER
 @app.route('/scanner')

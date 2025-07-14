@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='css/staff_login.css') }}" rel="stylesheet" />
+        <title>Staff - Login</title>
+    </head>
+    <body>
+        <div class="v263_464">
+            <div class="name"></div>
+            <div class="v263_476"></div>
+            <!-- bubbles -->
+            <div class="v263_477"></div>
+            <div class="v263_478"></div>
+            <div class="v263_479"></div>
+            <!-- bubbles -->
+            <div class="form-container">
+                <h1 class="staff-header">Staff Login</h1>
+
+                <div class="input-wrapper">
+                    <img src="{{ url_for('static', filename='images/user.png') }}" class="icon" alt="User Icon">
+                    <input type="text" class="input-field" placeholder="Enter Username" required>
+                </div>
+
+                <div class="input-wrapper">
+                    <img src="{{ url_for('static', filename='images/lock.png') }}" class="icon" alt="Lock Icon">
+                    <input type="password" class="input-field" placeholder="Enter Password" required>
+                </div>
+            </div>
+            <span class="laundrylink_header">LAUNDRY LINK</span>
+        </div>
+    </body>
+</html>
