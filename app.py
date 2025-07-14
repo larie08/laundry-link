@@ -31,6 +31,21 @@ def other_services():
 def payment():
     return render_template('payment.html')
 
+# STAFF DASHBOARD
+@app.route('/staff_dashboard')
+def staff_dashboard():
+
+    detergents = get_all_detergents()
+    fabric_conditioners = get_all_fabric_conditioners()
+
+    low_detergents = [d for d in detergents if d['QTY'] <= 10]
+    low_fabcons = [f for f in fabric_conditioners if f['QTY'] <= 10]
+
+    return render_template('staff_dashboard.html',
+        low_detergents=low_detergents,
+        low_fabcons=low_fabcons
+    )
+
 # STAFF DETERGENT INVENTORY
 @app.route('/detergent_inventory', methods=['GET', 'POST'])
 def detergent_inventory():

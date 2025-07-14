@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/staff_dashboard.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Dashboard</title>
+</head>
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Dashboard</h1>
+                    <div class="breadcrumb">Main / Dashboard</div>
+                </div>
+            </header>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="w3-container w3-padding w3-margin">
+                <!-- DASHBOARD OVERVIEW -->
+                <div class="w3-padding-top">
+                    <!-- STATS CARDS -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>List of Orders</h3>
+                                <p class="stat-number">24</p>
+                                <p class="stat-detail">12 Self-service • 12 Drop-off</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Today's Revenue</h3>
+                                <p class="stat-number">₱2,450</p>
+                                <p class="stat-detail">+15% from yesterday</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Inventory Alerts</h3>
+                                <p class="stat-number">3</p>
+                                <p class="stat-detail">Low stock items</p>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Payment Overall</h3>
+                                <p class="stat-number">₱15,750</p>
+                                <p class="stat-detail">This month's revenue</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAIN CONTENT GRID -->
+                    <div class="dashboard-grid">
+                        <!-- LIST OF ORDERS -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-clock"></i> List of Orders</h3>
+                                <div class="order-stats">
+                                    <span class="order-count">24</span>
+                                    <span class="order-label">Total Orders</span>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="orders-overview">
+                                    <div class="order-summary">
+                                        <div class="summary-item">
+                                            <div class="summary-icon pending-icon">
+                                                <i class="fas fa-clock"></i>
+                                            </div>
+                                            <div class="summary-details">
+                                                <span class="summary-number">8</span>
+                                                <span class="summary-label">Pending</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary-item">
+                                            <div class="summary-icon pick-up-icon">
+                                                <i class="fas fa-cog"></i>
+                                            </div>
+                                            <div class="summary-details">
+                                                <span class="summary-number">12</span>
+                                                <span class="summary-label">Pick-up</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary-item">
+                                            <div class="summary-icon completed-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="summary-details">
+                                                <span class="summary-number">4</span>
+                                                <span class="summary-label">Completed</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- SELF-SERVICE BUTTON -->
+                                    <div class="self-service-section">
+                                        <button class="self-service-btn" id="toggleOrdersBtn" onclick="toggleOrders()">
+                                            <i class="fas fa-user-cog"></i>
+                                            <span id="toggleOrdersBtnText">Self-Service Orders</span>
+                                            <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- ORDERS DISPLAY -->
+                                    <div class="orders-toggle-container">
+                                        <div class="priority-orders-section" id="priorityOrdersSection">
+                                            <h4 class="section-subtitle">Priority Orders</h4>
+
+                                            <div class="order-cards">
+                                                <div class="order-card pending">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-001</div>
+                                                        <div class="order-time">2:30 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Cedy</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱150</span>
+                                                            </div>
+                                                            <div class="order-status-badge pending">Pending</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="order-card pick-up">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-002</div>
+                                                        <div class="order-time">1:45 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Iyan</span>
+                                                                <span class="order-type-badge drop-off">Drop-off</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱280</span>
+                                                            </div>
+                                                            <div class="order-status-badge pick-up">Pick-up</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="order-card completed">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-003</div>
+                                                        <div class="order-time">12:00 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Sam</span>
+                                                                <span class="order-type-badge drop-off">Drop-off</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱180</span>
+                                                            </div>
+                                                            <div class="order-status-badge completed">Completed</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="order-card pending">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-004</div>
+                                                        <div class="order-time">3:15 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Pat</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱120</span>
+                                                            </div>
+                                                            <div class="order-status-badge pending">Pending</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="order-card pick-up">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-005</div>
+                                                        <div class="order-time">4:45 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Kim</span>
+                                                                <span class="order-type-badge drop-off">Drop-off</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱210</span>
+                                                            </div>
+                                                            <div class="order-status-badge pick-up">Pick-up</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="self-service-orders-section" id="selfServiceOrdersSection" style="display:none;">
+                                            <h4 class="section-subtitle">Self-Service Orders</h4>
+                                            <div class="order-cards">
+                                                <div class="order-card pending">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-101</div>
+                                                        <div class="order-time">10:00 AM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Alex</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱100</span>
+                                                            </div>
+                                                            <div class="order-status-badge pending">Pending</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="order-card pick-up">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-102</div>
+                                                        <div class="order-time">11:30 AM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Jamie</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱200</span>
+                                                            </div>
+                                                            <div class="order-status-badge pick-up">Pick-up</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="order-card completed">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-103</div>
+                                                        <div class="order-time">12:45 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Dana</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱160</span>
+                                                            </div>
+                                                            <div class="order-status-badge completed">Completed</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="order-card pending">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-104</div>
+                                                        <div class="order-time">2:20 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Lee</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱110</span>
+                                                            </div>
+                                                            <div class="order-status-badge pending">Pending</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="order-card pick-up">
+                                                    <div class="order-card-header">
+                                                        <div class="order-id">#ORD-105</div>
+                                                        <div class="order-time">5:10 PM</div>
+                                                    </div>
+                                                    <div class="order-card-body">
+                                                        <div class="customer-info">
+                                                            <div class="customer-avatar">
+                                                                <i class="fas fa-user"></i>
+                                                            </div>
+                                                            <div class="customer-details">
+                                                                <span class="customer-name">Rae</span>
+                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="order-details">
+                                                            <div class="order-items">
+                                                                <span class="load-count">1 load</span>
+                                                                <span class="order-value">₱190</span>
+                                                            </div>
+                                                            <div class="order-status-badge pick-up">Pick-up</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="view-all">
+                                    <a href="#" class="view-all-link">View All Orders <i class="fas fa-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CALENDAR -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-calendar-alt"></i> Calendar</h3>
+                                <span class="card-badge">2025-2040</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="calendar-container">
+                                    <div class="calendar-header">
+                                        <button class="calendar-nav-btn" onclick="previousMonth()">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <div class="current-month-year">
+                                            <span id="currentMonth">January</span>
+                                            <span id="currentYear">2025</span>
+                                        </div>
+                                        <button class="calendar-nav-btn" onclick="nextMonth()">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-weekdays">
+                                        <div class="weekday">Sun</div>
+                                        <div class="weekday">Mon</div>
+                                        <div class="weekday">Tue</div>
+                                        <div class="weekday">Wed</div>
+                                        <div class="weekday">Thu</div>
+                                        <div class="weekday">Fri</div>
+                                        <div class="weekday">Sat</div>
+                                    </div>
+                                    <div class="calendar-days" id="calendarDays">
+                                        <!-- I'M CRAVING JAVA CHIPS HAHAHHAHA BTW CONNECTED NIS JAVASCRIPT -->
+                                    </div>
+                                </div>
+                                <div class="view-all">
+                                    <a href="#" class="view-all-link" onclick="openCalendarModal()">View Full Calendar <i class="fas fa-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INVENTORY ALERTS -->
+                        <div class="dashboard-card inventory-alerts-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
+                                <span class="card-badge alert">2</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="inventory-details inventory-details-alone">
+                                    <div class="inventory-item">
+                                        <div class="item-header">
+                                            <div class="item-icon detergent-icon">
+                                                <i class="fas fa-soap"></i>
+                                            </div>
+                                            <div class="item-info">
+                                                <h4>Detergent</h4>
+                                                <span class="item-stock">5 items left</span>
+                                                {% if low_detergents %}
+                                                <ul class="low-stock-list">
+                                                    {% for item in low_detergents %}
+                                                    <li>{{ item['DETERGENT_NAME'] }} ({{ item['QTY'] }} left)</li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                            </div>
+                                            <div class="stock-indicator critical">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill critical" style="width: 25%"></div>
+                                        </div>
+                                        <div class="stock-details">
+                                            <span class="current-stock">5</span>
+                                            <span class="stock-separator">/</span>
+                                            <span class="max-stock">20</span>
+                                            <span class="stock-unit">items</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="view-all-inventory-btn-container">
+                                        <a href="{{ url_for('detergent_inventory') }}" class="view-all-inventory-btn">View All Detergent Inventory</a>
+                                    </div>
+
+                                    <div class="inventory-item">
+                                        <div class="item-header">
+                                            <div class="item-icon conditioner-icon">
+                                                <i class="fas fa-tshirt"></i>
+                                            </div>
+                                            <div class="item-info">
+                                                <h4>Fabric Conditioner</h4>
+                                                <span class="item-stock">8 items left</span>
+                                                {% if low_fabcons %}
+                                                <ul class="low-stock-list">
+                                                    {% for item in low_fabcons %}
+                                                    <li>{{ item['FABCON_NAME'] }} ({{ item['QTY'] }} left)</li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                            </div>
+                                            <div class="stock-indicator warning">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill warning" style="width: 40%"></div>
+                                        </div>
+                                        <div class="stock-details">
+                                            <span class="current-stock">8</span>
+                                            <span class="stock-separator">/</span>
+                                            <span class="max-stock">20</span>
+                                            <span class="stock-unit">items</span>
+                                        </div>
+                                    </div>
+                                    <div class="view-all-inventory-btn-container">
+                                        <a href="{{ url_for('fabric_conditioner') }}" class="view-all-inventory-btn">View All Fabcon Inventory</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CALENDAR MODAL -->
+    <div id="calendarModal" class="calendar-modal">
+        <div class="calendar-modal-content">
+            <div class="calendar-modal-header">
+                <h2><i class="fas fa-calendar-alt"></i> Full Calendar</h2>
+                <button class="modal-close-btn" onclick="closeCalendarModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="calendar-modal-body">
+                <div class="full-calendar-container">
+                    <div class="full-calendar-header">
+                        <button class="full-calendar-nav-btn" onclick="previousMonth()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="full-current-month-year">
+                            <span id="fullCurrentMonth">January</span>
+                            <span id="fullCurrentYear">2025</span>
+                        </div>
+                        <button class="full-calendar-nav-btn" onclick="nextMonth()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="full-calendar-weekdays">
+                        <div class="full-weekday">Sun</div>
+                        <div class="full-weekday">Mon</div>
+                        <div class="full-weekday">Tue</div>
+                        <div class="full-weekday">Wed</div>
+                        <div class="full-weekday">Thu</div>
+                        <div class="full-weekday">Fri</div>
+                        <div class="full-weekday">Sat</div>
+                    </div>
+                    <div class="full-calendar-days" id="fullCalendarDays">
+                        <!-- DO NOT CHANGE THIS , CONNECTED NIS JAVASCRIPT -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATE DETAILS MODAL -->
+    <div id="dateDetailsModal" class="date-details-modal">
+        <div class="date-details-modal-content">
+            <div class="date-details-modal-header">
+                <h2><i class="fas fa-calendar-day"></i> <span id="selectedDateTitle">January 15, 2025</span></h2>
+                <button class="modal-close-btn" onclick="closeDateDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="date-details-modal-body">
+                <div class="date-details-grid">
+                    <!-- ORDERS FOR THE DAY -->
+                    <div class="date-details-card">
+                        <div class="details-card-header">
+                            <h3><i class="fas fa-shopping-cart"></i> Orders for Today</h3>
+                            <span class="details-badge">5</span>
+                        </div>
+                        <div class="details-card-content">
+                            <div class="order-detail-item">
+                                <div class="order-detail-info">
+                                    <span class="order-detail-number">#ORD-001</span>
+                                    <span class="order-detail-type self-service">Self-service</span>
+                                </div>
+                                <div class="order-detail-status pending">Pending</div>
+                            </div>
+                            <div class="order-detail-item">
+                                <div class="order-detail-info">
+                                    <span class="order-detail-number">#ORD-002</span>
+                                    <span class="order-detail-type drop-off">Drop-off</span>
+                                </div>
+                                <div class="order-detail-status pick-up">Pick-up</div>
+                            </div>
+                            <div class="order-detail-item">
+                                <div class="order-detail-info">
+                                    <span class="order-detail-number">#ORD-003</span>
+                                    <span class="order-detail-type self-service">Self-service</span>
+                                </div>
+                                <div class="order-detail-status completed">Completed</div>
+                            </div>
+                            <div class="order-detail-item">
+                                <div class="order-detail-info">
+                                    <span class="order-detail-number">#ORD-004</span>
+                                    <span class="order-detail-type drop-off">Drop-off</span>
+                                </div>
+                                <div class="order-detail-status pending">Pending</div>
+                            </div>
+                            <div class="order-detail-item">
+                                <div class="order-detail-info">
+                                    <span class="order-detail-number">#ORD-005</span>
+                                    <span class="order-detail-type self-service">Self-service</span>
+                                </div>
+                                <div class="order-detail-status pick-up">Pick-up</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PICKUPS FOR THE DAY -->
+                    <div class="date-details-card">
+                        <div class="details-card-header">
+                            <h3><i class="fas fa-truck"></i> Pickups Due Today</h3>
+                            <span class="details-badge">3</span>
+                        </div>
+                        <div class="details-card-content">
+                            <div class="pickup-detail-item">
+                                <div class="pickup-detail-info">
+                                    <span class="pickup-detail-number">#PICK-001</span>
+                                    <span class="pickup-detail-time">2:30 PM</span>
+                                </div>
+                                <div class="pickup-detail-status ready">Ready</div>
+                            </div>
+                            <div class="pickup-detail-item">
+                                <div class="pickup-detail-info">
+                                    <span class="pickup-detail-number">#PICK-002</span>
+                                    <span class="pickup-detail-time">4:15 PM</span>
+                                </div>
+                                <div class="pickup-detail-status ready">Ready</div>
+                            </div>
+                            <div class="pickup-detail-item">
+                                <div class="pickup-detail-info">
+                                    <span class="pickup-detail-number">#PICK-003</span>
+                                    <span class="pickup-detail-time">5:00 PM</span>
+                                </div>
+                                <div class="pickup-detail-status pending">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="date-details-actions">
+                    <button class="action-btn primary" onclick="viewAllOrders()">
+                        <i class="fas fa-list"></i> View All Orders
+                    </button>
+                    <button class="action-btn secondary" onclick="viewAllPickups()">
+                        <i class="fas fa-truck"></i> View All Pickups
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SELF-SERVICE ORDERS MODAL -->
+    <div id="selfServiceModal" class="calendar-modal">
+        <div class="calendar-modal-content" style="max-width: 500px;">
+            <div class="calendar-modal-header">
+                <h2><i class="fas fa-user-cog"></i> Self-Service Orders</h2>
+                <button class="modal-close-btn" onclick="closeSelfServiceModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="calendar-modal-body">
+                <div class="order-cards">
+                    <div class="order-card pending">
+                        <div class="order-card-header">
+                            <div class="order-id">#ORD-101</div>
+                            <div class="order-time">10:00 AM</div>
+                        </div>
+                        <div class="order-card-body">
+                            <div class="customer-info">
+                                <div class="customer-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="customer-details">
+                                    <span class="customer-name">Alex</span>
+                                    <span class="order-type-badge self-service">Self-service</span>
+                                </div>
+                            </div>
+                            <div class="order-details">
+                                <div class="order-items">
+                                    <span class="item-count">2 items</span>
+                                    <span class="order-value">₱100</span>
+                                </div>
+                                <div class="order-status-badge pending">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-card pick-up">
+                        <div class="order-card-header">
+                            <div class="order-id">#ORD-102</div>
+                            <div class="order-time">11:30 AM</div>
+                        </div>
+                        <div class="order-card-body">
+                            <div class="customer-info">
+                                <div class="customer-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="customer-details">
+                                    <span class="customer-name">Jamie</span>
+                                    <span class="order-type-badge self-service">Self-service</span>
+                                </div>
+                            </div>
+                            <div class="order-details">
+                                <div class="order-items">
+                                    <span class="item-count">4 items</span>
+                                    <span class="order-value">₱200</span>
+                                </div>
+                                <div class="order-status-badge pick-up">Pick-up</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALENDAR JAVASCRIPT -->
+    <script>
+
+        // CALENDAR
+        let currentDate = new Date();
+        let selectedDate = new Date();
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+        });
+        
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = getMonthName(month);
+            document.getElementById('currentYear').textContent = year;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = date.getDate();
+                
+                if (isToday(date)) {
+                    dayElement.classList.add('today');
+                }
+                
+                if (isSelected(date)) {
+                    dayElement.classList.add('selected');
+                }
+                
+                if (date.getMonth() !== month) {
+                    dayElement.classList.add('other-month');
+                }
+                
+                dayElement.addEventListener('click', function() {
+                    if (!dayElement.classList.contains('other-month')) {
+                        selectDate(date);
+                        openDateDetailsModal(date); 
+                    }
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+        }
+        
+        function getMonthName(month) {
+            const months = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            return months[month];
+        }
+        
+        function isToday(date) {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getFullYear() === today.getFullYear();
+        }
+        
+        function isSelected(date) {
+            return date.getDate() === selectedDate.getDate() &&
+                   date.getMonth() === selectedDate.getMonth() &&
+                   date.getFullYear() === selectedDate.getFullYear();
+        }
+        
+        function selectDate(date) {
+            selectedDate = date;
+            renderCalendar();
+        }
+        
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+        
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            const main = document.querySelector('main');
+            
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'block';
+                main.style.marginLeft = '250px';
+            } else {
+                sidebar.style.display = 'none';
+                main.style.marginLeft = '0';
+            }
+        }
+
+        // CALENDAR MODAL
+        function openCalendarModal() {
+            document.getElementById('calendarModal').style.display = 'block';
+            renderFullCalendar(); 
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendarModal').style.display = 'none';
+        }
+
+        function renderFullCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('fullCurrentMonth').textContent = getMonthName(month);
+            document.getElementById('fullCurrentYear').textContent = year;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const fullCalendarDays = document.getElementById('fullCalendarDays');
+            fullCalendarDays.innerHTML = '';
+
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day'; 
+                dayElement.textContent = date.getDate();
+
+                if (isToday(date)) {
+                    dayElement.classList.add('today');
+                }
+
+                if (isSelected(date)) {
+                    dayElement.classList.add('selected');
+                }
+
+                if (date.getMonth() !== month) {
+                    dayElement.classList.add('other-month');
+                }
+
+                dayElement.addEventListener('click', function() {
+                    if (!dayElement.classList.contains('other-month')) {
+                        selectDate(date); 
+                        closeCalendarModal(); 
+                        openDateDetailsModal(date); 
+                    }
+                });
+
+                fullCalendarDays.appendChild(dayElement);
+            }
+        }
+
+        // DATE DETAILS MODAL
+        function openDateDetailsModal(date) {
+            const modal = document.getElementById('dateDetailsModal');
+            const selectedDateTitle = document.getElementById('selectedDateTitle');
+            selectedDateTitle.textContent = date.toLocaleDateString();
+            modal.style.display = 'block';
+        }
+
+        function closeDateDetailsModal() {
+            document.getElementById('dateDetailsModal').style.display = 'none';
+        }
+
+        function viewAllOrders() {
+            alert('Viewing all orders for ' + selectedDate.toLocaleDateString());
+        }
+
+        function viewAllPickups() {
+            alert('Viewing all pickups for ' + selectedDate.toLocaleDateString());
+        }
+        
+        // INVENTORY
+        function reorderInventory() {
+            alert('Opening reorder form for inventory items');
+        }
+        
+        function viewInventoryReport() {
+            alert('Opening inventory report');
+        }
+        
+        // SELF-SERVICE ORDERS
+        function openSelfServiceModal() {
+            document.getElementById('selfServiceModal').style.display = 'block';
+        }
+
+        function closeSelfServiceModal() {
+            document.getElementById('selfServiceModal').style.display = 'none';
+        }
+
+        function toggleOrders() {
+            const prioritySection = document.getElementById('priorityOrdersSection');
+            const selfServiceSection = document.getElementById('selfServiceOrdersSection');
+            const btnText = document.getElementById('toggleOrdersBtnText');
+            const btnIcon = document.querySelector('#toggleOrdersBtn i.fas');
+            if (prioritySection.style.display === 'none') {
+                prioritySection.style.display = '';
+                selfServiceSection.style.display = 'none';
+                btnText.textContent = 'Self-Service Orders';
+                btnIcon.className = 'fas fa-user-cog';
+            } else {
+                prioritySection.style.display = 'none';
+                selfServiceSection.style.display = '';
+                btnText.textContent = 'Priority Orders';
+                btnIcon.className = 'fas fa-list';
+            }
+        }
+    </script>
+</body>
+</html>
