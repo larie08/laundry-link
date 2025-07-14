@@ -31,6 +31,64 @@ def other_services():
 def payment():
     return render_template('payment.html')
 
+# STAFF DETERGENT INVENTORY
+@app.route('/detergent_inventory', methods=['GET', 'POST'])
+def detergent_inventory():
+    if request.method == 'POST':
+        action = request.form.get('action', 'Add')
+
+        if action == 'Add' or action == 'Update':
+            name = request.form['name']
+            price = float(request.form['price'])
+            quantity = int(request.form['quantity'])
+            image = request.files.get('image')
+            filename = None
+
+            if image and image.filename:
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            if action == 'Add':
+                add_detergent(name, price, quantity, filename)
+            elif action == 'Update':
+                detergent_id = int(request.form['detergent_id'])
+                if not filename:
+                    old = get_detergent_by_id(detergent_id)
+                    filename = old['IMAGE_FILENAME'] if old else None
+                update_detergent(detergent_id, name, price, quantity, filename)
+
+        elif action == 'Delete':
+            detergent_id = int(request.form['detergent_id'])
+            delete_detergent(detergent_id)
+
+        return redirect(url_for('detergent_inventory'))
+
+    # SEARCH
+    search_query = request.args.get('q', '').strip()
+    if search_query:
+        detergents = search_detergents(search_query)
+    else:
+        detergents = get_all_detergents()
+    
+    # LOW STOCK DETERGENTS
+    low_stock_detergents = [d for d in detergents if d['QTY'] <= 10]
+    
+    # TOTAL DETERGENTS
+    total_items = len(detergents)
+    low_stock_count = len(low_stock_detergents)
+    out_of_stock_count = len([d for d in detergents if d['QTY'] == 0])
+    
+    # TOTAL INVENTORY VALUE
+    total_value = sum(d['DETERGENT_PRICE'] * d['QTY'] for d in detergents)
+    
+    return render_template('staff_detergent_inventory.html', 
+                         detergents=detergents,
+                         low_stock_detergents=low_stock_detergents,
+                         total_items=total_items,
+                         low_stock_count=low_stock_count,
+                         out_of_stock_count=out_of_stock_count,
+                         total_value=total_value)
+
 # STAFF FABRIC CONDITIONER
 @app.route('/fabric_conditioner', methods=['GET', 'POST'])
 def fabric_conditioner():

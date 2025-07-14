@@ -1,12 +1,12 @@
 import pyodbc
 
-# SQL Server connection setup(I comment lang pls)-cedyy
-SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
-DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
+# # SQL Server connection setup(I comment lang pls)-cedyy
+# SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
+# DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
 
-# # DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-# SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' # Change this to your server name
-# DATABASE = 'LAUNDRYLINK'         # Change this to your database name
+# DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
+SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
+DATABASE = 'LAUNDRYLINK'         
 
 def get_connection():
     conn_str = (
