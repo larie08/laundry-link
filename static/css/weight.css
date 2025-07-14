@@ -26,7 +26,7 @@ body {
 .v93_72 {
   width: 727px;
   height: 39px;
-  background: url("images/v93_72.png");
+  background: url("../images/v93_72.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -99,7 +99,7 @@ body {
 .v96_2 {
   width: 24px;
   height: 24px;
-  background: url("images/v96_2.png");
+  background: url("../images/v96_2.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -172,7 +172,7 @@ body {
   width: 123px;
 }
 
-/* Main content container - matching contact.css structure */
+/* Main content container */
 .v93_144 {
   width: 800px;
   height: 1200px;
@@ -190,7 +190,7 @@ body {
 .v95_13 {
   width: 603px;
   height: 410px;
-  background: url("images/v95_13.png");
+  background: url("../images/v95_13.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -226,7 +226,7 @@ body {
   width: 400px;
 }
 
-/* Button container for better layout */
+/* Button container */
 .button-container {
   position: absolute;
   bottom: 40px;
@@ -237,7 +237,7 @@ body {
   align-items: center;
 }
 
-/* Previous button - positioned on the left */
+/* Previous button  */
 .v103_9 {
   width: 232px;
   height: 84px;
@@ -256,7 +256,7 @@ body {
   text-decoration: none;
 }
 
-/* Next button - positioned on the right */
+/* Next button */
 .v103_7 {
   width: 232px;
   height: 84px;

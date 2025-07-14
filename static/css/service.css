@@ -84,7 +84,7 @@ body {
 .v91_163 {
   width: 275px;
   height: 386px;
-  background: url("images/v91_163.png");
+  background: url("../images/v91_163.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -164,7 +164,7 @@ body {
 .v91_167 {
   width: 476px;
   height: 413px;
-  background: url("images/v91_167.png");
+  background: url("../images/v91_167.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -211,7 +211,7 @@ body {
 .v91_146 {
   width: 70px;
   height: 70px;
-  background: url("images/v91_146.png") no-repeat center center;
+  background: url("../images/v91_146.png") no-repeat center center;
   background-size: cover;
   border-radius: 50%;
 }
@@ -311,7 +311,7 @@ body {
 .v91_97 {
   width: 264px;
   height: 289px;
-  background: url("images/v91_97.png");
+  background: url("../images/v91_97.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -326,7 +326,7 @@ body {
 .v197_284 {
   width: 264px;
   height: 289px;
-  background: url("images/v197_284.png");
+  background: url("../images/v197_284.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
