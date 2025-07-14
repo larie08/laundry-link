@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/staff_scanner.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <title>Scanner</title>
+</head>
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <!-- CUSTOMERS REPORTS, INVENTORY REPORTS -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Customer Report</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Inventory Report</span>
+                        </a>      
+                    </li>
+                </ul>
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Scanner</h1>
+                    <div class="breadcrumb">Main / Scanner</div>
+                </div>
+            </header>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="w3-container w3-padding w3-margin">
+                <!-- CAMERA/SCANNER BUTTON AND SEARCH BOX -->
+                <div class="search-row">
+                    <button class="camera-btn" onclick="openScannerModal()"><i class="fas fa-camera"></i></button>
+                    <div class="search-container">
+                        <input type="text" class="search-box" placeholder="Search...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Name</th>
+                                <th>Order ID</th>
+                                <th>Phone Number</th>
+                                <th>QR Image</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>F001</td>
+                                <td>Tide Original Scent</td>
+                                <td>30.00</td>
+                                <td>200</td>
+                                <td><img src="../static/images/logo.jpg" alt="Tide" class="product-img"></td>
+                                <td>
+                                    <button class="action-btn pickup-btn" onclick="completePickup('F001')">
+                                        <img src="../static/images/delivery.png" alt="Complete Pick-up" class="delivery-icon" style="width: 20px; height: 20px;">
+                                    </button>
+                                    <button class="action-btn resend-btn" onclick="resendMessage('F001')">
+                                        <img src="../static/images/expired.png" alt="Resend Message" class="expired-icon" style="width: 20px; height: 20px;">
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button class="pagination-btn disabled">Prev</button>
+                        <span class="page-number">1</span>
+                        <button class="pagination-btn">Next</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- QR CODE SCANNER MODAL -->
+    <div id="scannerModal" class="scanner-modal">
+        <div class="scanner-modal-content">
+            <div class="scanner-modal-header">
+                <h2>QR Code Scanner</h2>
+                <button class="close-btn" onclick="closeScannerModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="scanner-modal-body">
+                <div class="scanner-container">
+                    <video id="scanner-video" autoplay playsinline></video>
+                    <canvas id="scanner-canvas" style="display: none;"></canvas>
+                    <div class="scanner-overlay">
+                        <div class="scanner-frame"></div>
+                        <div class="scanner-instructions">
+                            <p>Position the QR code within the frame</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="scanner-controls">
+                    <button class="scanner-btn" onclick="startScanner()">
+                        <i class="fas fa-play"></i> Start Scanner
+                    </button>
+                    <button class="scanner-btn" onclick="stopScanner()">
+                        <i class="fas fa-stop"></i> Stop Scanner
+                    </button>
+                </div>
+                <div class="scanner-result">
+                    <h3>Scanned Result:</h3>
+                    <div id="scannedData" class="scanned-data">
+                        <p>No QR code scanned yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPLETE PICK-UP MODAL -->
+    <div id="pickupModal" class="pickup-modal">
+        <div class="pickup-modal-content">
+            <div class="pickup-modal-header">
+                <h2>Complete Pick-up</h2>
+                <button class="close-btn" onclick="closePickupModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="pickup-modal-body">
+                <div class="customer-info">
+                    <h3>Customer Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Customer ID:</label>
+                            <span id="pickupCustomerId">F001</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Name:</label>
+                            <span id="pickupCustomerName">Alexa De Luna</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Order ID:</label>
+                            <span id="pickupOrderId">ORD-2024-001</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Phone Number:</label>
+                            <span id="pickupPhone">+63 912 345 6789</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pickup-confirmation">
+                    <h3>Confirmation</h3>
+                    <p>Are you sure you want to mark this order as completed and picked up?</p>
+                    <div class="confirmation-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="confirmPickup">
+                            <span class="checkmark"></span>
+                            I confirm that the customer has picked up their laundry
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="pickup-actions">
+                    <button class="cancel-btn" onclick="closePickupModal()">Cancel</button>
+                    <button class="confirm-btn" onclick="confirmPickup()" disabled id="confirmPickupBtn">
+                        <i class="fas fa-check"></i> Confirm Pick-up
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let scanning = false;
+        let scanInterval = null;
+
+        function openScannerModal() {
+            document.getElementById('scannerModal').style.display = 'flex';
+        }
+
+        function closeScannerModal() {
+            document.getElementById('scannerModal').style.display = 'none';
+            stopScanner();
+        }
+
+        async function startScanner() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                const video = document.getElementById('scanner-video');
+                video.srcObject = stream;
+                scanning = true;
+                
+                // START SCANNING
+                scanQRCode();
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please check permissions.');
+            }
+        }
+
+        function stopScanner() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            scanning = false;
+            
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            
+            const video = document.getElementById('scanner-video');
+            video.srcObject = null;
+        }
+
+        function scanQRCode() {
+            if (!scanning) return;
+            
+            const video = document.getElementById('scanner-video');
+            const canvas = document.getElementById('scanner-canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            
+            // CONTINUOUS SCANNING
+            scanInterval = setInterval(() => {
+                if (!scanning) return;
+                
+                try {
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // jsQR
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    if (code) {
+                        console.log("QR Code detected:", code.data);
+                        
+                        try {
+                            const qrData = JSON.parse(code.data);
+                            displayScannedData(qrData);
+                        } catch (e) {
+                            displayScannedData({
+                                rawData: code.data,
+                                customerId: 'Unknown',
+                                name: 'Unknown',
+                                orderId: 'Unknown',
+                                phone: 'Unknown'
+                            });
+                        }
+                        
+                        stopScanner();
+                        showSuccessMessage();
+                    }
+                } catch (error) {
+                    console.error('Error scanning QR code:', error);
+                }
+            }, 100);
+        }
+
+        function displayScannedData(data) {
+            const resultDiv = document.getElementById('scannedData');
+            
+            if (data.rawData) {
+                resultDiv.innerHTML = `
+                    <div class="scanned-item">
+                        <strong>Raw Data:</strong> ${data.rawData}<br>
+                        <strong>Customer ID:</strong> ${data.customerId}<br>
+                        <strong>Name:</strong> ${data.name}<br>
+                        <strong>Order ID:</strong> ${data.orderId}<br>
+                        <strong>Phone:</strong> ${data.phone}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="scanned-item">
+                        <strong>Customer ID:</strong> ${data.customerId || 'N/A'}<br>
+                        <strong>Name:</strong> ${data.name || 'N/A'}<br>
+                        <strong>Order ID:</strong> ${data.orderId || 'N/A'}<br>
+                        <strong>Phone:</strong> ${data.phone || 'N/A'}
+                    </div>
+                `;
+            }
+        }
+
+        // SUCCESS MESSAGE
+        function showSuccessMessage() {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = '<i class="fas fa-check-circle"></i> QR Code scanned successfully!';
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1001;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(successDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // CLOSE MODAL WINK WINK 
+        window.onclick = function(event) {
+            const modal = document.getElementById('scannerModal');
+            if (event.target === modal) {
+                closeScannerModal();
+            }
+        }
+
+        // COMPLETE PICK-UP FUNCTIONS
+        function completePickup(customerId) {
+            // SAMPLE DATA
+            const sampleData = {
+                'F001': {
+                    customerId: 'F001',
+                    name: 'Alexa De Luna',
+                    orderId: 'ORD-2024-001',
+                    phone: '09254412457'
+                }
+            };
+            
+            const customerData = sampleData[customerId] || {
+                customerId: customerId,
+                name: 'Sample Customer',
+                orderId: 'ORD-2025-SAMPLE',
+                phone: '09254412457'
+            };
+            
+            document.getElementById('pickupCustomerId').textContent = customerData.customerId;
+            document.getElementById('pickupCustomerName').textContent = customerData.name;
+            document.getElementById('pickupOrderId').textContent = customerData.orderId;
+            document.getElementById('pickupPhone').textContent = customerData.phone;
+            
+            // RESET CHECKBOX AND BUTTON STATE
+            document.getElementById('confirmPickup').checked = false;
+            document.getElementById('confirmPickupBtn').disabled = true;
+            
+            // SHOW MODAL
+            document.getElementById('pickupModal').style.display = 'flex';
+        }
+
+        function closePickupModal() {
+            document.getElementById('pickupModal').style.display = 'none';
+        }
+
+        function confirmPickup() {
+            const customerId = document.getElementById('pickupCustomerId').textContent;
+            
+            // API TO BACKEND 
+            // EXAMPLE MUNA SA SUCCESS MESS. 
+            showPickupSuccessMessage(customerId);
+            
+            closePickupModal();
+            
+            // UPDATE BUTTON STATE IN THE TABLE (OPTIONAL)
+            updatePickupButtonState(customerId);
+        }
+
+        function showPickupSuccessMessage(customerId) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `<i class="fas fa-check-circle"></i> Pick-up completed successfully for Customer ${customerId}!`;
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1001;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(successDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        function updatePickupButtonState(customerId) {
+            // UPDATE BUTTON STATE
+            // DISABLE PICK-UP BUTTON OR CHANGE ITS APPEARANCE
+            console.log(`Pick-up completed for customer: ${customerId}`);
+        }
+
+        // RESEND MESSAGE FUNCTION
+        function resendMessage(customerId) {
+            // SAMPLE DATA
+            const sampleData = {
+                'F001': {
+                    customerId: 'F001',
+                    name: 'Alexa De Luna',
+                    phone: '09254412457'
+                }
+            };
+            
+            const customerData = sampleData[customerId] || {
+                customerId: customerId,
+                name: 'Sample Customer',
+                phone: '09254412457'
+            };
+            
+            // CONFIRMATION DIALOG
+            if (confirm(`Resend notification message to ${customerData.name} (${customerData.phone})?`)) {
+                // API TO BACKEND  
+                // EXAMPLE MUNA SA SUCCESS MESS. 
+                showResendSuccessMessage(customerData.name);
+            }
+        }
+
+        function showResendSuccessMessage(customerName) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `<i class="fas fa-paper-plane"></i> Message resent successfully to ${customerName}!`;
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #17a2b8;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1001;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(successDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        // CHECKBOX EVENT LISTENER FOR PICK-UP CONFIRMATION
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmCheckbox = document.getElementById('confirmPickup');
+            const confirmBtn = document.getElementById('confirmPickupBtn');
+            
+            if (confirmCheckbox && confirmBtn) {
+                confirmCheckbox.addEventListener('change', function() {
+                    confirmBtn.disabled = !this.checked;
+                });
+            }
+        });
+
+        // CLOSE PICKUP MODAL WHEN CLICKING OUTSIDE
+        window.addEventListener('click', function(event) {
+            const pickupModal = document.getElementById('pickupModal');
+            if (event.target === pickupModal) {
+                closePickupModal();
+            }
+        });
+    </script>
+</body>
+</html>

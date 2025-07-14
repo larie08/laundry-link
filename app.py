@@ -145,5 +145,10 @@ def fabric_conditioner():
         total_value=total_value
     )
 
+# SCANNER
+@app.route('/scanner')
+def scanner():
+    return render_template('staff_scanner.html') 
+
 if __name__ == '__main__':
     app.run(debug=True)
