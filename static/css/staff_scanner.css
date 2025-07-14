@@ -1,0 +1,685 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.w3-sidebar {
+    background-color: #ffffff;
+    color: #122D69;
+    padding: 20px 0;
+    box-shadow: 5px 0 3px -1px rgba(0, 0, 0, 0.05);
+    z-index: 1;
+}
+
+/* MAIN TITLE */
+.main-title {
+    padding: 16px 24px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 8px;
+    background-color: #122D69;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    margin: 0 10px 8px 10px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+}
+
+.section-title {
+    font-size: 0.9rem;
+    padding: 15px 20px 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+ul{
+    list-style-type: none;
+    text-decoration: none; 
+}
+
+li{
+    padding: 10px 0;
+    text-decoration: none;
+}
+
+a{
+    text-decoration: none;
+}
+
+.w3-sidebar .w3-button:hover {
+    background-color: #122D69 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button:hover a {
+    color: #ffffff;
+}
+
+/* MAIN CONTENT */
+main {
+    width: 100vw;
+    min-height: 100vh;
+    margin-left: 250px;
+    padding: 30px;
+    background-color: #ffffff;
+}
+
+.hamburger-btn {
+    background-color: #122D69;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    margin-top: -20px;
+    margin-left: -15px;
+}
+
+.page-title {
+    color: #233872;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.breadcrumb {
+    color: #7b8db0;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 30px;
+}
+
+/* ADD ITEM BUTTON AND CAMERA BUTTON */
+.add-item-btn, 
+.camera-btn{
+    background-color: #233872;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.add-item-btn:hover {
+    background: #1a2a5a;
+}
+
+/* SEARCH */
+.search-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.search-container {
+    position: relative;
+    width: 300px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7b8db0;
+    pointer-events: none;
+}
+
+.search-box {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: #233872;
+}
+
+/* INVENTORY TABLE */
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.inventory-table th {
+    background: #f5f7fa;
+    color: #000000;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.inventory-table td {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    vertical-align: middle;
+}
+
+/* PRODUCT IMAGE */
+.product-img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+/* ACTION BUTTONS SUD NI SIYA SA INVENTORY TABLE */
+.action-btn {
+    background: #ffc107;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background 0.3s;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background: #e0a800;
+}
+
+.action-btn i {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+}
+
+.expired-btn {
+    background: #ff0000;
+}
+
+/* PAGINATION */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 8px;
+}
+
+.pagination-btn {
+    background: #233872;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.pagination-btn:hover {
+    background: #1a2a5a;
+}
+
+.pagination-btn.disabled {
+    background: #bfc8da;
+    cursor: not-allowed;
+}
+
+.page-number {
+    background: #233872;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* SCANNER MODAL */
+.scanner-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+
+.scanner-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.scanner-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.scanner-modal-header h2 {
+    color: #233872;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #7b8db0;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background-color: #e0e0e0;
+    color: #233872;
+}
+
+/* SCANNER BODY */
+.scanner-modal-body {
+    padding: 24px;
+}
+
+.scanner-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+#scanner-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.scanner-frame {
+    width: 200px;
+    height: 200px;
+    border: 3px solid #233872;
+    border-radius: 8px;
+    position: relative;
+    background: transparent;
+}
+
+.scanner-frame::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid rgba(35, 56, 114, 0.3);
+    border-radius: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* SCANNER INSTRUCTIONS */
+.scanner-instructions {
+    margin-top: 20px;
+    text-align: center;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.scanner-instructions p {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* SCANNER CONTROLS */
+.scanner-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+/* SCANNER BUTTONS */
+.scanner-btn {
+    background-color: #233872;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.scanner-btn:hover {
+    background: #1a2a5a;
+}
+
+.scanner-btn i {
+    font-size: 1rem;
+}
+
+/* SCANNER RESULT */
+.scanner-result {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.scanner-result h3 {
+    color: #233872;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.scanned-data {
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.scanned-data p {
+    margin: 0;
+    color: #7b8db0;
+    font-style: italic;
+}
+
+.scanned-item {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    line-height: 1.6;
+}
+
+.scanned-item strong {
+    color: #233872;
+}
+
+
+/* PICK-UP MODAL */
+.pickup-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+
+.pickup-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.pickup-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.pickup-modal-header h2 {
+    color: #233872;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.pickup-modal-body {
+    padding: 24px;
+}
+
+.customer-info {
+    margin-bottom: 24px;
+}
+
+.customer-info h3 {
+    color: #233872;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item label {
+    font-size: 0.9rem;
+    color: #7b8db0;
+    font-weight: 500;
+}
+
+.info-item span {
+    font-size: 1rem;
+    color: #233872;
+    font-weight: 600;
+}
+
+/* PICK-UP CONFIRMATION BASTA MAO NI SUD SA MODAL */
+.pickup-confirmation {
+    margin-bottom: 24px;
+}
+
+.pickup-confirmation h3 {
+    color: #233872;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.pickup-confirmation p {
+    color: #666;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.confirmation-options {
+    margin-bottom: 16px;
+}
+
+/* CHECKBOX BASTA MAO NI SUD SA MODAL */
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #233872;
+    border-radius: 4px;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #233872;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* PICK-UP ACTIONS */
+.pickup-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* CANCEL BUTTON */
+.cancel-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268;
+}
+
+/* CONFIRM BUTTON */
+.confirm-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirm-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.confirm-btn:disabled {
+    background-color: #bfc8da;
+    cursor: not-allowed;
+}
+
+/* ACTION BUTTONS FOR PICK-UP AND RESEND MESSAGE */
+.pickup-btn {
+    background: #FFC107 !important;
+}
+
+.pickup-btn:hover {
+    background: #eeb509 !important;
+}
+
+.resend-btn {
+    background: #dc3545 !important;
+}
+
+.resend-btn:hover {
+    background: #c82333 !important;
+}
+
+
+
