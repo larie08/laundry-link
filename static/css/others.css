@@ -26,7 +26,7 @@ body {
 .v100_100 {
   width: 727px;
   height: 39px;
-  background: url("images/v100_100.png");
+  background: url("../images/v100_100.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -109,7 +109,7 @@ body {
 .v100_108 {
   width: 24px;
   height: 24px;
-  background: url("images/v100_108.png");
+  background: url("../images/v100_108.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -122,7 +122,7 @@ body {
 .v100_109 {
   width: 24px;
   height: 24px;
-  background: url("images/v100_109.png");
+  background: url("../images/v100_109.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -307,7 +307,7 @@ button.v100_145 {
 .v100_158 {
   width: 66px;
   height: 66px;
-  background: url("images/v100_158.png");
+  background: url("../images/v100_158.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -320,7 +320,7 @@ button.v100_145 {
 .v100_159 {
   width: 62px;
   height: 62px;
-  background: url("images/v100_159.png");
+  background: url("../images/v100_159.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -363,7 +363,7 @@ button.v100_154 {
 .v100_160 {
   width: 65px;
   height: 65px;
-  background: url("images/v100_160.png");
+  background: url("../images/v100_160.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -400,7 +400,7 @@ button.v100_147 {
 .v100_157 {
   width: 64px;
   height: 64px;
-  background: url("images/v100_157.png");
+  background: url("../images/v100_157.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -455,7 +455,7 @@ button.v100_147 {
 .v100_177 {
   width: 80px;
   height: 80px;
-  background: url("images/v100_177.png");
+  background: url("../images/v100_177.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -534,7 +534,7 @@ button.v100_173 {
 .v100_176 {
   width: 77px;
   height: 77px;
-  background: url("images/v100_176.png");
+  background: url("../images/v100_176.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -604,7 +604,7 @@ button.v244_288 {
 .v245_301 {
   width: 84px;
   height: 84px;
-  background: url("images/v245_301.png");
+  background: url("../images/v245_301.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -632,7 +632,7 @@ button.v244_288 {
 .v245_304 {
   width: 64px;
   height: 64px;
-  background: url("images/v245_304.png");
+  background: url("../images/v245_304.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -675,7 +675,7 @@ button.v244_290 {
 .v245_296 {
   width: 64px;
   height: 64px;
-  background: url("images/v245_296.png");
+  background: url("../images/v245_296.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;

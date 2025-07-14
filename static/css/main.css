@@ -24,9 +24,9 @@ body {
 
 .v91_57 {
   position: relative;
-  width: 900px; /* Set a fixed width to contain all elements */
-  height: 1200px; /* Set a fixed height to contain all elements */
-  transform: scale(1.2); /* Scale up to make it bigger */
+  width: 900px; 
+  height: 1200px; 
+  transform: scale(1.2); 
   transform-origin: center center;
 }
 
@@ -42,7 +42,7 @@ body {
 .v91_91 {
   width: 526px;
   height: 520px;
-  background: url("images/v91_91.png");
+  background: url("../images/v91_91.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -56,7 +56,7 @@ body {
 .v91_64 {
   width: 500px;
   height: 500px;
-  background: url("images/v91_64.png");
+  background: url("../images/v91_64.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -69,7 +69,7 @@ body {
 .v91_65 {
   width: 355px;
   height: 216px;
-  background: url("images/v91_65.png");
+  background: url("../images/v91_65.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -102,7 +102,7 @@ body {
 }
 .v91_127 {
   width: 743px;
-  color: url("images/v91_127.png");
+  color: url("../images/v91_127.png");
   position: absolute;
   top: 132px;
   left: 141px;
@@ -115,7 +115,7 @@ body {
 .v91_122 {
   width: 850px;
   height: 752px;
-  background: url("images/v91_122.png");
+  background: url("../images/v91_122.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
