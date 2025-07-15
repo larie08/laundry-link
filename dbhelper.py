@@ -211,6 +211,11 @@ def update_user(user_id: int, username: str, password: str, role: str, fullname:
     '''
     return postprocess(sql, (username, password, role, fullname, user_id))
 
+def authenticate_user(username: str, password: str) -> dict:
+    sql = "SELECT * FROM [USER] WHERE USERNAME=? AND PASSWORD=?"
+    result = getallprocess(sql, (username, password))
+    return result[0] if result else None
+
 # Detergent management functions
 def add_detergent(name: str, price: float, qty: int, image_filename: str = None) -> bool:
     sql = '''

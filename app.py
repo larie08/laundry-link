@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash, get_flashed_messages
 import os
 from werkzeug.utils import secure_filename
 from dbhelper import *
@@ -6,6 +6,7 @@ from dbhelper import *
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.secret_key = 'laundrylink'
 
 @app.route('/')
 def home():
@@ -32,13 +33,52 @@ def payment():
     return render_template('payment.html')
 
 # added Staff Log in Route
-@app.route('/staff_login')
+@app.route('/staff_login', methods=['GET', 'POST'])
 def staff_login():
-    return render_template('staff_login.html')
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = authenticate_user(username, password)
+        if user and user['ROLE'].lower() == 'staff':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['role'] = user['ROLE']
+            return redirect(url_for('staff_dashboard'))
+        else:
+            flash('Invalid username or password, or not a staff account.', 'danger')
+            return redirect(url_for('staff_login'))
+    return render_template('staff_login.html', error=error)
+
+# ADMIN LOGIN
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = authenticate_user(username, password)
+        if user and user['ROLE'].lower() == 'admin':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['role'] = user['ROLE']
+            return redirect(url_for('staff_dashboard'))
+        else:
+            flash('Invalid username or password, or not an admin account.', 'danger')
+            return redirect(url_for('admin_login'))
+    return render_template('admin_login.html', error=error)
+
+#LOGOUT
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('staff_login'))
 
 # STAFF DASHBOARD
 @app.route('/staff_dashboard')
 def staff_dashboard():
+    if 'user_id' not in session or session['role'] != 'staff':
+        return redirect(url_for('staff_login'))
 
     detergents = get_all_detergents()
     fabric_conditioners = get_all_fabric_conditioners()
@@ -165,17 +205,11 @@ def fabric_conditioner():
         total_value=total_value
     )
 
-
-# added Admin Log in Route
-@app.route('/admin_login')
-def admin_login():
-    return render_template('admin_login.html')
-
-
 # SCANNER
 @app.route('/scanner')
 def scanner():
     return render_template('staff_scanner.html') 
+
 
 if __name__ == '__main__':
     app.run(debug=True)

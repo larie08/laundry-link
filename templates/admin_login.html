@@ -1,36 +1,51 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
-        <link href="{{ url_for('static', filename='css/staff_login.css') }}" rel="stylesheet" />
-        <title>Admin - Login</title>
-    </head>
-    <body>
-        <div class="v263_464">
-            <div class="name"></div>
-            <div class="v263_476"></div>
-            <!-- bubbles -->
-            <div class="v263_477"></div>
-            <div class="v263_478"></div>
-            <div class="v263_479"></div>
-            <!-- bubbles -->
-            <div class="form-container">
-                <h1 class="staff-header">Admin Login</h1>
-
-                <div class="input-wrapper">
-                    <img src="{{ url_for('static', filename='images/user.png') }}" class="icon" alt="User Icon">
-                    <input type="text" class="input-field" placeholder="Enter Username" required>
-                </div>
-
-                <div class="input-wrapper">
-                    <img src="{{ url_for('static', filename='images/lock.png') }}" class="icon" alt="Lock Icon">
-                    <input type="password" class="input-field" placeholder="Enter Password" required>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/staff_customers.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../static/css/staff_admin_login.css">
+    <title>Admin Login</title>
+</head>
+<body>
+    <div class="background-image">
+        <img src="../static/images/staff_admin_background_3.png" alt="background">
+    </div>
+    <h1>LAUNDRY LINK</h1>
+    <h2>Admin Login</h2>
+    <div class="login-container">
+        <form action="#" method="POST">
+            <div class="input-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" name="username" placeholder="Enter Username" required>
                 </div>
             </div>
-            <span class="laundrylink_header">LAUNDRY LINK</span>
-        </div>
-    </body>
+            
+            <div class="input-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Enter Password" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="login-button">Login</button>
+        </form>
+        <br>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="error-message" style="color: #fff; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
 </html>
