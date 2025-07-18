@@ -126,7 +126,87 @@
             <button class="v100_149">OWN DETERGENT</button>
             <button class="v100_154">OWN FABCON</button>
             <div class="v100_160"></div>
-            <button class="v100_147">FABCON</button>
+            <button class="v100_147" onclick="document.getElementById('fabconModal').style.display='block'">FABCON</button>
+            
+            <!-- FABCON Modal (btw gi reuse ra nako ang sa detergent options) -->
+            <div id="fabconModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('fabconModal').style.display='none'">&times;</span>
+                <h2>SELECT FABCON</h2>
+
+                <form>
+                <div class="detergent-option">
+                    <input type="checkbox" id="downy" />
+                    <label for="downy">
+                    <img src="{{ url_for('static', filename='images/downy.jpg') }}" alt="Downy">
+                    <div class="details">
+                        <strong>DOWNY PREMIUM PERFUME</strong>
+                        <span>Php 20.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="del" />
+                    <label for="del">
+                    <img src="{{ url_for('static', filename='images/del.jpg') }}" alt="Del"> 
+                    <div class="details">
+                        <strong>DEL FRAGRANCE SCENT</strong>
+                        <span>Php 16.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="surf_fabcon" />
+                    <label for="surf_fabcon">
+                    <img src="{{ url_for('static', filename='images/surf_fabcon.jpg') }}" alt="Surf Fabric Conditioner"> 
+                    <div class="details">
+                        <strong>SURF FABRIC CONDITIONER</strong>
+                        <span>Php 19.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="detergent-option">
+                    <input type="checkbox" id="sof" />
+                    <label for="sof">
+                       <img src="{{ url_for('static', filename='images/sof.jpg') }}" alt="Sof">
+                    <div class="details">
+                        <strong>SOF ALL DAY RADIANCE</strong>
+                        <span>Php 10.00</span>
+                    </div>
+                    <div class="quantity">
+                        <button type="button">-</button>
+                        <input type="number" min="1" value="1" />
+                        <button type="button">+</button>
+                    </div>
+                    </label>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="submit">Submit</button>
+                    <button type="button" class="cancel" onclick="document.getElementById('fabconModal').style.display='none'">Cancel</button>
+                </div>
+                </form>
+            </div>
+            </div>
+
             <span class="v100_112">WEIGH</span>
             <span class="v100_113">OTHER</span>
             <span class="v100_114">PAYMENT</span>
@@ -162,7 +242,6 @@
                 <label for="pickup-date">Date</label>
                 <div class="input-icon">
                     <input type="date" id="pickup-date" name="pickup-date" required />
-                    <span class="icon">&#128197;</span> <!-- calendar emoji as placeholder tempo -->
                 </div>
                 </div>
 
@@ -170,7 +249,6 @@
                 <label for="pickup-time">Time</label>
                 <div class="input-icon">
                     <input type="time" id="pickup-time" name="pickup-time" required />
-                    <span class="icon">&#128337;</span> <!-- clock emoji as placeholder tempo -->
                 </div>
                 </div>
 
@@ -180,7 +258,28 @@
                 </div>
             </div>
             </div>
-            <button class="v244_290">ADD NOTE</button>
+            
+            <button class="v244_290" onclick="document.getElementById('noteModal').style.display='block'">ADD NOTE</button>
+            
+            <!-- ADD NOTE Modal -->
+            <div id="noteModal" class="modal">
+            <div class="modal-content note-modal">
+                <span class="close" onclick="document.getElementById('noteModal').style.display='none'">&times;</span>
+                <h2>Note</h2>
+
+                <form>
+                <div class="note-text-area">
+                    <textarea id="note-text" placeholder="You can write your note here..."></textarea>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="submit">Submit</button>
+                    <button type="button" class="cancel" onclick="document.getElementById('noteModal').style.display='none'">Cancel</button>
+                </div>
+                </form>
+            </div>
+            </div>
+            
             <div class="v245_296"></div>
         </div>
 </body>
