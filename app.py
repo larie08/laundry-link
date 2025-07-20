@@ -28,9 +28,9 @@ def weight_laundry():
 def other_services():
     return render_template('others.html')
 
-@app.route('/payment')
-def payment():
-    return render_template('payment.html')
+@app.route('/payments')
+def payments():
+    return render_template('payments.html')
 
 # added Staff Log in Route
 @app.route('/staff_login', methods=['GET', 'POST'])
