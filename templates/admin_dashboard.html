@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Dashboard</title>
+    <title>Admin Dashboard</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -33,31 +33,31 @@
                 <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('staff_dashboard') }}">
+                        <a href="{{ url_for('admin_dashboard') }}">
                             <span>Dashboard</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('staff_detergent_inventory') }}">
+                        <a href="{{ url_for('admin_detergent_inventory') }}">
                             <span>Detergent</span>
                         </a>      
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('staff_fabric_conditioner') }}">
+                        <a href="{{ url_for('admin_fabric_conditioner') }}">
                             <span>Fabric Conditioner</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('staff_scanner') }}">
+                        <a href="{{ url_for('admin_scanner') }}">
                             <span>Scanner</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="#">
+                        <a href="{{ url_for('admin_customers') }}">
                             <span>Customers</span>
                         </a>
                     </li>
@@ -65,6 +65,33 @@
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="#">
                             <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Customer Reports</span>
                         </a>
                     </li>
                 </ul>
@@ -536,7 +563,7 @@
                                     </div>
 
                                     <div class="view-all-inventory-btn-container">
-                                        <a href="{{ url_for('staff_detergent_inventory') }}" class="view-all-inventory-btn">View All Detergent Inventory</a>
+                                        <a href="{{ url_for('admin_detergent_inventory') }}" class="view-all-inventory-btn">View All Detergent Inventory</a>
                                     </div>
 
                                     <div class="inventory-item">
@@ -570,7 +597,7 @@
                                         </div>
                                     </div>
                                     <div class="view-all-inventory-btn-container">
-                                        <a href="{{ url_for('staff_fabric_conditioner') }}" class="view-all-inventory-btn">View All Fabcon Inventory</a>
+                                        <a href="{{ url_for('admin_fabric_conditioner') }}" class="view-all-inventory-btn">View All Fabcon Inventory</a>
                                     </div>
                                 </div>
                             </div>

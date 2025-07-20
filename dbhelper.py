@@ -134,6 +134,20 @@ def initialize_database():
         FOREIGN KEY (FABCON_ID) REFERENCES FABCON(FABCON_ID)
     )
     ''')
+    
+    # ADMIN_USER table
+    cursor.execute('''
+        IF NOT EXISTS (SELECT * FROM [USER] WHERE USERNAME='admin')
+        INSERT INTO [USER] (USERNAME, PASSWORD, ROLE, FULLNAME, DATE_CREATED)
+        VALUES ('admin', 'admin123', 'admin', 'Administrator', GETDATE())
+    ''')
+
+    # STAFF_USER table
+    cursor.execute('''
+        IF NOT EXISTS (SELECT * FROM [USER] WHERE USERNAME='staff')
+        INSERT INTO [USER] (USERNAME, PASSWORD, ROLE, FULLNAME, DATE_CREATED)
+        VALUES ('staff', 'staff123', 'staff', 'Staff', GETDATE())
+    ''')
 
     conn.commit()
     conn.close()
