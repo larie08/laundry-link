@@ -8,6 +8,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.secret_key = 'laundrylink'
 
+# CUSTOMER ROUTES
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -32,24 +33,6 @@ def other_services():
 def payments():
     return render_template('payments.html')
 
-# added Staff Log in Route
-@app.route('/staff_login', methods=['GET', 'POST'])
-def staff_login():
-    error = None
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = authenticate_user(username, password)
-        if user and user['ROLE'].lower() == 'staff':
-            session['user_id'] = user['USER_ID']
-            session['username'] = user['USERNAME']
-            session['role'] = user['ROLE']
-            return redirect(url_for('staff_dashboard'))
-        else:
-            flash('Invalid username or password, or not a staff account.', 'danger')
-            return redirect(url_for('staff_login'))
-    return render_template('staff_login.html', error=error)
-
 # ADMIN LOGIN
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
@@ -62,23 +45,17 @@ def admin_login():
             session['user_id'] = user['USER_ID']
             session['username'] = user['USERNAME']
             session['role'] = user['ROLE']
-            return redirect(url_for('staff_dashboard'))
+            return redirect(url_for('admin_dashboard'))
         else:
             flash('Invalid username or password, or not an admin account.', 'danger')
             return redirect(url_for('admin_login'))
     return render_template('admin_login.html', error=error)
 
-#LOGOUT
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('staff_login'))
-
-# STAFF DASHBOARD
-@app.route('/staff_dashboard')
-def staff_dashboard():
-    if 'user_id' not in session or session['role'] != 'staff':
-        return redirect(url_for('staff_login'))
+# ADMIN DASHBOARD
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
 
     detergents = get_all_detergents()
     fabric_conditioners = get_all_fabric_conditioners()
@@ -86,14 +63,14 @@ def staff_dashboard():
     low_detergents = [d for d in detergents if d['QTY'] <= 10]
     low_fabcons = [f for f in fabric_conditioners if f['QTY'] <= 10]
 
-    return render_template('staff_dashboard.html',
+    return render_template('admin_dashboard.html',
         low_detergents=low_detergents,
         low_fabcons=low_fabcons
     )
 
-# STAFF DETERGENT INVENTORY
-@app.route('/detergent_inventory', methods=['GET', 'POST'])
-def detergent_inventory():
+# ADMIN DETERGENT INVENTORY
+@app.route('/admin_detergent_inventory')
+def admin_detergent_inventory():
     if request.method == 'POST':
         action = request.form.get('action', 'Add')
 
@@ -121,7 +98,180 @@ def detergent_inventory():
             detergent_id = int(request.form['detergent_id'])
             delete_detergent(detergent_id)
 
-        return redirect(url_for('detergent_inventory'))
+        return redirect(url_for('admin_detergent_inventory'))
+
+    # SEARCH
+    search_query = request.args.get('q', '').strip()
+    if search_query:
+        detergents = search_detergents(search_query)
+    else:
+        detergents = get_all_detergents()
+    
+    # LOW STOCK DETERGENTS
+    low_stock_detergents = [d for d in detergents if d['QTY'] <= 10]
+    
+    # TOTAL DETERGENTS
+    total_items = len(detergents)
+    low_stock_count = len(low_stock_detergents)
+    out_of_stock_count = len([d for d in detergents if d['QTY'] == 0])
+    
+    # TOTAL INVENTORY VALUE
+    total_value = sum(d['DETERGENT_PRICE'] * d['QTY'] for d in detergents)
+    
+    return render_template('admin_detergent_inventory.html', 
+                         detergents=detergents,
+                         low_stock_detergents=low_stock_detergents,
+                         total_items=total_items,
+                         low_stock_count=low_stock_count,
+                         out_of_stock_count=out_of_stock_count,
+                         total_value=total_value)
+
+# ADMIN FABRIC CONDITIONER  
+@app.route('/admin_fabric_conditioner')
+def admin_fabric_conditioner():
+    if request.method == 'POST':
+        action = request.form.get('action', 'Add')
+
+        if action == 'Add' or action == 'Update':
+            name = request.form['name']
+            price = float(request.form['price'])
+            quantity = int(request.form['quantity'])
+            image = request.files.get('image')
+            filename = None
+
+            if image and image.filename:
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            if action == 'Add':
+                add_fabric_conditioner(name, price, quantity, filename)
+            elif action == 'Update':
+                fabcon_id = int(request.form['fabric_conditioner_id'])
+                if not filename:
+                    old = get_fabric_conditioner_by_id(fabcon_id)
+                    filename = old['IMAGE_FILENAME'] if old else None
+                update_fabric_conditioner(fabcon_id, name, price, quantity, filename)
+
+        elif action == 'Delete':
+            fabcon_id = int(request.form['fabric_conditioner_id'])
+            delete_fabric_conditioner(fabcon_id)
+
+        return redirect(url_for('fabric_conditioner'))
+
+    # SEARCH
+    search_query = request.args.get('q', '').strip()
+    if search_query:
+        fabric_conditioners = search_fabric_conditioners(search_query)
+    else:
+        fabric_conditioners = get_all_fabric_conditioners()
+    
+    # Get total inventory value
+    total_value = get_fabcon_total_value()['TotalValue']
+    
+    # Calculate additional statistics
+    total_items = len(fabric_conditioners)
+    low_stock_count = len([f for f in fabric_conditioners if f['QTY'] <= 10])
+    out_of_stock_count = len([f for f in fabric_conditioners if f['QTY'] == 0])
+    
+    return render_template(
+        'admin_fabric_conditioner.html',
+        fabric_conditioners=fabric_conditioners,
+        total_items=total_items,
+        low_stock_count=low_stock_count,
+        out_of_stock_count=out_of_stock_count,
+        total_value=total_value
+    )
+
+# ADMIN SCANNER
+@app.route('/admin_scanner')    
+def admin_scanner():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    return render_template('admin_scanner.html')   
+
+# ADMIN CUSTOMERS
+@app.route('/admin_customers')
+def admin_customers():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    return render_template('admin_customers.html')
+
+#LOGOUT
+@app.route('/logout')
+def logout():
+    role = session.get('role')
+    session.clear()
+    if role == 'admin':
+        return redirect(url_for('admin_login'))
+    else:
+        return redirect(url_for('staff_login'))
+
+# added Staff Log in Route
+@app.route('/staff_login', methods=['GET', 'POST'])
+def staff_login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = authenticate_user(username, password)
+        if user and user['ROLE'].lower() == 'staff':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['role'] = user['ROLE']
+            return redirect(url_for('staff_dashboard'))
+        else:
+            flash('Invalid username or password, or not a staff account.', 'danger')
+            return redirect(url_for('staff_login'))
+    return render_template('staff_login.html', error=error)
+
+# STAFF DASHBOARD
+@app.route('/staff_dashboard')
+def staff_dashboard():
+    if 'user_id' not in session or session['role'] != 'staff':
+        return redirect(url_for('staff_login'))
+
+    detergents = get_all_detergents()
+    fabric_conditioners = get_all_fabric_conditioners()
+
+    low_detergents = [d for d in detergents if d['QTY'] <= 10]
+    low_fabcons = [f for f in fabric_conditioners if f['QTY'] <= 10]
+
+    return render_template('staff_dashboard.html',
+        low_detergents=low_detergents,
+        low_fabcons=low_fabcons
+    )
+
+# STAFF DETERGENT INVENTORY
+@app.route('/staff_detergent_inventory', methods=['GET', 'POST'])
+def staff_detergent_inventory():
+    if request.method == 'POST':
+        action = request.form.get('action', 'Add')
+
+        if action == 'Add' or action == 'Update':
+            name = request.form['name']
+            price = float(request.form['price'])
+            quantity = int(request.form['quantity'])
+            image = request.files.get('image')
+            filename = None
+
+            if image and image.filename:
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            if action == 'Add':
+                add_detergent(name, price, quantity, filename)
+            elif action == 'Update':
+                detergent_id = int(request.form['detergent_id'])
+                if not filename:
+                    old = get_detergent_by_id(detergent_id)
+                    filename = old['IMAGE_FILENAME'] if old else None
+                update_detergent(detergent_id, name, price, quantity, filename)
+
+        elif action == 'Delete':
+            detergent_id = int(request.form['detergent_id'])
+            delete_detergent(detergent_id)
+
+        return redirect(url_for('staff_detergent_inventory'))
 
     # SEARCH
     search_query = request.args.get('q', '').strip()
@@ -150,8 +300,8 @@ def detergent_inventory():
                          total_value=total_value)
 
 # STAFF FABRIC CONDITIONER
-@app.route('/fabric_conditioner', methods=['GET', 'POST'])
-def fabric_conditioner():
+@app.route('/staff_fabric_conditioner', methods=['GET', 'POST'])
+def staff_fabric_conditioner():
     if request.method == 'POST':
         action = request.form.get('action', 'Add')
 
@@ -206,10 +356,14 @@ def fabric_conditioner():
     )
 
 # SCANNER
-@app.route('/scanner')
-def scanner():
+@app.route('/staff_scanner')
+def staff_scanner():
     return render_template('staff_scanner.html') 
 
+# STAFF CUSTOMERS
+@app.route('/staff_customers')
+def staff_customers():
+    return render_template('staff_customers.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
