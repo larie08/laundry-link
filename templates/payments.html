@@ -96,20 +96,45 @@
                 <div class="payment-methods">
                     <label class="payment-method" data-method="cash">
                         <input type="radio" name="payment_mode" value="cash" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
+                        <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment" onclick="openCashModal()">
                     </label>
                     
                     <label class="payment-method" data-method="gcash">
                         <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash">
+                        <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
                     </label>
 
                     <label class="payment-method" data-method="maya">
                         <input type="radio" name="payment_mode" value="maya" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya">
+                        <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
                     </label>
                 </div>
-                <button class="btn">Proceed to Payment</button>
+                </div>
+
+                <!-- GCash QR Modal -->
+                <div id="gcashModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
+                        <h2>GCash Payment</h2>
+                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code">
+                        </div>
+                        <p class="qr-instructions">Scan QR code using GCash app to pay</p>
+                    </div>
+                </div>
+
+                <!-- Maya QR Modal -->
+                <div id="mayaModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
+                        <h2>Maya Payment</h2>
+                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code">
+                        </div>
+                        <p class="qr-instructions">Scan QR code using Maya app to pay</p>
+                    </div>
                 </div>
             </div>
             
@@ -145,5 +170,32 @@
                     document.getElementById('selected_payment_method').value = this.dataset.method;
                 });
             });
+
+            // QR Modal Functions
+            function openQRModal(type) {
+                event.stopPropagation(); // Prevent label click event
+                document.getElementById(type + 'Modal').style.display = 'block';
+            }
+
+            function closeQRModal(type) {
+                document.getElementById(type + 'Modal').style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('qr-modal')) {
+                    event.target.style.display = 'none';
+                }
+            }
+
+            // Cash Modal Functions
+            function openCashModal() {
+                event.stopPropagation(); // Prevent label click event
+                document.getElementById('cashModal').style.display = 'block';
+            }
+
+            function closeCashModal() {
+                document.getElementById('cashModal').style.display = 'none';
+            }
         </script>
 </html>
