@@ -1139,3 +1139,18 @@ input[type="time"] {
   background: #ccc;
   color: #333;
 }
+
+/* Visual indication for selected detergent/fabcon option */
+.detergent-option.selected {
+  border: 2px solid #0d47a1;
+  background: #e3f0ff;
+  border-radius: 10px;
+}
+
+/* Visual indication for selected toggle buttons */
+button.selected {
+  background: #0d47a1 !important;
+  color: #fff !important;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}

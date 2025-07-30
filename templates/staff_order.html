@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/staff_order.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Customers Management</title>
+</head>
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_customers') }}">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('staff_orders') }}">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('logout') }}">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Orders</h1>
+                    <div class="breadcrumb">Main / Orders</div>
+                </div>
+            </header>
+
+<!-- CHARTS -->
+<div class="charts-section">
+    <!-- Bar Chart: Pending vs Normal Orders -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <h3><i class="fas fa-chart-bar"></i> Pending vs Normal Orders</h3>
+        </div>
+        <div class="chart-content">
+            <canvas id="orderTypeChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+    <!-- Donut Chart: Order Status Distribution -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <h3><i class="fas fa-chart-pie"></i> Order Status Distribution</h3>
+        </div>
+        <div class="chart-content">
+            <canvas id="orderStatusChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="w3-container w3-padding w3-margin">
+                <!-- ORDER TYPE, ORDER STATUS, FILTER AND SEARCH BOX -->
+                <div class="search-row">
+                    <form method="GET" action="{{ url_for('staff_orders') }}" class="filter-form">
+                        <select name="order_type" class="filter-dropdown">
+                            <option value="">Order Type</option>
+                            <option value="self-service" {% if request.args.get('order_type') == 'self-service' %}selected{% endif %}>Self-Service</option>
+                            <option value="drop-off" {% if request.args.get('order_type') == 'drop-off' %}selected{% endif %}>Drop-Off</option>
+                        </select>
+                        <select name="order_status" class="filter-dropdown">
+                            <option value="">Order Status</option>
+                            <option value="pending" {% if request.args.get('order_status') == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="completed" {% if request.args.get('order_status') == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="pickup" {% if request.args.get('order_status') == 'pickup' %}selected{% endif %}>Pickup</option>
+                        </select>
+                        <button type="submit" class="filter-btn">Filter</button>
+                    </form>
+                    
+                    <form method="GET" action="{{ url_for('staff_orders') }}" class="search-container">
+                        <input type="text" class="search-box" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
+                        {% if request.args.get('q', '') %}
+                        <a href="{{ url_for('orders') }}" class="clear-search-btn" title="Clear search">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sorting Note -->
+                <div class="order-legend w3-margin-bottom">
+                    <span style="font-weight:600;color:#233872;">
+                        Note: Priority orders are always displayed first. Staff should process priority orders before normal orders.
+                    </span>
+                </div>
+
+                <div class="table-container">
+                    <table class="customers-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer ID</th>
+                                <th>Order Type</th>
+                                <th>Priority</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Date Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Priority Orders First -->
+                            <tr class="priority-order">
+                                <td>ORD-002</td>
+                                <td>1001</td>
+                                <td><span class="badge-table badge-self-table">Self-service</span></td>
+                                <td><span class="badge-table badge-priority-table">Priority</span></td>
+                                <td><span class="badge-table badge-unpaid-table">Unpaid</span></td>
+                                <td><span class="badge-table badge-pending-table">Pending</span></td>
+                                <td>07/11/2025</td>
+                                <td>
+                                    <button class="view-detail-btn" onclick="openOrderDetailsModal()">
+                                        <i class="fas fa-info-circle"></i> View Detail
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Normal Orders Below -->
+                            <tr>
+                                <td>ORD-001</td>
+                                <td>1000</td>
+                                <td><span class="badge-table badge-self-table">Self-service</span></td>
+                                <td><span class="badge-table badge-normal-table">Normal</span></td>
+                                <td><span class="badge-table badge-unpaid-table">Unpaid</span></td>
+                                <td><span class="badge-table badge-pending-table">Pending</span></td>
+                                <td>07/11/2025</td>
+                                <td>
+                                    <button class="view-detail-btn" onclick="openOrderDetailsModal()">
+                                        <i class="fas fa-info-circle"></i> View Detail
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button class="pagination-btn disabled">Prev</button>
+                        <span class="page-number">1</span>
+                        <button class="pagination-btn">Next</button>
+                    </div>
+                </div>
+
+                
+            </div>
+        </main>
+       
+
+        
+    </div>
+
+    <!-- Order Details Modal -->
+<div id="orderDetailsModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <span class="close" onclick="closeOrderDetailsModal()">&times;</span>
+        <h2>Order Details</h2>
+        <!-- Top Section: Order Info -->
+        <div class="order-info-grid">
+            <div><strong>Order ID:</strong></div><div>ORD-001</div>
+            <div><strong>Customer:</strong></div><div>Cedyy</div>
+            <div><strong>Order Type:</strong></div><div><span class="badge badge-self">Self-Service</span></div>
+            <div><strong>Status:</strong></div><div><span class="badge badge-pending">Pending</span></div>
+            <div><strong>Payment:</strong></div><div><span class="badge badge-unpaid">Unpaid</span></div>
+            <div><strong>Date Created:</strong></div><div>2025-07-11</div>
+            <div><strong>Pickup Schedule:</strong></div><div>2025-07-12 10:00 AM</div>
+            <div><strong>Total Load:</strong></div><div>2 Loads</div>
+            <div><strong>Total Weight:</strong></div><div>9.5 kg</div>
+            <div><strong>Order Notes:</strong></div><div>Customer prefers Tide only.</div>
+        </div>
+        <hr>
+        <!-- Receipt Section -->
+        <div class="receipt-section">
+            <div class="receipt-row">
+                <span>Priority</span>
+                <span class="receipt-value">₱50</span>
+            </div>
+            <div class="receipt-row">
+                <span>Total Load</span>
+                <span class="receipt-value">2 Loads</span>
+            </div>
+            <div class="receipt-row receipt-subrow">
+                <span style="padding-left:24px;">Price</span>
+                <span class="receipt-value">₱20</span>
+            </div>
+            <div class="receipt-row">
+                <span>Ironing</span>
+                <span class="receipt-value">₱50</span>
+            </div>
+            <div class="receipt-row">
+                <span>Folding</span>
+                <span class="receipt-value">₱70</span>
+            </div>
+            <div class="receipt-row">
+                <span>Detergent</span>
+                <span class="receipt-value">Tide Original Scent (₱18)</span>
+            </div>
+            <div class="receipt-row receipt-subrow">
+                <span style="padding-left:24px;">Qty</span>
+                <span class="receipt-value">5</span>
+            </div>
+            <div class="receipt-row receipt-subrow">
+                <span style="padding-left:24px;">Price</span>
+                <span class="receipt-value">₱90</span>
+            </div>
+            <div class="receipt-row">
+                <span>FabCon</span>
+                <span class="receipt-value">Own</span>
+            </div>
+            <div class="receipt-row total-row">
+                <span>Total Price</span>
+                <span class="receipt-value price">₱280.00</span>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn paid-btn">Mark as Paid</button>
+        </div>
+    </div>
+</div>
+    <script>
+function openOrderDetailsModal() {
+    document.getElementById('orderDetailsModal').style.display = 'block';
+}
+function closeOrderDetailsModal() {
+    document.getElementById('orderDetailsModal').style.display = 'none';
+}
+window.onclick = function(event) {
+    var modal = document.getElementById('orderDetailsModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // DONUT CHART: Order Status Distribution (Pending, Pickup, Completed)
+    const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+    const orderStatusChart = new Chart(orderStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Pickup', 'Completed'],
+            datasets: [{
+                data: [5, 3, 12], // Example data
+                backgroundColor: [
+                    '#A5D6A7', // Light green background for Pending
+                    '#FFAB91', // Light red/salmon background for Pickup
+                    '#81C784'  // Light green background for Completed
+                ],
+                borderColor: [
+                    '#2E7D32', // Dark green border
+                    '#D84315', // Dark red border
+                    '#388E3C'  // Dark green border
+                ],
+                borderWidth: 2,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: {
+                            family: 'Poppins',
+                            size: 12,
+                            weight: '500'
+                        },
+                        color: '#000000'
+                    }
+                }
+            },
+            elements: {
+                arc: {
+                    borderWidth: 2
+                }
+            }
+        }
+    });
+
+    // BAR CHART: Pending vs Normal Orders
+    const orderTypeCtx = document.getElementById('orderTypeChart').getContext('2d');
+    const orderTypeChart = new Chart(orderTypeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Pending', 'Normal'],
+            datasets: [{
+                label: 'Order Count',
+                data: [7, 13], // Example data
+                backgroundColor: [
+                    '#f1c40f', // Pending
+                    '#233872'  // Normal
+                ],
+                borderColor: [
+                    '#f1c40f',
+                    '#233872'
+                ],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Poppins',
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Poppins',
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>
