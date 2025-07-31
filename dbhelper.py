@@ -1,12 +1,12 @@
 import pyodbc
 
 # # SQL Server connection setup(I comment lang pls)-cedyy
-# SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
-# DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
+SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
+DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
 
-# DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
-DATABASE = 'LAUNDRYLINK'         
+# # DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
+# SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
+# DATABASE = 'LAUNDRYLINK'         
 
 def get_connection():
     conn_str = (
@@ -117,6 +117,8 @@ def initialize_database():
     CREATE TABLE ORDERITEM_DETERGENT (
         ORDERITEM_ID INT,
         DETERGENT_ID INT,
+        QUANTITY INT,
+        UNIT_PRICE DECIMAL(10,2),
         PRIMARY KEY (ORDERITEM_ID, DETERGENT_ID),
         FOREIGN KEY (ORDERITEM_ID) REFERENCES ORDER_ITEM(ORDERITEM_ID),
         FOREIGN KEY (DETERGENT_ID) REFERENCES DETERGENT(DETERGENT_ID)
@@ -129,6 +131,8 @@ def initialize_database():
     CREATE TABLE ORDERITEM_FABCON (
         ORDERITEM_ID INT,
         FABCON_ID INT,
+        QUANTITY INT,
+        UNIT_PRICE DECIMAL(10,2),
         PRIMARY KEY (ORDERITEM_ID, FABCON_ID),
         FOREIGN KEY (ORDERITEM_ID) REFERENCES ORDER_ITEM(ORDERITEM_ID),
         FOREIGN KEY (FABCON_ID) REFERENCES FABCON(FABCON_ID)
@@ -319,6 +323,34 @@ def get_fabcon_total_value() -> dict:
     sql = "EXEC sp_CalculateFabconTotalValue"
     result = getallprocess(sql)
     return result[0] if result else {'ItemType': 'Fabric Conditioner', 'TotalValue': 0}
+
+def add_order_item(customer_own_detergent: bool, customer_own_fabcon: bool, iron: bool, fold_clothes: bool, prioritize_order: bool) -> int:
+    sql = '''
+    INSERT INTO ORDER_ITEM (CUSTOMER_OWN_DETERGENT, CUSTOMER_OWN_FABCON, IRON, FOLD_CLOTHES, PRIORITIZE_ORDER, DATE_CREATED)
+    VALUES (?, ?, ?, ?, ?, GETDATE())
+    '''
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(sql, (customer_own_detergent, customer_own_fabcon, iron, fold_clothes, prioritize_order))
+    conn.commit()
+    orderitem_id = cursor.lastrowid if hasattr(cursor, 'lastrowid') else cursor.execute('SELECT @@IDENTITY').fetchone()[0]
+    cursor.close()
+    conn.close()
+    return orderitem_id
+
+def add_orderitem_detergent(orderitem_id: int, detergent_id: int, quantity: int, unit_price: float) -> bool:
+    sql = '''
+    INSERT INTO ORDERITEM_DETERGENT (ORDERITEM_ID, DETERGENT_ID, QUANTITY, UNIT_PRICE)
+    VALUES (?, ?, ?, ?)
+    '''
+    return postprocess(sql, (orderitem_id, detergent_id, quantity, unit_price))
+
+def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_price: float) -> bool:
+    sql = '''
+    INSERT INTO ORDERITEM_FABCON (ORDERITEM_ID, FABCON_ID, QUANTITY, UNIT_PRICE)
+    VALUES (?, ?, ?, ?)
+    '''
+    return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
     
 if __name__ == "__main__":
     initialize_database()
