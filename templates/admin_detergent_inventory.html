@@ -33,37 +33,37 @@
                 <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_dashboard') }}">
+                        <a href="{{ url_for('dashboard') }}">
                             <span>Dashboard</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_detergent_inventory') }}">
+                        <a href="{{ url_for('detergent_inventory') }}">
                             <span>Detergent</span>
                         </a>      
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_fabric_conditioner') }}">
+                        <a href="{{ url_for('fabric_conditioner') }}">
                             <span>Fabric Conditioner</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_scanner') }}">
+                        <a href="{{ url_for('scanner') }}">
                             <span>Scanner</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_customers') }}">
+                        <a href="{{ url_for('customers') }}">
                             <span>Customers</span>
                         </a>
                     </li>
 
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_orders') }}">
+                        <a href="{{ url_for('orders') }}">
                             <span>Orders</span>
                         </a>
                     </li>
@@ -215,10 +215,10 @@
                 <!-- ADD ITEM BUTTON AND SEARCH BOX -->
                 <div class="search-row">
                     <button class="add-item-btn">Add Item</button>
-                    <form method="GET" action="{{ url_for('admin_detergent_inventory') }}" class="search-container">
+                    <form method="GET" action="{{ url_for('detergent_inventory') }}" class="search-container">
                         <input type="text" class="search-box" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
                         {% if request.args.get('q', '') %}
-                        <a href="{{ url_for('admin_detergent_inventory') }}" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('detergent_inventory') }}" class="clear-search-btn" title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
@@ -259,7 +259,7 @@
                                         data-image="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ url_for('admin_detergent_inventory') }}" style="display:inline;">
+                                    <form method="POST" action="{{ url_for('detergent_inventory') }}" style="display:inline;">
                                         <input type="hidden" name="detergent_id" value="{{ item['DETERGENT_ID'] }}">
                                         <input type="hidden" name="action" value="Delete">
                                         <button type="submit" class="action-btn" onclick="return confirm('Are you sure you want to delete this item?');">
@@ -285,7 +285,7 @@
             <div class="modal-content">
                 <span class="close" onclick="closeModal('addItemModal')">&times;</span>
                 <h2>Add Item</h2>
-                <form action="{{ url_for('admin_detergent_inventory') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ url_for('detergent_inventory') }}" method="POST" enctype="multipart/form-data">
                     <div class="modal-img-upload">
                         <label for="addImageInput" class="img-label">
                             <img id="addImgPreview" src="../static/images/logo.jpg" alt="Preview" class="modal-img-preview">
@@ -315,7 +315,7 @@
             <div class="modal-content">
                 <span class="close" onclick="closeModal('editItemModal')">&times;</span>
                 <h2>Edit Item</h2>
-                <form id="editForm" action="{{ url_for('admin_detergent_inventory') }}" method="POST" enctype="multipart/form-data">
+                <form id="editForm" action="{{ url_for('detergent_inventory') }}" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="detergent_id" id="editDetergentId">
                     <input type="hidden" name="action" value="Update">
                     <div class="modal-img-upload">

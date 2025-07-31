@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/admin_order_report.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Order Report</title>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customers') }}">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('orders') }}">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button w3-blue">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('logout') }}">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- MAIN -->
+        <main>
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Order Report</h1>
+                    <div class="breadcrumb">Main / Order Report</div>
+                </div>
+            </header>
+            
+            <div class="w3-container w3-padding w3-margin">
+                <!-- SUMMARY STATISTICS CARDS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Total Orders</h3>
+                            <p class="stat-number">1,247</p>
+                            <span class="stat-change positive">+12.5%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Total Revenue</h3>
+                            <p class="stat-number">₱45,230</p>
+                            <span class="stat-change positive">+8.3%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Pending Orders</h3>
+                            <p class="stat-number">23</p>
+                            <span class="stat-change negative">-5.2%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Completed Orders</h3>
+                            <p class="stat-number">1,189</p>
+                            <span class="stat-change positive">+15.7%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHART SECTION (NOW ABOVE FILTERS) -->
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Service Type Distribution</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-period="week">This Week</button>
+                                <button class="chart-btn" data-period="month">This Month</button>
+                                <button class="chart-btn" data-period="year">This Year</button>
+                            </div>
+                        </div>
+                        <canvas id="orderChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="quick-stats">
+                        <div class="quick-stat-item">
+                            <div class="quick-stat-header">
+                                <i class="fas fa-clock"></i>
+                                <span>Peak Hours</span>
+                            </div>
+                            <div class="quick-stat-value">2:00 PM - 6:00 PM</div>
+                        </div>
+                        
+                        <div class="quick-stat-item">
+                            <div class="quick-stat-header">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>Avg Processing Time</span>
+                            </div>
+                            <div class="quick-stat-value">2.5 hours</div>
+                        </div>
+                        
+                        <div class="quick-stat-item">
+                            <div class="quick-stat-header">
+                                <i class="fas fa-star"></i>
+                                <span>Most Popular Service</span>
+                            </div>
+                            <div class="quick-stat-value">Self-Service</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTERS AND SEARCH SECTION (NOW BELOW CHART) -->
+                <div class="filters-section">
+                    <div class="filter-row">
+                        <div class="search-group">
+                            <div class="search-container">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="search-input" placeholder="Search orders by ID, customer name, or phone...">
+                                <button class="clear-search-btn" title="Clear search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            
+                            <select class="filter-select">
+                                <option value="">All Services</option>
+                                <option value="wash">Wash Only</option>
+                                <option value="dry">Dry Only</option>
+                                <option value="wash-dry">Wash & Dry</option>
+                                <option value="press">Press</option>
+                            </select>
+                            
+                            <div class="date-range">
+                                <input type="date" class="date-input" placeholder="Start Date">
+                                <span>to</span>
+                                <input type="date" class="date-input" placeholder="End Date">
+                            </div>
+                            
+                            <button class="apply-filter-btn">
+                                <i class="fas fa-filter"></i>
+                                Apply Filters
+                            </button>
+                            
+                            <button class="clear-filter-btn">
+                                <i class="fas fa-times"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ORDERS TABLE -->
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>Recent Orders</h3>
+                        <div class="table-actions">
+                            <button class="export-btn">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                            <button class="print-btn">
+                                <i class="fas fa-print"></i>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Service Type</th>
+                                    <th>Items</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#ORD-001</td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-name">John Doe</div>
+                                            <div class="customer-phone">+63 912 345 6789</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="service-badge wash-dry">Wash & Dry</span>
+                                    </td>
+                                    <td>5 items</td>
+                                    <td>₱150.00</td>
+                                    <td>
+                                        <span class="status-badge completed">Completed</span>
+                                    </td>
+                                    <td>Dec 15, 2024</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="action-btn view" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn edit" title="Edit Order">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-btn delete" title="Delete Order">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>#ORD-002</td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-name">Jane Smith</div>
+                                            <div class="customer-phone">+63 923 456 7890</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="service-badge wash">Wash Only</span>
+                                    </td>
+                                    <td>3 items</td>
+                                    <td>₱75.00</td>
+                                    <td>
+                                        <span class="status-badge pending">Pending</span>
+                                    </td>
+                                    <td>Dec 15, 2024</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="action-btn view" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn edit" title="Edit Order">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-btn delete" title="Delete Order">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>#ORD-003</td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-name">Mike Johnson</div>
+                                            <div class="customer-phone">+63 934 567 8901</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="service-badge press">Press</span>
+                                    </td>
+                                    <td>2 items</td>
+                                    <td>₱60.00</td>
+                                    <td>
+                                        <span class="status-badge processing">Processing</span>
+                                    </td>
+                                    <td>Dec 14, 2024</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="action-btn view" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="action-btn edit" title="Edit Order">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-btn delete" title="Delete Order">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- PAGINATION -->
+                    <div class="pagination">
+                        <button class="pagination-btn" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </button>
+                        <div class="page-numbers">
+                            <span class="page-number active">1</span>
+                            <span class="page-number">2</span>
+                            <span class="page-number">3</span>
+                            <span class="page-dots">...</span>
+                            <span class="page-number">10</span>
+                        </div>
+                        <button class="pagination-btn">
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Chart initialization - Service Type Distribution (Unique Horizontal Bar Chart)
+        const ctx = document.getElementById('orderChart').getContext('2d');
+        
+        // Create gradient for bars
+        const gradient1 = ctx.createLinearGradient(0, 0, 400, 0);
+        gradient1.addColorStop(0, '#3b82f6');
+        gradient1.addColorStop(1, '#1d4ed8');
+        
+        const gradient2 = ctx.createLinearGradient(0, 0, 400, 0);
+        gradient2.addColorStop(0, '#10b981');
+        gradient2.addColorStop(1, '#059669');
+
+        const orderChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Self-Service', 'Drop-Off'],
+                datasets: [{
+                    label: 'Orders',
+                    data: [856, 234],
+                    backgroundColor: [gradient1, gradient2],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 35,
+                    maxBarThickness: 40
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(35, 56, 114, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#233872',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            label: function(context) {
+                                const value = context.parsed.x;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${value} orders (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#1e293b',
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            },
+                            padding: 8
+                        }
+                    }
+                },
+                elements: {
+                    bar: {
+                        borderSkipped: false
+                    }
+                }
+            }
+        });
+
+        // Chart period controls
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update chart data based on selected period
+                const period = this.getAttribute('data-period');
+                let newData;
+                
+                switch(period) {
+                    case 'week':
+                        newData = [856, 234];
+                        break;
+                    case 'month':
+                        newData = [3245, 890];
+                        break;
+                    case 'year':
+                        newData = [38920, 10680];
+                        break;
+                    default:
+                        newData = [856, 234];
+                }
+                
+                orderChart.data.datasets[0].data = newData;
+                orderChart.update('active');
+            });
+        });
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            const main = document.querySelector('main');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+        }
+    </script>
+</body>
+</html>
