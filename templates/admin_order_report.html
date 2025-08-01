@@ -70,7 +70,7 @@
                 <!-- REPORTS -->
                 <div class="section-title w3-padding w3-text-gray">Reports</div>
                 <ul class="w3-margin-left">
-                    <li class="w3-padding w3-bar-item w3-button w3-blue">
+                    <li class="w3-padding w3-bar-item w3-button">
                         <a href="#">
                             <span>Order Reports</span>
                         </a>
@@ -104,7 +104,6 @@
                 </ul>
             </nav>
         </aside>
-        
         <!-- MAIN -->
         <main>
             <header>
@@ -114,432 +113,160 @@
                     <div class="breadcrumb">Main / Order Report</div>
                 </div>
             </header>
-            
             <div class="w3-container w3-padding w3-margin">
-                <!-- SUMMARY STATISTICS CARDS -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Total Orders</h3>
-                            <p class="stat-number">1,247</p>
-                            <span class="stat-change positive">+12.5%</span>
-                        </div>
+
+                <!-- SUMMARY CARDS -->
+                <div class="stats-cards stats-cards-layout">
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-card-title">Total Orders</div>
+                        <div class="stat-card-number">{{ orders|length if orders else 0 }}</div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Total Revenue</h3>
-                            <p class="stat-number">₱45,230</p>
-                            <span class="stat-change positive">+8.3%</span>
-                        </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-card-title">Total Revenue</div>
+                        <div class="stat-card-number">₱{{ total_revenue if total_revenue else 0 }}</div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Pending Orders</h3>
-                            <p class="stat-number">23</p>
-                            <span class="stat-change negative">-5.2%</span>
-                        </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-card-title">Pending Orders</div>
+                        <div class="stat-card-number">{{ pending_orders|length if pending_orders else 0 }}</div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Completed Orders</h3>
-                            <p class="stat-number">1,189</p>
-                            <span class="stat-change positive">+15.7%</span>
-                        </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-card-title">Completed Orders</div>
+                        <div class="stat-card-number">{{ completed_orders|length if completed_orders else 0 }}</div>
                     </div>
                 </div>
 
-                <!-- CHART SECTION (NOW ABOVE FILTERS) -->
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3>Service Type Distribution</h3>
-                            <div class="chart-controls">
-                                <button class="chart-btn active" data-period="week">This Week</button>
-                                <button class="chart-btn" data-period="month">This Month</button>
-                                <button class="chart-btn" data-period="year">This Year</button>
-                            </div>
-                        </div>
-                        <canvas id="orderChart" width="400" height="200"></canvas>
-                    </div>
-                    
-                    <div class="quick-stats">
-                        <div class="quick-stat-item">
-                            <div class="quick-stat-header">
-                                <i class="fas fa-clock"></i>
-                                <span>Peak Hours</span>
-                            </div>
-                            <div class="quick-stat-value">2:00 PM - 6:00 PM</div>
-                        </div>
-                        
-                        <div class="quick-stat-item">
-                            <div class="quick-stat-header">
-                                <i class="fas fa-hourglass-half"></i>
-                                <span>Avg Processing Time</span>
-                            </div>
-                            <div class="quick-stat-value">2.5 hours</div>
-                        </div>
-                        
-                        <div class="quick-stat-item">
-                            <div class="quick-stat-header">
-                                <i class="fas fa-star"></i>
-                                <span>Most Popular Service</span>
-                            </div>
-                            <div class="quick-stat-value">Self-Service</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- FILTER/SEARCH -->
+                <div class="filter-search-row card flex-row align-center">
+                    <form id="ordersSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container search-form-self-service">
+                        <input type="text" class="search-box" name="q" placeholder="Search orders by ID or customer name..." value="{{ request.args.get('q', '') }}">
+                        <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
+                        {% if request.args.get('q', '') %}
+                        <a href="{{ url_for('admin_order_report') }}" class="clear-search-btn" title="Clear search">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                    </form>
 
-                <!-- FILTERS AND SEARCH SECTION (NOW BELOW CHART) -->
-                <div class="filters-section">
-                    <div class="filter-row">
-                        <div class="search-group">
-                            <div class="search-container">
-                                <i class="fas fa-search search-icon"></i>
-                                <input type="text" class="search-input" placeholder="Search orders by ID, customer name, or phone...">
-                                <button class="clear-search-btn" title="Clear search">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="filter-group">
-                            <select class="filter-select">
-                                <option value="">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                            
-                            <select class="filter-select">
-                                <option value="">All Services</option>
-                                <option value="wash">Wash Only</option>
-                                <option value="dry">Dry Only</option>
-                                <option value="wash-dry">Wash & Dry</option>
-                                <option value="press">Press</option>
-                            </select>
-                            
-                            <div class="date-range">
-                                <input type="date" class="date-input" placeholder="Start Date">
-                                <span>to</span>
-                                <input type="date" class="date-input" placeholder="End Date">
-                            </div>
-                            
-                            <button class="apply-filter-btn">
-                                <i class="fas fa-filter"></i>
-                                Apply Filters
-                            </button>
-                            
-                            <button class="clear-filter-btn">
-                                <i class="fas fa-times"></i>
-                                Clear
-                            </button>
-                        </div>
+                    <div class="date-filter flex-row align-center">
+                        <div class="date-label">Date Range:</div>
+                        <input type="date" id="startDate" name="start_date" class="w3-input w3-border date-input" value="{{ request.args.get('start_date', '') }}">
+                        <span>to</span>
+                        <input type="date" id="endDate" name="end_date" class="w3-input w3-border date-input" value="{{ request.args.get('end_date', '') }}">
+                        <button id="applyDateFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
+                        <button id="clearDateFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
                     </div>
                 </div>
 
                 <!-- ORDERS TABLE -->
-                <div class="table-section">
-                    <div class="table-header">
-                        <h3>Recent Orders</h3>
-                        <div class="table-actions">
-                            <button class="export-btn">
-                                <i class="fas fa-download"></i>
-                                Export
-                            </button>
-                            <button class="print-btn">
-                                <i class="fas fa-print"></i>
-                                Print
-                            </button>
+                <div id="ordersTableSection" class="table-container">
+                    <div class="table-header-layout">
+                        <h3>Orders</h3>
+                        <div class="download-btns download-btns-layout">
+                            <a href="" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
                         </div>
                     </div>
-                    
-                    <div class="table-container">
-                        <table class="orders-table">
-                            <thead>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer ID</th>
+                                <th>Order Type</th>
+                                <th>Priority</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Date Created</th>
+                                <th>Date Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if orders %}
+                                {% for order in orders %}
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Service Type</th>
-                                    <th>Items</th>
-                                    <th>Total Amount</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
+                                    <td>{{ order.ORDER_ID }}</td>
+                                    <td>{{ order.CUSTOMER_ID }}</td>
+                                    <td>{{ order.ORDER_TYPE }}</td>
+                                    <td>{{ order.PRIORITY }}</td>
+                                    <td>{{ order.PAYMENT_STATUS }}</td>
+                                    <td>
+                                        <span class="status-badge {{ order.STATUS.lower() }}">
+                                            {{ order.STATUS }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.DATE_CREATED }}</td>
+                                    <td>{{ order.DATE_UPDATED }}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
+                                {% endfor %}
+                            {% else %}
                                 <tr>
-                                    <td>#ORD-001</td>
-                                    <td>
-                                        <div class="customer-info">
-                                            <div class="customer-name">John Doe</div>
-                                            <div class="customer-phone">+63 912 345 6789</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="service-badge wash-dry">Wash & Dry</span>
-                                    </td>
-                                    <td>5 items</td>
-                                    <td>₱150.00</td>
-                                    <td>
-                                        <span class="status-badge completed">Completed</span>
-                                    </td>
-                                    <td>Dec 15, 2024</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="action-btn view" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn edit" title="Edit Order">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="action-btn delete" title="Delete Order">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
+                                    <td colspan="8" style="text-align: center; padding: 20px;">No orders found</td>
                                 </tr>
-                                
-                                <tr>
-                                    <td>#ORD-002</td>
-                                    <td>
-                                        <div class="customer-info">
-                                            <div class="customer-name">Jane Smith</div>
-                                            <div class="customer-phone">+63 923 456 7890</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="service-badge wash">Wash Only</span>
-                                    </td>
-                                    <td>3 items</td>
-                                    <td>₱75.00</td>
-                                    <td>
-                                        <span class="status-badge pending">Pending</span>
-                                    </td>
-                                    <td>Dec 15, 2024</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="action-btn view" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn edit" title="Edit Order">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="action-btn delete" title="Delete Order">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <tr>
-                                    <td>#ORD-003</td>
-                                    <td>
-                                        <div class="customer-info">
-                                            <div class="customer-name">Mike Johnson</div>
-                                            <div class="customer-phone">+63 934 567 8901</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="service-badge press">Press</span>
-                                    </td>
-                                    <td>2 items</td>
-                                    <td>₱60.00</td>
-                                    <td>
-                                        <span class="status-badge processing">Processing</span>
-                                    </td>
-                                    <td>Dec 14, 2024</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="action-btn view" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="action-btn edit" title="Edit Order">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="action-btn delete" title="Delete Order">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- PAGINATION -->
-                    <div class="pagination">
-                        <button class="pagination-btn" disabled>
-                            <i class="fas fa-chevron-left"></i>
-                            Previous
-                        </button>
-                        <div class="page-numbers">
-                            <span class="page-number active">1</span>
-                            <span class="page-number">2</span>
-                            <span class="page-number">3</span>
-                            <span class="page-dots">...</span>
-                            <span class="page-number">10</span>
-                        </div>
-                        <button class="pagination-btn">
-                            Next
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button class="pagination-btn disabled">Prev</button>
+                    <span class="page-number">1</span>
+                    <button class="pagination-btn">Next</button>
                 </div>
             </div>
         </main>
     </div>
-
     <script>
-        // Chart initialization - Service Type Distribution (Unique Horizontal Bar Chart)
-        const ctx = document.getElementById('orderChart').getContext('2d');
-        
-        // Create gradient for bars
-        const gradient1 = ctx.createLinearGradient(0, 0, 400, 0);
-        gradient1.addColorStop(0, '#3b82f6');
-        gradient1.addColorStop(1, '#1d4ed8');
-        
-        const gradient2 = ctx.createLinearGradient(0, 0, 400, 0);
-        gradient2.addColorStop(0, '#10b981');
-        gradient2.addColorStop(1, '#059669');
+        // DATE FILTER
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const applyDateFilterBtn = document.getElementById('applyDateFilter');
+            const clearDateFilterBtn = document.getElementById('clearDateFilter');
 
-        const orderChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Self-Service', 'Drop-Off'],
-                datasets: [{
-                    label: 'Orders',
-                    data: [856, 234],
-                    backgroundColor: [gradient1, gradient2],
-                    borderColor: '#ffffff',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    barThickness: 35,
-                    maxBarThickness: 40
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(35, 56, 114, 0.9)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#233872',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            title: function(context) {
-                                return context[0].label;
-                            },
-                            label: function(context) {
-                                const value = context.parsed.x;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${value} orders (${percentage}%)`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#64748b',
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            },
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#1e293b',
-                            font: {
-                                size: 13,
-                                weight: '600'
-                            },
-                            padding: 8
-                        }
-                    }
-                },
-                elements: {
-                    bar: {
-                        borderSkipped: false
-                    }
-                }
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('start_date')) {
+                startDateInput.value = urlParams.get('start_date');
             }
-        });
+            if (urlParams.has('end_date')) {
+                endDateInput.value = urlParams.get('end_date');
+            }
 
-        // Chart period controls
-        document.querySelectorAll('.chart-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+            applyDateFilterBtn.addEventListener('click', function() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                const searchQuery = urlParams.get('q') || '';
                 
-                // Update chart data based on selected period
-                const period = this.getAttribute('data-period');
-                let newData;
-                
-                switch(period) {
-                    case 'week':
-                        newData = [856, 234];
-                        break;
-                    case 'month':
-                        newData = [3245, 890];
-                        break;
-                    case 'year':
-                        newData = [38920, 10680];
-                        break;
-                    default:
-                        newData = [856, 234];
+                let url = new URL(window.location);
+                if (searchQuery) {
+                    url.searchParams.set('q', searchQuery);
                 }
+                if (startDate) {
+                    url.searchParams.set('start_date', startDate);
+                }
+                if (endDate) {
+                    url.searchParams.set('end_date', endDate);
+                }
+                window.location.href = url;
+            });
+
+            // CLEAR DATE FILTER
+            clearDateFilterBtn.addEventListener('click', function() {
+                startDateInput.value = '';
+                endDateInput.value = '';
                 
-                orderChart.data.datasets[0].data = newData;
-                orderChart.update('active');
+                const searchQuery = urlParams.get('q') || '';
+                
+                let url = new URL(window.location);
+                if (searchQuery) {
+                    url.searchParams.set('q', searchQuery);
+                }
+                window.location.href = url;
             });
         });
-
-        // Toggle sidebar
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.w3-sidebar');
-            const main = document.querySelector('main');
-            sidebar.classList.toggle('collapsed');
-            main.classList.toggle('expanded');
-        }
     </script>
 </body>
 </html>
