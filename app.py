@@ -296,6 +296,12 @@ def logout():
 
 # ============== ADMIN-ONLY REPORTS =============
 # ORDER REPORT 
+@app.route('/admin_order_report')
+def admin_order_report():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    return render_template('admin_order_report.html')
 
 # INVENTORY REPORT
 @app.route('/inventory_report')
