@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Customers Management</title>
+    <title>Inventory Management</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -91,7 +91,7 @@
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="#">
+                        <a href="{{ url_for('customer_report') }}">
                             <span>Customer Reports</span>
                         </a>
                     </li>
@@ -112,7 +112,7 @@
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()" title="Toggle Sidebar"><i class="fas fa-bars"></i></button>
                     <h1 class="page-title">Customers</h1>
                     <div class="breadcrumb">Main / Customers</div>
                 </div>
@@ -209,7 +209,7 @@
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
-                        <button type="submit" class="search-icon">
+                        <button type="submit" class="search-icon" title="Search">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>

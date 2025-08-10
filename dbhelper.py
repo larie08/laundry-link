@@ -1,12 +1,12 @@
 import pyodbc
 
 # # # SQL Server connection setup(I comment lang pls)-cedyy
-# SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
-# DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
+SERVER = 'HeartsPC\\SQLEXPRESS' # Change this to your server name
+DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
 
 # DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
-DATABASE = 'LAUNDRYLINK'         
+# SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
+# DATABASE = 'LAUNDRYLINK'         
 
 def get_connection():
     conn_str = (
@@ -181,7 +181,7 @@ def getallprocess(sql: str, params: tuple = ()) -> list:
     conn.close()
     return results
 
-# Customner management functions
+# Customer management functions
 def add_customer(fullname: str, phone_number: str) -> bool:
     sql = '''
     INSERT INTO CUSTOMER (FULLNAME, PHONE_NUMBER, DATE_CREATED)
