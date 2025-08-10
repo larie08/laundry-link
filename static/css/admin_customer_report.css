@@ -15,12 +15,87 @@ body {
     min-height: 100vh;
 }
 
+/* Stat card styles */
+.stats-cards {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    flex: 1;
+    background: #f5f7fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.stat-card > div:first-child {
+    font-size: 2rem;
+    color: #233872;
+}
+
+.stat-card > div:nth-child(2) {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.stat-card > div:last-child {
+    font-size: 1.5rem;
+}
+
+/* Status badge styles */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background-color: #f0f0f0;
+    color: #666;
+}
+
+.status-badge.paid {
+    background-color: #e6f7e6;
+    color: #28a745;
+}
+
+.status-badge.unpaid {
+    background-color: #feeae9;
+    color: #dc3545;
+}
+
+/* Sidebar toggle functionality */
+aside.collapsed {
+    width: 70px !important;
+}
+
+aside.collapsed .main-title {
+    padding: 16px 0;
+    justify-content: center;
+}
+
+aside.collapsed .section-title,
+aside.collapsed span {
+    display: none;
+}
+
+main.expanded {
+    margin-left: 70px !important;
+}
+
 .w3-sidebar {
     background-color: #ffffff;
     color: #122D69;
     padding: 20px 0;
     box-shadow: 5px 0 3px -1px rgba(0, 0, 0, 0.05);
     z-index: 1;
+}
+
+.logo-img {
+    width: 90px;
+    height: 100px;
 }
 
 .main-title {
@@ -133,6 +208,7 @@ main {
     align-items: center;
     position: relative;
     width: 350px;
+    margin-right: 10px;
 }
 
 .search-box {
@@ -158,6 +234,7 @@ main {
     height: 42px;
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
 
 .search-box:focus {
@@ -275,19 +352,6 @@ th[data-sort]:hover {
     background-color: rgba(78, 115, 223, 0.1);
 }
 
-/* Sorted column styles */
-th.sorted {
-    background-color: #e6ecfa;
-}
-
-th.sorted.asc .sort-icon:after {
-    content: "\2191";
-}
-
-th.sorted.desc .sort-icon:after {
-    content: "\2193";
-}
-
 .inventory-table td {
     padding: 12px;
     border: 1px solid #e0e0e0;
@@ -368,16 +432,6 @@ th.sorted.desc .sort-icon:after {
     min-width: 160px;
 }
 
-.toggle-btn.active {
-    background-color: #233872;
-    color: white;
-}
-
-.toggle-btn:not(.active) {
-    background-color: #e0e0e0;
-    color: #333;
-}
-
 .filter-btn {
     font-weight: 600;
     margin-left: 6px;
@@ -403,28 +457,41 @@ th.sorted.desc .sort-icon:after {
 .date-filter {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-left: 12px;
+    gap: 10px;
+    margin-left: auto;
 }
 
-.date-label {
-    font-weight: 600;
-    margin-right: 6px;
-    white-space: nowrap;
+.date-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.date-field label {
+    font-size: 12px;
+    margin-bottom: 2px;
 }
 
 .date-input {
-    width: 150px;
-    height: 42px;
-    border-radius: 6px;
-    font-size: 1rem;
-    border: 1px solid #d1d5db;
-    background: #fff;
-    padding: 0 10px;
+    width: 140px;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    font-size: 14px;
+    margin-top: 18px;
 }
 
 .download-btns {
     display: flex;
     gap: 10px;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 

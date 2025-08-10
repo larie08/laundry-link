@@ -1,12 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, get_flashed_messages, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, flash, get_flashed_messages, send_file, jsonify, Response
 import os
 from werkzeug.utils import secure_filename
 from dbhelper import *
 import io
 import pandas as pd
 from fpdf import FPDF
-from datetime import datetime
-
+from datetime import datetime, timedelta
+import dbhelper
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from xlsxwriter.workbook import Workbook
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -21,8 +26,21 @@ def home():
 def service_type():
     return render_template('service.html')
 
-@app.route('/contact')
+@app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    if request.method == 'POST':
+        fullname = request.form['name']
+        phone_number = request.form['contact']
+        
+        success = dbhelper.add_customer(fullname, phone_number)
+        
+        if success:
+            flash('Customer added successfully!')
+            return redirect(url_for('weight_laundry'))  # go to next step
+        else:
+            flash('An error occurred. Please try again.')
+            return redirect(url_for('contact'))
+
     return render_template('contact.html')
 
 @app.route('/weight_laundry', methods=['GET'])
@@ -612,5 +630,327 @@ def download_inventory_report(format):
     else:
         return "Invalid format", 400
 
+@app.route('/customer_report')
+def customer_report():
+    # Check if admin is logged in
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    search_query = request.args.get('q', '').strip()
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    file_format = request.args.get('format')
+    customer_type = request.args.get('type', 'all')
+    
+    if file_format:
+        return redirect(url_for('download_customer_report', format=file_format, 
+                                type=customer_type, q=search_query, 
+                                date_from=date_from, date_to=date_to))
+    
+    # Get all customers
+    customers = dbhelper.get_all_customers()
+    
+    if search_query:
+        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
+                     search_query in str(c['CUSTOMER_ID']) or 
+                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
+    
+    # Get customer order data
+    for customer in customers:
+        sql = """
+            SELECT TOP 1 ORDER_ID, ORDER_STATUS, PAYMENT_STATUS
+            FROM [ORDER] 
+            WHERE CUSTOMER_ID = ?
+            ORDER BY DATE_CREATED DESC
+        """
+        result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
+        if result:
+            customer['ORDER_ID'] = result[0]['ORDER_ID']
+            customer['ORDER_STATUS'] = result[0]['ORDER_STATUS']
+            customer['PAYMENT_STATUS'] = result[0]['PAYMENT_STATUS']
+        else:
+            customer['ORDER_ID'] = 'N/A'
+            customer['ORDER_STATUS'] = 'N/A'
+            customer['PAYMENT_STATUS'] = 'N/A'
+        
+        sql = "SELECT COUNT(*) as total_orders FROM [ORDER] WHERE CUSTOMER_ID = ?"
+        count_result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
+        customer['total_orders'] = count_result[0]['total_orders'] if count_result else 0
+    
+    # Apply date filtering
+    if date_from or date_to:
+        filtered_customers = []
+        for customer in customers:
+            include = True
+            if date_from and customer['DATE_CREATED']:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                if customer['DATE_CREATED'] < from_date:
+                    include = False
+            if date_to and customer['DATE_CREATED']:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                if customer['DATE_CREATED'] > to_date:
+                    include = False
+            if include:
+                filtered_customers.append(customer)
+        customers = filtered_customers
+    
+    total_customers = len(customers)
+    
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    new_customers_list = [c for c in customers if c['DATE_CREATED'] and c['DATE_CREATED'] >= thirty_days_ago]
+    new_customers = len(new_customers_list)
+    
+    total_orders = sum(c.get('total_orders', 0) for c in customers)
+    avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
+    
+    return render_template('admin_customer_report.html', 
+                          customers=customers,
+                          total_customers=total_customers,
+                          new_customers_count=new_customers,
+                          total_orders=total_orders,
+                          avg_orders_per_customer=avg_orders)
+
+@app.route('/download_customer_report/<format>')
+def download_customer_report(format):
+    # Check if user is admin
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+        
+    customer_type = request.args.get('type', 'all')
+    search_query = request.args.get('q', '').strip()
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    # Get all customers
+    customers = dbhelper.get_all_customers()
+    
+    # Apply search filter
+    if search_query:
+        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
+                     search_query in str(c['CUSTOMER_ID']) or 
+                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
+    
+    # Get customer order data
+    for customer in customers:
+        sql = """
+            SELECT TOP 1 ORDER_ID, ORDER_STATUS, PAYMENT_STATUS
+            FROM [ORDER] 
+            WHERE CUSTOMER_ID = ?
+            ORDER BY DATE_CREATED ASC
+        """
+        result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
+        if result:
+            customer['ORDER_ID'] = result[0]['ORDER_ID']
+            customer['ORDER_STATUS'] = result[0]['ORDER_STATUS']
+            customer['PAYMENT_STATUS'] = result[0]['PAYMENT_STATUS']
+        else:
+            customer['ORDER_ID'] = 'N/A'
+            customer['ORDER_STATUS'] = 'N/A'
+            customer['PAYMENT_STATUS'] = 'N/A'
+        
+        sql = "SELECT COUNT(*) as total_orders FROM [ORDER] WHERE CUSTOMER_ID = ?"
+        count_result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
+        customer['total_orders'] = count_result[0]['total_orders'] if count_result else 0
+    
+    # Apply date filtering
+    if date_from or date_to:
+        filtered_customers = []
+        for customer in customers:
+            include = True
+            if date_from and customer['DATE_CREATED']:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                if customer['DATE_CREATED'] < from_date:
+                    include = False
+            if date_to and customer['DATE_CREATED']:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                if customer['DATE_CREATED'] > to_date:
+                    include = False
+            if include:
+                filtered_customers.append(customer)
+        customers = filtered_customers
+    
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    new_customers_list = [c for c in customers if c['DATE_CREATED'] and c['DATE_CREATED'] >= thirty_days_ago]
+    
+    if customer_type == 'new':
+        customers_to_display = new_customers_list
+        filename = 'new_customer_report'
+        sheet_name = 'New Customers'
+    else:
+        customers_to_display = customers
+        filename = 'all_customer_report'
+        sheet_name = 'All Customers'
+    
+    if format == 'excel':
+        output = io.BytesIO()
+        
+        # Create DataFrame
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        
+        df = pd.DataFrame(data)
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            
+            # Add a header format
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'fg_color': '#122D69',
+                'font_color': 'white',
+                'border': 1
+            })
+            
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                
+            worksheet.set_column('A:A', 8)   # ID
+            worksheet.set_column('B:B', 20)  # Full Name
+            worksheet.set_column('C:C', 15)  # Phone Number
+            worksheet.set_column('D:D', 15)  # Date Created
+            worksheet.set_column('E:E', 10)  # Order ID
+            worksheet.set_column('F:F', 15)  # Status
+            worksheet.set_column('G:G', 15)  # Payment Status
+            
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
+    
+    elif format == 'pdf':
+        pdf = FPDF(orientation='L', unit='mm', format='A4')
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        def add_title_bar(title):
+            pdf.set_fill_color(18, 45, 105)  # #122D69
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('Arial', 'B', 16)
+            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
+            pdf.ln(2)
+
+        def add_table(df):
+            if df.empty:
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_font('Arial', '', 10)
+                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                return
+                
+            pdf.set_font('Arial', 'B', 8)
+            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
+            pdf.set_text_color(35, 56, 114)    # #233872
+            
+            available_width = pdf.w - 2 * pdf.l_margin
+            columns = ['ID', 'Full Name', 'Phone Number', 'Date Created', 'Order ID', 'Status', 'Payment Status']
+            
+            col_widths = [
+                available_width * 0.10,  # ID
+                available_width * 0.20,  # Full Name
+                available_width * 0.15,  # Phone Number
+                available_width * 0.15,  # Date Created
+                available_width * 0.15,  # Order ID
+                available_width * 0.12,  # Status
+                available_width * 0.13   # Payment Status
+            ]
+            
+            for i, col in enumerate(columns):
+                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+            pdf.ln()
+            
+            pdf.set_font('Arial', '', 9)
+            for row_idx, customer in enumerate(customers_to_display):
+                if row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
+                else:
+                    pdf.set_fill_color(255, 255, 255)  # white
+                pdf.set_text_color(0, 0, 0)
+                
+                date_created = customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A'
+                
+                pdf.cell(col_widths[0], 7, str(customer['CUSTOMER_ID']), border=1, align='C', fill=True)
+                pdf.cell(col_widths[1], 7, customer['FULLNAME'], border=1, align='C', fill=True)
+                pdf.cell(col_widths[2], 7, customer['PHONE_NUMBER'] or 'N/A', border=1, align='C', fill=True)
+                pdf.cell(col_widths[3], 7, date_created, border=1, align='C', fill=True)
+                pdf.cell(col_widths[4], 7, str(customer.get('ORDER_ID', 'N/A')), border=1, align='C', fill=True)
+                pdf.cell(col_widths[5], 7, customer.get('ORDER_STATUS', 'N/A'), border=1, align='C', fill=True)
+                pdf.cell(col_widths[6], 7, customer.get('PAYMENT_STATUS', 'N/A'), border=1, align='C', fill=True)
+                pdf.ln()
+
+        # Create DataFrame
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        df = pd.DataFrame(data)
+        
+        pdf.add_page()
+        add_title_bar(f"{sheet_name} Report")
+        
+        if date_from or date_to:
+            pdf.set_font('Arial', '', 10)
+            pdf.set_text_color(0, 0, 0)
+            date_range = "Date Range: "
+            if date_from:
+                date_range += f"From {date_from} "
+            if date_to:
+                date_range += f"To {date_to}"
+            pdf.cell(0, 7, date_range, ln=True, align='L')
+            pdf.ln(2)
+            
+        add_table(df)
+        
+        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+    
+    elif format == 'csv':
+        output = io.StringIO()
+        
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        
+        df = pd.DataFrame(data)
+        df.to_csv(output, index=False)
+        
+        response_data = output.getvalue()
+        output.close()
+        
+        return Response(
+            response_data,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename={filename}.csv"}
+        )
+    else:
+        return "Invalid format", 400
+
 if __name__ == '__main__':
     app.run(debug=True)
+    
