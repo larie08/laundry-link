@@ -741,7 +741,7 @@ button.v244_290 {
   text-decoration: none;
 }
 
-button.v100_97, button.v100_99 {
+button.v100_97, .v100_99 {
   color: rgba(255,255,255,1);
   font-family: Poppins;
   font-weight: SemiBold;
@@ -1138,4 +1138,19 @@ input[type="time"] {
 #fabconModal .modal-buttons .cancel {
   background: #ccc;
   color: #333;
+}
+
+/* Visual indication for selected detergent/fabcon option */
+.detergent-option.selected {
+  border: 2px solid #0d47a1;
+  background: #e3f0ff;
+  border-radius: 10px;
+}
+
+/* Visual indication for selected toggle buttons */
+button.selected {
+  background: #0d47a1 !important;
+  color: #fff !important;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
 }

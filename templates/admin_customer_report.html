@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/admin_customer_report.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Customer Report</title>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo-img">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customers') }}">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('orders') }}">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button w3-blue">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('logout') }}">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <!-- MAIN -->
+        <main>
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Customer Report</h1>
+                    <div class="breadcrumb">Main / Customer Report</div>
+                </div>
+            </header>
+            <div class="w3-container w3-padding w3-margin">
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div><i class="fas fa-users"></i></div>
+                        <div>Total Customers</div>
+                        <div>{{ total_customers }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div><i class="fas fa-user-plus"></i></div>
+                        <div>New Customers</div>
+                        <div>{{ new_customers_count }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div><i class="fas fa-shopping-cart"></i></div>
+                        <div>Total Orders</div>
+                        <div>{{ total_orders }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div><i class="fas fa-chart-line"></i></div>
+                        <div>Avg Orders/Customer</div>
+                        <div>{{ avg_orders_per_customer }}</div>
+                    </div>
+                </div>
+
+                <!-- SEARCH BAR -->
+                <div class="filter-search-row card flex-row align-center">
+                    <form method="GET" action="{{ url_for('customer_report') }}" class="search-container">
+                        <input type="text" class="search-box" name="q" placeholder="Search customer by name or phone..." value="{{ request.args.get('q', '') }}">
+                        <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
+                        {% if request.args.get('q') %}
+                        <a href="{{ url_for('customer_report') }}" class="clear-search-btn" title="Clear search">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                    </form>
+
+                    <div class="date-filter">
+                        <div class="date-field">
+                            <label for="date_from">From:</label>
+                            <input type="date" id="date_from" name="date_from" class="date-input" value="{{ request.args.get('date_from', '') }}">
+                        </div>
+                        <div class="date-field">
+                            <label for="date_to">To:</label>
+                            <input type="date" id="date_to" name="date_to" class="date-input" value="{{ request.args.get('date_to', '') }}">
+                        </div>
+                        <button type="button" id="apply-date-filter" class="w3-button w3-blue rounded-btn filter-btn">Apply</button>
+                        <button type="button" id="clear-date-filter" class="w3-button w3-gray rounded-btn filter-btn">Clear</button>
+                    </div>
+                </div>
+
+                <!-- CUSTOMER TABLE -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Customer List</h3>
+                        <div class="download-btns">
+                            <a href="{{ url_for('download_customer_report', format='excel') }}{% if request.args.get('q') %}?q={{ request.args.get('q') }}{% endif %}{% if request.args.get('date_from') %}&date_from={{ request.args.get('date_from') }}{% endif %}{% if request.args.get('date_to') %}&date_to={{ request.args.get('date_to') }}{% endif %}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="{{ url_for('download_customer_report', format='csv') }}{% if request.args.get('q') %}?q={{ request.args.get('q') }}{% endif %}{% if request.args.get('date_from') %}&date_from={{ request.args.get('date_from') }}{% endif %}{% if request.args.get('date_to') %}&date_to={{ request.args.get('date_to') }}{% endif %}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="{{ url_for('download_customer_report', format='pdf') }}{% if request.args.get('q') %}?q={{ request.args.get('q') }}{% endif %}{% if request.args.get('date_from') %}&date_from={{ request.args.get('date_from') }}{% endif %}{% if request.args.get('date_to') %}&date_to={{ request.args.get('date_to') }}{% endif %}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                        </div>
+                    </div>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Phone Number</th>
+                                <th>Date Created</th>
+                                <th>Order ID</th>
+                                <th>Order Status</th>
+                                <th>Payment Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <td>{{ customer.CUSTOMER_ID }}</td>
+                                <td>{{ customer.FULLNAME }}</td>
+                                <td>{{ customer.PHONE_NUMBER }}</td>
+                                <td>{{ customer.DATE_CREATED }}</td>
+                                <td>{{ customer.ORDER_ID }}</td>
+                                <td>{{ customer.ORDER_STATUS }}</td>
+                                <td>
+                                    {% if customer.PAYMENT_STATUS == 'PAID' %}
+                                    <span class="status-badge paid">Paid</span>
+                                    {% elif customer.PAYMENT_STATUS == 'UNPAID' %}
+                                    <span class="status-badge unpaid">Unpaid</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button class="pagination-btn disabled">Prev</button>
+                    <span class="page-number">1</span>
+                    <button class="pagination-btn">Next</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.getElementById('date_from');
+            const endDateInput = document.getElementById('date_to');
+            const applyDateFilterBtn = document.getElementById('apply-date-filter');
+            const clearDateFilterBtn = document.getElementById('clear-date-filter');
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('date_from')) {
+                startDateInput.value = urlParams.get('date_from');
+            }
+            if (urlParams.has('date_to')) {
+                endDateInput.value = urlParams.get('date_to');
+            }
+
+            // Apply date filter
+            applyDateFilterBtn.addEventListener('click', function() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                const searchQuery = urlParams.get('q') || '';
+                
+                let url = `{{ url_for('customer_report') }}`;
+                let params = [];
+                
+                if (searchQuery) {
+                    params.push(`q=${searchQuery}`);
+                }
+                if (startDate) {
+                    params.push(`date_from=${startDate}`);
+                }
+                if (endDate) {
+                    params.push(`date_to=${endDate}`);
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                window.location.href = url;
+            });
+
+            // Clear date filter
+            clearDateFilterBtn.addEventListener('click', function() {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                
+                const searchQuery = urlParams.get('q') || '';
+                
+                let url = `{{ url_for('customer_report') }}`;
+                if (searchQuery) {
+                    url += `?q=${searchQuery}`;
+                }
+                window.location.href = url;
+            });
+            
+            window.toggleSidebar = function() {
+                const sidebar = document.querySelector('aside');
+                sidebar.classList.toggle('collapsed');
+                document.querySelector('main').classList.toggle('expanded');
+            };
+        });
+    </script>
+</body>
+</html>

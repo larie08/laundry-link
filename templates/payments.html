@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='css/payment.css') }}" rel="stylesheet" />
+        <title>Laundrylink - Others</title>
+    </head>
+    <body>
+        <div class="v100_1">
+            <div class="v100_2"></div>
+            <div class="v100_3">
+            </div>
+            <div class="v100_4">
+                <form action="{{ url_for('other_services') }}" method="get">
+                    <button class="v100_5" type="submit">Previous</button>
+                </form>
+            </div>
+            <div class="v100_200">
+                <div class="v100_201"></div>
+                <div class="v100_202"></div>
+                <div class="v100_203"></div>
+                <div class="v100_204"></div>
+                <div class="v100_205"></div>
+                <div class="v100_206"></div>
+                <div class="v100_207"></div>
+                <div class="v100_107"></div>
+                <div class="v100_208"></div>
+                <div class="v100_209"></div>
+                <div class="v100_109"></div>
+                <span class="v100_210">4</span>
+            </div>
+            <span class="v100_211">YOU</span>
+            <span class="v100_212">WEIGH</span>
+            <span class="v100_213">OTHER</span>
+            <span class="v100_214">PAYMENT</span>
+            
+            <div class="receipt-box">
+                <p class="date">July 20, 2025</p>
+
+                <p><strong>Order Number:</strong> 012345</p>
+                <p><strong>Customer:</strong> Cedric Cornelio</p>
+                <p><strong>Contact Number:</strong> 09123456789</p>
+                <h3>Order Breakdown</h2>
+                <table>
+                <thead>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                    <th>Load</th> 
+                    <th>Qty</th>
+                    <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td>1 Load</td>
+                    <td></td>
+                    <td>Php 50.00</td>
+                    </tr>
+                    <tr>
+                    <td style="font-weight: bold;">Additional Services</td>
+                    <td></td>
+                    <td></td>
+                    </tr>
+                    <tr>
+                    <td>Iron</td>
+                    <td></td>
+                    <td>Php 45.00</td>
+                    </tr>
+                    <tr>
+                    <td>Fold</td>
+                    <td></td>
+                    <td>Php 30.00</td>
+                    </tr>
+                    <tr>
+                    <td style="font-weight: bold;">Add Ons</td>
+                    <td></td>
+                    <td></td>
+                    </tr>
+                    <tr>
+                    <td>Downy Premium Perfume</td>
+                    <td>3</td>
+                    <td>Php 60.00</td>
+                    </tr>
+                </tbody>
+                </table>
+
+                <h2 class="total"><hr>
+                <span class="total-label">Grand Total</span>
+                <span class="total-amount">Php 185.00</span>
+                </h2>
+
+                <div class="payment-section">
+                <h3>Mode of Payment</h3>
+                <div class="payment-methods">
+                    <label class="payment-method" data-method="cash">
+                        <input type="radio" name="payment_mode" value="cash" class="payment-radio">
+                        <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment" onclick="openCashModal()">
+                    </label>
+                    
+                    <label class="payment-method" data-method="gcash">
+                        <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
+                        <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
+                    </label>
+
+                    <label class="payment-method" data-method="maya">
+                        <input type="radio" name="payment_mode" value="maya" class="payment-radio">
+                        <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
+                    </label>
+                </div>
+                </div>
+
+                <!-- GCash QR Modal -->
+                <div id="gcashModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
+                        <h2>GCash Payment</h2>
+                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code">
+                        </div>
+                        <p class="qr-instructions">Scan QR code using GCash app to pay</p>
+                    </div>
+                </div>
+
+                <!-- Maya QR Modal -->
+                <div id="mayaModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
+                        <h2>Maya Payment</h2>
+                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code">
+                        </div>
+                        <p class="qr-instructions">Scan QR code using Maya app to pay</p>
+                    </div>
+                </div>
+            </div>
+            
+            <input type="hidden" id="selected_payment_method" name="payment_method" value="">
+        </div>
+        </body>
+        <script>
+            function openScheduleModal() {
+                document.getElementById('scheduleModal').style.display = 'block';
+            }
+
+            function closeScheduleModal() {
+                document.getElementById('scheduleModal').style.display = 'none';
+            }
+
+            // Payment method selection
+            document.querySelectorAll('.payment-method').forEach(method => {
+                const radio = method.querySelector('.payment-radio');
+                
+                method.addEventListener('click', function() {
+                    // Remove active class from all methods
+                    document.querySelectorAll('.payment-method').forEach(m => {
+                        m.classList.remove('active');
+                    });
+                    
+                    // Add active class to selected method
+                    this.classList.add('active');
+                    
+                    // Check the radio button
+                    radio.checked = true;
+                    
+                    // Update hidden input with selected method
+                    document.getElementById('selected_payment_method').value = this.dataset.method;
+                });
+            });
+
+            // QR Modal Functions
+            function openQRModal(type) {
+                event.stopPropagation(); // Prevent label click event
+                document.getElementById(type + 'Modal').style.display = 'block';
+            }
+
+            function closeQRModal(type) {
+                document.getElementById(type + 'Modal').style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('qr-modal')) {
+                    event.target.style.display = 'none';
+                }
+            }
+
+            // Cash Modal Functions
+            function openCashModal() {
+                event.stopPropagation(); // Prevent label click event
+                document.getElementById('cashModal').style.display = 'block';
+            }
+
+            function closeCashModal() {
+                document.getElementById('cashModal').style.display = 'none';
+            }
+        </script>
+</html>

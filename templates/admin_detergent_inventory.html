@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Fabric Conditioner Inventory Management</title>
+    <title>Admin Detergent</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -68,6 +68,33 @@
                         </a>
                     </li>
                 </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
                 <!-- LOGOUT -->
                 <ul class="w3-margin-left w3-margin-top">
                     <li class="w3-padding w3-bar-item w3-button">
@@ -85,13 +112,14 @@
             <header>
                 <div>
                     <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                    <h1 class="page-title">Fabric Conditioner</h1>
-                    <div class="breadcrumb">Main / Fabric Conditioner</div>
+                    <h1 class="page-title">Detergent</h1>
+                    <div class="breadcrumb">Main / Detergent</div>
                 </div>
             </header>
 
             <!-- CONTAINER FOR THE MAIN CONTENT -->
             <div class="w3-container w3-padding w3-margin">
+                
                 <!-- INVENTORY SUMMARY -->
                 <div class="w3-margin-bottom">
                     <div class="summary-grid">
@@ -106,7 +134,7 @@
                                     </div>
                                     <div class="summary-details">
                                         <span class="summary-number">{{ total_items }}</span>
-                                        <span class="summary-label">Total Fabric Conditioners</span>
+                                        <span class="summary-label">Total Detergents</span>
                                     </div>
                                 </div>
                                 <div class="summary-item">
@@ -140,7 +168,7 @@
                         </div>
 
                         <!-- LOW STOCK ALERT CARD -->
-                        {% if low_stock_count > 0 %}
+                        {% if low_stock_detergents %}
                         <div class="low-stock-alert">
                             <div class="alert-header">
                                 <h3><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</h3>
@@ -148,13 +176,13 @@
                             </div>
                             <div class="alert-content">
                                 <div class="low-stock-items">
-                                    {% for item in fabric_conditioners if item['QTY'] <= 10 %}
+                                    {% for item in low_stock_detergents %}
                                     <div class="low-stock-item">
                                         <div class="item-info">
-                                            <img src="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}" alt="{{ item['FABCON_NAME'] }}" class="item-img">
+                                            <img src="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}" alt="{{ item['DETERGENT_NAME'] }}" class="item-img">
                                             <div class="item-details">
-                                                <h4>{{ item['FABCON_NAME'] }}</h4>
-                                                <p class="item-id">F{{ '%03d'|format(item['FABCON_ID']) }}</p>
+                                                <h4>{{ item['DETERGENT_NAME'] }}</h4>
+                                                <p class="item-id">D{{ '%03d'|format(item['DETERGENT_ID']) }}</p>
                                             </div>
                                         </div>
                                         <div class="stock-status">
@@ -183,20 +211,20 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <!-- ADD ITEM BUTTON AND SEARCH BOX -->
                 <div class="search-row">
                     <button class="add-item-btn">Add Item</button>
-                    <form method="GET" action="{{ url_for('fabric_conditioner') }}" class="search-container">
+                    <form method="GET" action="{{ url_for('detergent_inventory') }}" class="search-container">
                         <input type="text" class="search-box" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
-                        <button type="submit" class="search-icon">
-                            <i class="fas fa-search"></i>
-                        </button>
                         {% if request.args.get('q', '') %}
-                        <a href="{{ url_for('fabric_conditioner') }}" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('detergent_inventory') }}" class="clear-search-btn" title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
+                        <button type="submit" class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </form>
                 </div>
 
@@ -214,25 +242,25 @@
                             </tr>
                         </thead>
                        <tbody>
-                            {% for item in fabric_conditioners %}
+                            {% for item in detergents %}
                             <tr>
-                                <td>F{{ '%03d'|format(item['FABCON_ID']) }}</td>
-                                <td><img src="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}" alt="{{ item['FABCON_NAME'] }}" class="product-img"></td>
-                                <td>{{ item['FABCON_NAME'] }}</td>
-                                <td>₱{{ '%.2f'|format(item['FABCON_PRICE']) }}</td>
+                                <td>D{{ '%03d'|format(item['DETERGENT_ID']) }}</td>
+                                <td><img src="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}" alt="{{ item['DETERGENT_NAME'] }}" class="product-img"></td>
+                                <td>{{ item['DETERGENT_NAME'] }}</td>
+                                <td>{{ '%.2f'|format(item['DETERGENT_PRICE']) }}</td>
                                 <td>{{ item['QTY'] }}</td>
-                                <td>₱{{ '%.2f'|format(item['FABCON_PRICE'] * item['QTY']) }}</td>
+                                <td>₱{{ '%.2f'|format(item['DETERGENT_PRICE'] * item['QTY']) }}</td>
                                 <td>
                                     <button class="action-btn edit-btn"
-                                        data-id="{{ item['FABCON_ID'] }}"
-                                        data-name="{{ item['FABCON_NAME'] }}"
-                                        data-price="{{ item['FABCON_PRICE'] }}"
+                                        data-id="{{ item['DETERGENT_ID'] }}"
+                                        data-name="{{ item['DETERGENT_NAME'] }}"
+                                        data-price="{{ item['DETERGENT_PRICE'] }}"
                                         data-qty="{{ item['QTY'] }}"
                                         data-image="{{ url_for('static', filename='uploads/' ~ item['IMAGE_FILENAME']) if item['IMAGE_FILENAME'] else '../static/images/logo.jpg' }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ url_for('fabric_conditioner') }}" style="display:inline;">
-                                        <input type="hidden" name="fabric_conditioner_id" value="{{ item['FABCON_ID'] }}">
+                                    <form method="POST" action="{{ url_for('detergent_inventory') }}" style="display:inline;">
+                                        <input type="hidden" name="detergent_id" value="{{ item['DETERGENT_ID'] }}">
                                         <input type="hidden" name="action" value="Delete">
                                         <button type="submit" class="action-btn" onclick="return confirm('Are you sure you want to delete this item?');">
                                             <i class="fas fa-trash"></i>
@@ -257,7 +285,7 @@
             <div class="modal-content">
                 <span class="close" onclick="closeModal('addItemModal')">&times;</span>
                 <h2>Add Item</h2>
-                <form action="{{ url_for('fabric_conditioner') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ url_for('detergent_inventory') }}" method="POST" enctype="multipart/form-data">
                     <div class="modal-img-upload">
                         <label for="addImageInput" class="img-label">
                             <img id="addImgPreview" src="../static/images/logo.jpg" alt="Preview" class="modal-img-preview">
@@ -287,8 +315,8 @@
             <div class="modal-content">
                 <span class="close" onclick="closeModal('editItemModal')">&times;</span>
                 <h2>Edit Item</h2>
-                <form id="editForm" action="{{ url_for('fabric_conditioner') }}" method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="fabric_conditioner_id" id="editFabricConditionerId">
+                <form id="editForm" action="{{ url_for('detergent_inventory') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="detergent_id" id="editDetergentId">
                     <input type="hidden" name="action" value="Update">
                     <div class="modal-img-upload">
                         <label for="editImageInput" class="img-label">
@@ -314,6 +342,7 @@
             </div>
         </div>
     </div>
+    
     <!-- MODAL & BUTTON SCRIPTS -->
     <script>
         // Open Add Item Modal
@@ -325,7 +354,7 @@
             btn.onclick = function(e) {
                 e.preventDefault();
                 document.getElementById('editItemModal').style.display = 'block';
-                document.getElementById('editFabricConditionerId').value = btn.getAttribute('data-id');
+                document.getElementById('editDetergentId').value = btn.getAttribute('data-id');
                 document.getElementById('editName').value = btn.getAttribute('data-name');
                 document.getElementById('editPrice').value = btn.getAttribute('data-price');
                 document.getElementById('editQty').value = btn.getAttribute('data-qty');

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/admin_order_report.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Order Report</title>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customers') }}">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('orders') }}">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('logout') }}">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <!-- MAIN -->
+        <main>
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Order Report</h1>
+                    <div class="breadcrumb">Main / Order Report</div>
+                </div>
+            </header>
+            <div class="w3-container w3-padding w3-margin">
+
+                <!-- SUMMARY CARDS -->
+                <div class="stats-cards stats-cards-layout">
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-card-title">Total Orders</div>
+                        <div class="stat-card-number">{{ orders|length if orders else 0 }}</div>
+                    </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-card-title">Total Revenue</div>
+                        <div class="stat-card-number">₱{{ total_revenue if total_revenue else 0 }}</div>
+                    </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-card-title">Pending Orders</div>
+                        <div class="stat-card-number">{{ pending_orders|length if pending_orders else 0 }}</div>
+                    </div>
+                    <div class="stat-card stat-card-layout">
+                        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-card-title">Completed Orders</div>
+                        <div class="stat-card-number">{{ completed_orders|length if completed_orders else 0 }}</div>
+                    </div>
+                </div>
+
+                <!-- FILTER/SEARCH -->
+                <div class="filter-search-row card flex-row align-center">
+                    <form id="ordersSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container search-form-self-service">
+                        <input type="text" class="search-box" name="q" placeholder="Search orders by ID or customer name..." value="{{ request.args.get('q', '') }}">
+                        <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
+                        {% if request.args.get('q', '') %}
+                        <a href="{{ url_for('admin_order_report') }}" class="clear-search-btn" title="Clear search">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                    </form>
+
+                    <div class="date-filter flex-row align-center">
+                        <div class="date-label">Date Range:</div>
+                        <input type="date" id="startDate" name="start_date" class="w3-input w3-border date-input" value="{{ request.args.get('start_date', '') }}">
+                        <span>to</span>
+                        <input type="date" id="endDate" name="end_date" class="w3-input w3-border date-input" value="{{ request.args.get('end_date', '') }}">
+                        <button id="applyDateFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
+                        <button id="clearDateFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                    </div>
+                </div>
+
+                <!-- ORDERS TABLE -->
+                <div id="ordersTableSection" class="table-container">
+                    <div class="table-header-layout">
+                        <h3>Orders</h3>
+                        <div class="download-btns download-btns-layout">
+                            <a href="" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                        </div>
+                    </div>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer ID</th>
+                                <th>Order Type</th>
+                                <th>Priority</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Date Created</th>
+                                <th>Date Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if orders %}
+                                {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.ORDER_ID }}</td>
+                                    <td>{{ order.CUSTOMER_ID }}</td>
+                                    <td>{{ order.ORDER_TYPE }}</td>
+                                    <td>{{ order.PRIORITY }}</td>
+                                    <td>{{ order.PAYMENT_STATUS }}</td>
+                                    <td>
+                                        <span class="status-badge {{ order.STATUS.lower() }}">
+                                            {{ order.STATUS }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.DATE_CREATED }}</td>
+                                    <td>{{ order.DATE_UPDATED }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 20px;">No orders found</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button class="pagination-btn disabled">Prev</button>
+                    <span class="page-number">1</span>
+                    <button class="pagination-btn">Next</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // DATE FILTER
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const applyDateFilterBtn = document.getElementById('applyDateFilter');
+            const clearDateFilterBtn = document.getElementById('clearDateFilter');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('start_date')) {
+                startDateInput.value = urlParams.get('start_date');
+            }
+            if (urlParams.has('end_date')) {
+                endDateInput.value = urlParams.get('end_date');
+            }
+
+            applyDateFilterBtn.addEventListener('click', function() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                const searchQuery = urlParams.get('q') || '';
+                
+                let url = new URL(window.location);
+                if (searchQuery) {
+                    url.searchParams.set('q', searchQuery);
+                }
+                if (startDate) {
+                    url.searchParams.set('start_date', startDate);
+                }
+                if (endDate) {
+                    url.searchParams.set('end_date', endDate);
+                }
+                window.location.href = url;
+            });
+
+            // CLEAR DATE FILTER
+            clearDateFilterBtn.addEventListener('click', function() {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                
+                const searchQuery = urlParams.get('q') || '';
+                
+                let url = new URL(window.location);
+                if (searchQuery) {
+                    url.searchParams.set('q', searchQuery);
+                }
+                window.location.href = url;
+            });
+        });
+    </script>
+</body>
+</html>

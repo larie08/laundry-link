@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Fabric Conditioner Inventory Management</title>
+    <title>Admin Fabric Conditioner</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -65,6 +65,33 @@
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('orders') }}">
                             <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
                         </a>
                     </li>
                 </ul>
