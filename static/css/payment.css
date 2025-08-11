@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 body {
-  font-size: 14px;
+  font-size: 12px;
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -15,8 +15,8 @@ body {
 }
 
 .v100_1 {
-  width: 1000px;
-  height: 1400px;
+  width: 500px;
+  height: 700px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: relative;
@@ -25,32 +25,32 @@ body {
 
 /* Main content container*/
 .v100_2 {
-  width: 800px;
-  height: 1200px; 
+  width: 400px;
+  height: 600px; 
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 200px;
-  left: calc(50% - 400px);
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
-  border-radius: 25px;
-  padding: 80px 40px 40px 40px;
+  top: 100px;
+  left: 50px;
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  border-radius: 13px;
+  padding: 40px 20px 20px 20px;
 }
 
 /* Previous button */
 .v100_4 {
-  width: 232px;
-  height: 84px;
+  width: 116px;
+  height: 42px;
   background: rgba(255,193,7,1);
   opacity: 1;
   position: absolute;
-  top: 1250px;
-  left: 146px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 625px;
+  left: 73px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -62,7 +62,7 @@ button.v100_5 {
   color: rgba(255,255,255,1);
   font-family: Poppins;
   font-weight: bold;
-  font-size: 30px;
+  font-size: 15px;
   opacity: 1;
   text-align: center;
   background: none;
@@ -72,22 +72,22 @@ button.v100_5 {
 
 /* Progress bar container */
 .v100_200 {
-  width: 727px;
-  height: 39px;
+  width: 364px;
+  height: 20px;
   background: url("../images/v100_100.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 60px;
-  left: 136px;
+  top: 30px;
+  left: 68px;
   overflow: hidden;
 }
 
 .v100_201 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
@@ -97,8 +97,19 @@ button.v100_5 {
 }
 
 .v100_202 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
+  background: rgba(18,45,105,1);
+  opacity: 1;
+  position: absolute;
+  top: 0px;
+  left: 115px;
+  border-radius: 50%;
+}
+
+.v100_203 {
+  width: 20px;
+  height: 20px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
@@ -107,123 +118,112 @@ button.v100_5 {
   border-radius: 50%;
 }
 
-.v100_203 {
-  width: 40px;
-  height: 39px;
-  background: rgba(18,45,105,1);
-  opacity: 1;
-  position: absolute;
-  top: 0px;
-  left: 458px;
-  border-radius: 50%;
-}
-
 .v100_204 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
   top: 0px;
-  left: 687px;
+  left: 344px;
   border-radius: 50%;
 }
 
 .v100_205 {
-  width: 668px;
-  height: 8px;
+  width: 334px;
+  height: 4px;
   background: rgba(217,217,217,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 40px;
+  top: 8px;
+  left: 20px;
   overflow: hidden;
 }
 
 .v100_206 {
-  width: 229px;
-  height: 8px;
+  width: 115px;
+  height: 4px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 40px;
+  top: 8px;
+  left: 20px;
   overflow: hidden;
 }
 
 .v100_207 {
-  width: 229px;
-  height: 8px;
+  width: 115px;
+  height: 4px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 269px;
+  top: 8px;
+  left: 135px;
   overflow: hidden;
 }
 
 .v100_107 {
-  width: 260px;
-  height: 8px;
+  width: 130px;
+  height: 4px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 469px;
+  top: 8px;
+  left: 235px;
   overflow: hidden;
 }
 
 .v100_208 {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: url("../images/v100_108.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 7px;
-  left: 8px;
+  top: 4px;
+  left: 4px;
   overflow: hidden;
 }
 
 .v100_109 {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: url("../images/v100_108.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 7px;
-  left: 467px;
+  top: 4px;
+  left: 234px;
   overflow: hidden;
 }
 
 .v100_209 {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: url("../images/v100_109.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 7px;
-  left: 237px;
+  top: 4px;
+  left: 119px;
   overflow: hidden;
 }
 
 .v100_210 {
-  width: 13px;
+  width: 7px;
   color: rgba(255,255,255,1);
   position: absolute;
-  top: 7px;
-  left: 701px;
+  top: 4px;
+  left: 351px;
   font-family: Inter;
   font-weight: Regular;
-  font-size: 20px;
+  font-size: 10px;
   opacity: 1;
   text-align: left;
 }
@@ -233,52 +233,52 @@ button.v100_5 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 136px;
-  top: 130px;
-  width: 65px;
+  left: 68px;
+  top: 65px;
+  width: 33px;
 }
 
 .v100_212 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 342px;
-  top: 130px;
-  width: 86px;
+  left: 171px;
+  top: 65px;
+  width: 43px;
 }
 
 .v100_213 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 572px;
-  top: 130px;
-  width: 84px;
+  left: 286px;
+  top: 65px;
+  width: 42px;
 }
 
 .v100_214 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 744px;
-  top: 130px;
-  width: 123px;
+  left: 372px;
+  top: 65px;
+  width: 62px;
 }
 
 h2 {
@@ -287,14 +287,14 @@ h2 {
 
 .receipt-box {
     width: 90%;
-    max-width: 730px;
-    font-size: 20px;
+    max-width: 365px;
+    font-size: 10px;
     background: #ffffff;
-    border-radius: 10px;
+    border-radius: 5px;
     position: absolute;
-    padding-left: 20px;
-    padding-right: 20px;
-    top: 220px;
+    padding-left: 10px;
+    padding-right: 10px;
+    top: 110px;
     left: 50%;
     transform: translateX(-50%);
 }
@@ -302,7 +302,7 @@ h2 {
 .receipt-box h3 {
     color: rgba(18,45,105,1);
     text-align: left;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-family: Poppins;
 }
 
@@ -310,13 +310,13 @@ h2 {
   color: rgba(18,45,105,1);
   text-align: right;
   font-weight: bold;
-  margin-bottom: 20px;
-  margin-top: 20px;
+  margin-bottom: 10px;
+  margin-top: 10px;
   font-family: Poppins;
 }
 
 .receipt-box p {
-  margin: 10px 0;
+  margin: 5px 0;
   font-family: Poppins;
 }
 
@@ -329,13 +329,13 @@ table {
 }
 
 th, td {
-    padding: 5px;
+    padding: 3px;
     text-align: left;
     font-family: Poppins;
 }
 
 .total {
-    margin: 10px 0;
+    margin: 5px 0;
     text-align: center;
     font-weight: bold;
     font-family: Poppins;
@@ -346,7 +346,7 @@ th, td {
 }
 
 .total hr {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 
 .total-label {
@@ -359,27 +359,27 @@ th, td {
 
 input[type="number"] {
   width: 100%;
-  padding: 5px;
+  padding: 3px;
 }
 
 .payment-section {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid #eee;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
 }
 
 .payment-section h3 {
   color: rgba(18,45,105,1);
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-family: Poppins;
-  font-size: 1.2em;
+  font-size: 0.6em;
 }
 
 .payment-methods {
   display: left;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 25px;
+  gap: 10px;
+  margin-bottom: 13px;
 }
 
 .payment-method {
@@ -390,13 +390,13 @@ input[type="number"] {
 }
 
 .payment-method img {
-    width: 64px;
-    height: 64px;
+    width: 32px;
+    height: 32px;
     object-fit: contain;
     transition: transform 0.3s ease;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px;
 }
 
 .payment-method.active img {
@@ -419,26 +419,26 @@ input[type="number"] {
     display: block;
     font-weight: bold;
     color: rgba(18,45,105,1);
-    margin-bottom: 5px;
-    font-size: 1.1em;
+    margin-bottom: 3px;
+    font-size: 0.55em;
 }
 
 .method-description {
     display: block;
-    font-size: 0.9em;
+    font-size: 0.45em;
     color: #666;
 }
 
 .method-check {
-    width: 24px;
-    height: 24px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: rgba(255,193,7,1);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 7px;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -448,12 +448,12 @@ input[type="number"] {
 }
 
 .payment-amount {
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .payment-amount label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     color: rgba(18,45,105,1);
     font-weight: 500;
 }
@@ -461,14 +461,14 @@ input[type="number"] {
 .btn {
     background: rgba(255,193,7,1);
     color: white;
-    padding: 12px 20px;
+    padding: 6px 10px;
     border: none;
-    border-radius: 5px;
+    border-radius: 3px;
     cursor: pointer;
     width: 100%;
     font-family: Poppins;
-    font-size: 20px;
-    margin-top: 20px;
+    font-size: 10px;
+    margin-top: 10px;
     transition: background 0.3s ease;
 }
 
@@ -490,37 +490,37 @@ input[type="number"] {
 .modal-content {
     background-color: #fff;
     margin: 15% auto;
-    padding: 20px;
+    padding: 10px;
     width: 90%;
-    max-width: 600px;
-    border-radius: 15px;
+    max-width: 300px;
+    border-radius: 8px;
     position: relative;
     text-align: center;
 }
 
 .modal-content h2 {
     color: rgba(18,45,105,1);
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-family: Poppins;
-    font-size: 24px;
+    font-size: 12px;
 }
 
 .modal-amount {
     color: rgba(18,45,105,1);
     font-family: Poppins;
-    font-size: 20px;
+    font-size: 10px;
     font-weight: bold;
-    margin: 15px 0;
-    padding: 10px;
+    margin: 8px 0;
+    padding: 5px;
     background-color: rgba(255,193,7,0.1);
-    border-radius: 8px;
+    border-radius: 4px;
     display: inline-block;
 }
 
 .qr-container {
     background: #fff;
-    border-radius: 10px;
-    margin: 10px auto;
+    border-radius: 5px;
+    margin: 5px auto;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -529,7 +529,7 @@ input[type="number"] {
 
 .qr-container img {
     width: 100%;
-    max-width: 500px;
+    max-width: 250px;
     height: auto;
     object-fit: contain;
 }
@@ -537,15 +537,15 @@ input[type="number"] {
 .qr-instructions {
     color: #666;
     font-family: Poppins;
-    margin-top: 15px;
-    font-size: 16px;
+    margin-top: 8px;
+    font-size: 8px;
 }
 
 .close-modal {
     position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
+    right: 10px;
+    top: 8px;
+    font-size: 14px;
     font-weight: bold;
     color: #666;
     cursor: pointer;
@@ -564,10 +564,10 @@ input[type="number"] {
 /* Cash Receipt Modal Styles */
 .receipt {
   width: 70%;
-  font-size: medium;
+  font-size: small;
   background: white;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
   border: 1px #999;
   display: flexbox;
 }
@@ -577,14 +577,14 @@ input[type="number"] {
 }
 
 .header, .footer {
-  font-size: 12px;
-  margin-bottom: 10px;
+  font-size: 6px;
+  margin-bottom: 5px;
 }
 
 .title {
   font-weight: bold;
-  font-size: 16px;
-  margin: 10px 0;
+  font-size: 8px;
+  margin: 5px 0;
 }
 
 .section {
@@ -597,26 +597,26 @@ input[type="number"] {
 
 .section label {
   display: inline-block;
-  min-width: 100px;
+  min-width: 50px;
 }
 
 .order-box {
-  border: 2px dashed #000;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 7px;
+  border: 1px dashed #000;
+  padding: 5px;
+  margin: 5px 0;
+  border-radius: 4px;
   align-items: center;
 }
 
 .items {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .items td {
-  padding: 4px 0;
-  font-size: 14px;
+  padding: 2px 0;
+  font-size: 7px;
 }
 
 .items .desc {
@@ -639,11 +639,11 @@ input[type="number"] {
 
 .total-line {
   border-top: 1px dashed #000;
-  margin: 10px 0;
+  margin: 5px 0;
 }
 
 .barcode {
-  margin: 20px 0;
+  margin: 10px 0;
   text-align: center;
 }
 
@@ -654,12 +654,12 @@ input[type="number"] {
 
 .dashed {
   border-top: 1px dashed #000;
-  margin: 10px 0;
+  margin: 5px 0;
 }
 
 .r-dashed {
   border-top: 1px dashed #979797;
-  margin: 10px 0;
+  margin: 5px 0;
 }
 
 /* Update existing modal styles */
@@ -667,7 +667,7 @@ input[type="number"] {
     background-color: #fff;
     margin: 10% auto;
     width: 90%;
-    border-radius: 15px;
+    border-radius: 8px;
     position: relative;
     text-align: center;
 }

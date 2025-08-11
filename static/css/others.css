@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 body {
-  font-size: 14px;
+  font-size: 12px;
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -14,8 +14,8 @@ body {
   overflow: hidden;
 }
 .v100_93 {
-  width: 1000px;
-  height: 1400px;
+  width: 500px;
+  height: 700px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: relative;
@@ -24,21 +24,21 @@ body {
 
 /* Progress bar container */
 .v100_100 {
-  width: 727px;
-  height: 39px;
+  width: 364px;
+  height: 20px;
   background: url("../images/v100_100.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 60px;
-  left: 136px;
+  top: 30px;
+  left: 68px;
   overflow: hidden;
 }
 .v100_101 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
@@ -47,8 +47,18 @@ body {
   border-radius: 50%;
 }
 .v100_102 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
+  background: rgba(18,45,105,1);
+  opacity: 1;
+  position: absolute;
+  top: 0px;
+  left: 115px;
+  border-radius: 50%;
+}
+.v100_103 {
+  width: 20px;
+  height: 20px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
@@ -56,91 +66,81 @@ body {
   left: 229px;
   border-radius: 50%;
 }
-.v100_103 {
-  width: 40px;
-  height: 39px;
-  background: rgba(18,45,105,1);
-  opacity: 1;
-  position: absolute;
-  top: 0px;
-  left: 458px;
-  border-radius: 50%;
-}
 .v100_104 {
-  width: 40px;
-  height: 39px;
+  width: 20px;
+  height: 20px;
   background: rgba(217,217,217,1);
   opacity: 1;
   position: absolute;
   top: 0px;
-  left: 687px;
+  left: 344px;
   border-radius: 50%;
 }
 .v100_105 {
-  width: 668px;
-  height: 8px;
+  width: 334px;
+  height: 4px;
   background: rgba(217,217,217,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 40px;
+  top: 8px;
+  left: 20px;
   overflow: hidden;
 }
 .v100_106 {
-  width: 229px;
-  height: 8px;
+  width: 115px;
+  height: 4px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 40px;
+  top: 8px;
+  left: 20px;
   overflow: hidden;
 }
 .v100_107 {
-  width: 229px;
-  height: 8px;
+  width: 115px;
+  height: 4px;
   background: rgba(18,45,105,1);
   opacity: 1;
   position: absolute;
-  top: 15px;
-  left: 269px;
+  top: 8px;
+  left: 135px;
   overflow: hidden;
 }
 .v100_108 {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: url("../images/v100_108.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 7px;
-  left: 8px;
+  top: 4px;
+  left: 4px;
   overflow: hidden;
 }
 .v100_109 {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: url("../images/v100_109.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 7px;
-  left: 237px;
+  top: 4px;
+  left: 119px;
   overflow: hidden;
 }
 .v100_110 {
-  width: 13px;
+  width: 7px;
   color: rgba(255,255,255,1);
   position: absolute;
-  top: 7px;
-  left: 472px;
+  top: 4px;
+  left: 236px;
   font-family: Inter;
   font-weight: Regular;
-  font-size: 20px;
+  font-size: 10px;
   opacity: 1;
   text-align: left;
 }
@@ -150,154 +150,154 @@ body {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 136px;
-  top: 130px;
-  width: 65px;
+  left: 68px;
+  top: 65px;
+  width: 33px;
 }
 .v100_112 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 342px;
-  top: 130px;
-  width: 86px;
+  left: 171px;
+  top: 65px;
+  width: 43px;
 }
 .v100_113 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 572px;
-  top: 130px;
-  width: 84px;
+  left: 286px;
+  top: 65px;
+  width: 42px;
 }
 .v100_114 {
   color: rgba(18,45,105,1);
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: center;
   position: absolute;
-  left: 744px;
-  top: 130px;
-  width: 123px;
+  left: 372px;
+  top: 65px;
+  width: 62px;
 }
 
 /* Main content container*/
 .v100_94 {
-  width: 800px;
-  height: 1200px; 
+  width: 400px;
+  height: 600px; 
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 200px;
-  left: calc(50% - 400px);
+  top: 100px;
+  left: 50px;
   border: 1px solid rgba(0,0,0,1);
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
-  border-radius: 15px;
-  padding: 80px 40px 40px 40px;
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  padding: 40px 20px 20px 20px;
 }
 
 .v100_95 {
-  width: 178px;
+  width: 89px;
   color: rgba(0,0,0,0.5);
   position: absolute;
-  top: 345px;
-  left: 156px;
+  top: 173px;
+  left: 78px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 40px;
+  font-size: 20px;
   opacity: 1;
   text-align: left;
 }
 .v100_161 {
-  width: 133px;
+  width: 67px;
   color: rgba(0,0,0,0.5);
   position: absolute;
-  top: 696px;
-  left: 156px;
+  top: 348px;
+  left: 78px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 40px;
+  font-size: 20px;
   opacity: 1;
   text-align: left;
 }
 .v100_133 {
-  width: 368px;
-  height: 86px;
+  width: 184px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 418px;
-  left: 156px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 209px;
+  left: 78px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v100_140 {
-  width: 368px;
-  height: 86px;
+  width: 184px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 527px;
-  left: 156px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 264px;
+  left: 78px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v100_138 {
-  width: 342px;
-  height: 86px;
+  width: 171px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 418px;
-  left: 543px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 209px;
+  left: 272px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v100_151 {
-  width: 342px;
-  height: 86px;
+  width: 171px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 527px;
-  left: 543px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 264px;
+  left: 272px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
 }
 button.v100_145 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 433px;
-  left: 311px;
+  top: 217px;
+  left: 156px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -305,40 +305,40 @@ button.v100_145 {
   cursor: pointer;
 }
 .v100_158 {
-  width: 66px;
-  height: 66px;
+  width: 33px;
+  height: 33px;
   background: url("../images/v100_158.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 540px;
-  left: 188px;
+  top: 270px;
+  left: 94px;
   overflow: hidden;
 }
 .v100_159 {
-  width: 62px;
-  height: 62px;
+  width: 31px;
+  height: 31px;
   background: url("../images/v100_159.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 430px;
-  left: 580px;
+  top: 215px;
+  left: 290px;
   overflow: hidden;
 }
 button.v100_149 {
-  width: 217px;
+  width: 109px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 552px;
-  left: 287px;
+  top: 276px;
+  left: 144px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -346,14 +346,14 @@ button.v100_149 {
   cursor: pointer;
 }
 button.v100_154 {
-  width: 217px;
+  width: 109px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 551px;
-  left: 668px;
+  top: 276px;
+  left: 334px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -361,27 +361,27 @@ button.v100_154 {
   cursor: pointer;
 }
 .v100_160 {
-  width: 65px;
-  height: 65px;
+  width: 33px;
+  height: 33px;
   background: url("../images/v100_160.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 538px;
-  left: 579px;
+  top: 269px;
+  left: 290px;
   overflow: hidden;
 }
 button.v100_147 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 433px;
-  left: 700px;
+  top: 217px;
+  left: 350px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -389,91 +389,91 @@ button.v100_147 {
   cursor: pointer;
 }
 .v91_256 {
-  width: 100px;
-  height: 100px;
+  width: 50px;
+  height: 50px;
   background: rgba(217,217,217,1);
   opacity: 1;
   position: absolute;
-  top: 364px;
-  left: 9071px;
+  top: 182px;
+  left: 4536px;
 }
 .v100_157 {
-  width: 64px;
-  height: 64px;
+  width: 32px;
+  height: 32px;
   background: url("../images/v100_157.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 429px;
-  left: 188px;
+  top: 215px;
+  left: 94px;
   overflow: hidden;
 }
 .v100_163 {
-  width: 368px;
-  height: 86px;
+  width: 184px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 771px;
-  left: 156px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 386px;
+  left: 78px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v100_165 {
-  width: 342px;
-  height: 86px;
+  width: 171px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 771px;
-  left: 543px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 386px;
+  left: 272px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v100_267 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 819px;
-  left: 722px;
+  top: 410px;
+  left: 361px;
   font-family: Poppins;
   font-weight: Regular;
-  font-size: 15px;
+  font-size: 8px;
   opacity: 1;
   text-align: left;
 }
 .v100_177 {
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   background: url("../images/v100_177.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 774px;
-  left: 579px;
+  top: 387px;
+  left: 290px;
   overflow: hidden;
 }
 button.v100_167 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 785px;
-  left: 350px;
+  top: 393px;
+  left: 175px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -481,50 +481,50 @@ button.v100_167 {
   cursor: pointer;
 }
 .v100_265 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 819px;
-  left: 350px;
+  top: 410px;
+  left: 175px;
   font-family: Poppins;
   font-weight: Regular;
-  font-size: 15px;
+  font-size: 8px;
   opacity: 1;
   text-align: left;
 }
 .v100_269 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 466px;
-  left: 311px;
+  top: 233px;
+  left: 156px;
   font-family: Poppins;
   font-weight: Regular;
-  font-size: 15px;
+  font-size: 8px;
   opacity: 1;
   text-align: left;
 }
 .v100_273 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 466px;
-  left: 701px;
+  top: 233px;
+  left: 351px;
   font-family: Poppins;
   font-weight: Regular;
-  font-size: 15px;
+  font-size: 8px;
   opacity: 1;
   text-align: left;
 }
 button.v100_173 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 785px;
-  left: 722px;
+  top: 393px;
+  left: 361px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -532,57 +532,57 @@ button.v100_173 {
   cursor: pointer;
 }
 .v100_176 {
-  width: 77px;
-  height: 77px;
+  width: 39px;
+  height: 39px;
   background: url("../images/v100_176.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 775px;
-  left: 188px;
+  top: 388px;
+  left: 94px;
   overflow: hidden;
 }
 .v244_284 {
-  width: 368px;
-  height: 86px;
+  width: 184px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 880px;
-  left: 152px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 440px;
+  left: 76px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v244_285 {
-  width: 342px;
-  height: 86px;
+  width: 171px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 880px;
-  left: 539px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 440px;
+  left: 270px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 button.v244_288 {
-  width: 211px;
+  width: 106px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 894px;
-  left: 304px;
+  top: 447px;
+  left: 152px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -590,67 +590,67 @@ button.v244_288 {
   cursor: pointer;
 }
 .v244_289 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 928px;
-  left: 304px;
+  top: 464px;
+  left: 152px;
   font-family: Poppins;
   font-weight: Regular;
-  font-size: 15px;
+  font-size: 8px;
   opacity: 1;
   text-align: left;
 }
 .v245_301 {
-  width: 84px;
-  height: 84px;
+  width: 42px;
+  height: 42px;
   background: url("../images/v245_301.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 882px;
-  left: 184px;
+  top: 441px;
+  left: 92px;
   overflow: hidden;
 }
 .v245_297 {
-  width: 368px;
-  height: 86px;
+  width: 184px;
+  height: 43px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 989px;
-  left: 156px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 495px;
+  left: 78px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .v245_304 {
-  width: 64px;
-  height: 64px;
+  width: 32px;
+  height: 32px;
   background: url("../images/v245_304.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 1000px;
-  left: 194px;
+  top: 500px;
+  left: 97px;
   overflow: hidden;
 }
 button.v245_298 {
-  width: 327px;
+  width: 164px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 1011px;
-  left: 289px;
+  top: 506px;
+  left: 145px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -658,14 +658,14 @@ button.v245_298 {
   cursor: pointer;
 }
 button.v244_290 {
-  width: 169px;
+  width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 903px;
-  left: 714px;
+  top: 452px;
+  left: 357px;
   font-family: Poppins;
   font-weight: Bold;
-  font-size: 25px;
+  font-size: 12px;
   opacity: 1;
   text-align: left;
   background: none;
@@ -673,25 +673,25 @@ button.v244_290 {
   cursor: pointer;
 }
 .v245_296 {
-  width: 64px;
-  height: 64px;
+  width: 32px;
+  height: 32px;
   background: url("../images/v245_296.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 892px;
-  left: 595px;
+  top: 446px;
+  left: 298px;
   overflow: hidden;
 }
 
 /* Button container*/
 .button-container {
   position: absolute;
-  bottom: 40px;
-  left: 40px;
-  right: 40px;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -699,19 +699,19 @@ button.v244_290 {
 
 /* Previous button */
 .v100_98 {
-  width: 232px;
-  height: 84px;
+  width: 116px;
+  height: 42px;
   background: rgba(255,193,7,1);
-  padding: 27px 74px;
+  padding: 13px 37px;
   opacity: 1;
   position: absolute;
-  top: 1150px;
-  left: 146px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 575px;
+  left: 73px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -721,19 +721,19 @@ button.v244_290 {
 
 /* Next button*/
 .v100_96 {
-  width: 232px;
-  height: 84px;
+  width: 116px;
+  height: 42px;
   background: rgba(255,193,7,1);
-  padding: 27px 74px;
+  padding: 14px 37px;
   opacity: 1;
   position: absolute;
-  top: 1150px;
-  left: 644px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  top: 575px;
+  left: 322px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -745,7 +745,7 @@ button.v100_97, .v100_99 {
   color: rgba(255,255,255,1);
   font-family: Poppins;
   font-weight: SemiBold;
-  font-size: 30px;
+  font-size: 15px;
   opacity: 1;
   text-align: center;
   background: none;
@@ -754,42 +754,30 @@ button.v100_97, .v100_99 {
 }
 
 /*Detergent Modal*/
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 10;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-.modal-content {
+#detergentModal .modal-content {
   background-color: #fff;
   margin: 3% auto;
-  padding: 50px;
-  border-radius: 20px;
-  width: 850px;
+  padding: 25px;
+  border-radius: 10px;
+  width: 425px;
   max-width: 95%;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
   font-family: Poppins, sans-serif;
   position: relative;
 }
 
-.modal-content h2 {
-  margin-bottom: 40px;
-  font-size: 32px;
+#detergentModal .modal-content h2 {
+  margin-bottom: 20px;
+  font-size: 16px;
   font-weight: bold;
   color: #333;
 }
 
 .close {
   position: absolute;
-  right: 30px;
-  top: 25px;
-  font-size: 36px;
+  right: 15px;
+  top: 13px;
+  font-size: 18px;
   font-weight: bold;
   color: #666;
   cursor: pointer;
@@ -798,13 +786,13 @@ button.v100_97, .v100_99 {
 .detergent-option {
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
-  gap: 25px;
+  margin-bottom: 15px;
+  gap: 13px;
 }
 
 .detergent-option input[type="checkbox"] {
-  width: 28px;
-  height: 28px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
 }
 
@@ -812,13 +800,13 @@ button.v100_97, .v100_99 {
   display: flex;
   align-items: center;
   flex: 1;
-  gap: 25px;
+  gap: 13px;
   cursor: pointer;
 }
 
 .detergent-option img {
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
@@ -829,52 +817,52 @@ button.v100_97, .v100_99 {
 }
 
 .details strong {
-  font-size: 20px;
+  font-size: 10px;
   color: #222;
 }
 
 .details span {
-  font-size: 18px;
+  font-size: 9px;
   color: #666;
 }
 
 .quantity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .quantity input {
-  width: 50px;
-  height: 40px;
+  width: 25px;
+  height: 20px;
   text-align: center;
-  font-size: 18px;
+  font-size: 9px;
 }
 
 .quantity button {
   background: #eee;
   border: none;
-  padding: 10px 15px;
-  font-size: 20px;
+  padding: 5px 8px;
+  font-size: 10px;
   cursor: pointer;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
-  margin-top: 40px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .modal-buttons .submit,
 .modal-buttons .cancel {
   background: #0d47a1;
   color: #fff;
-  font-size: 20px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 14px 32px;
+  padding: 7px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
@@ -900,48 +888,48 @@ button.v100_97, .v100_99 {
 .modal-content {
   background: #fff;
   margin: 5% auto;
-  padding: 50px 60px;
-  border-radius: 16px;
-  width: 600px;
+  padding: 25px 30px;
+  border-radius: 8px;
+  width: 300px;
   max-width: 95%;
   font-family: 'Poppins', sans-serif;
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 13px rgba(0, 0, 0, 0.3);
   position: relative;
 }
 
 .modal-content h2 {
-  font-size: 30px;
+  font-size: 15px;
   font-weight: 700;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .note {
-  font-size: 16px;
+  font-size: 8px;
   color: #888;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
 .close {
   position: absolute;
-  top: 20px;
-  right: 25px;
-  font-size: 34px;
+  top: 10px;
+  right: 13px;
+  font-size: 17px;
   font-weight: bold;
   color: #666;
   cursor: pointer;
 }
 
 .form-group {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
 label {
   display: block;
-  font-size: 20px;
+  font-size: 10px;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .input-icon {
@@ -951,34 +939,34 @@ label {
 input[type="date"],
 input[type="time"] {
   width: 100%;
-  padding: 14px 45px 14px 20px;
-  font-size: 18px;
-  border: 2px solid #ddd;
-  border-radius: 10px;
+  padding: 7px 23px 7px 10px;
+  font-size: 9px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 
 .icon {
   position: absolute;
-  right: 15px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 22px;
+  font-size: 11px;
   color: #999;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
+  gap: 10px;
 }
 
 .modal-buttons .submit,
 .modal-buttons .cancel {
-  padding: 14px 32px;
-  font-size: 20px;
+  padding: 7px 16px;
+  font-size: 10px;
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
@@ -995,32 +983,32 @@ input[type="time"] {
 
 /* Add Note Modal Specific Styles */
 .note-modal {
-  width: 400px;
-  padding: 30px;
+  width: 200px;
+  padding: 15px;
 }
 
 .note-modal h2 {
-  font-size: 24px;
+  font-size: 12px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .note-text-area {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
 .note-text-area textarea {
   width: 100%;
-  height: 200px;
-  padding: 15px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  height: 100px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 7px;
   color: #666;
   resize: vertical;
-  min-height: 150px;
+  min-height: 75px;
 }
 
 .note-text-area textarea:focus {
@@ -1036,18 +1024,18 @@ input[type="time"] {
 #fabconModal .modal-content {
   background-color: #fff;
   margin: 3% auto;
-  padding: 50px;
-  border-radius: 20px;
-  width: 850px;
+  padding: 25px;
+  border-radius: 10px;
+  width: 425px;
   max-width: 95%;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
   font-family: Poppins, sans-serif;
   position: relative;
 }
 
 #fabconModal .modal-content h2 {
-  margin-bottom: 40px;
-  font-size: 32px;
+  margin-bottom: 20px;
+  font-size: 16px;
   font-weight: bold;
   color: #333;
 }
@@ -1055,13 +1043,13 @@ input[type="time"] {
 #fabconModal .detergent-option {
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
-  gap: 25px;
+  margin-bottom: 15px;
+  gap: 13px;
 }
 
 #fabconModal .detergent-option input[type="checkbox"] {
-  width: 28px;
-  height: 28px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
 }
 
@@ -1069,13 +1057,13 @@ input[type="time"] {
   display: flex;
   align-items: center;
   flex: 1;
-  gap: 25px;
+  gap: 13px;
   cursor: pointer;
 }
 
 #fabconModal .detergent-option img {
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
@@ -1086,52 +1074,52 @@ input[type="time"] {
 }
 
 #fabconModal .details strong {
-  font-size: 20px;
+  font-size: 10px;
   color: #222;
 }
 
 #fabconModal .details span {
-  font-size: 18px;
+  font-size: 9px;
   color: #666;
 }
 
 #fabconModal .quantity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 #fabconModal .quantity input {
-  width: 50px;
-  height: 40px;
+  width: 25px;
+  height: 20px;
   text-align: center;
-  font-size: 18px;
+  font-size: 9px;
 }
 
 #fabconModal .quantity button {
   background: #eee;
   border: none;
-  padding: 10px 15px;
-  font-size: 20px;
+  padding: 5px 8px;
+  font-size: 10px;
   cursor: pointer;
 }
 
 #fabconModal .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
-  margin-top: 40px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 #fabconModal .modal-buttons .submit,
 #fabconModal .modal-buttons .cancel {
   background: #0d47a1;
   color: #fff;
-  font-size: 20px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 14px 32px;
+  padding: 7px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
@@ -1142,15 +1130,15 @@ input[type="time"] {
 
 /* Visual indication for selected detergent/fabcon option */
 .detergent-option.selected {
-  border: 2px solid #0d47a1;
+  border: 1px solid #0d47a1;
   background: #e3f0ff;
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 /* Visual indication for selected toggle buttons */
 button.selected {
   background: #0d47a1 !important;
   color: #fff !important;
-  border-radius: 8px;
+  border-radius: 4px;
   transition: background 0.2s, color 0.2s;
 }
