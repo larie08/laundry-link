@@ -11,7 +11,6 @@ body {
   min-height: 100vh;
 }
 
-/* ADJUSTED: Reduced main container size from 1024px×1366px to 683px×911px */
 .v91_130 {
   width: 683px; 
   height: 911px;
@@ -23,14 +22,12 @@ body {
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_154 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 639px, left: 85px */
   top: 426px;
   left: 57px;
   border-top-left-radius: 30px;
@@ -40,14 +37,12 @@ body {
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_155 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 639px, left: 85px */
   top: 426px;
   left: 57px;
   border-top-left-radius: 30px;
@@ -57,14 +52,12 @@ body {
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_156 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 639px, left: 85px */
   top: 426px;
   left: 57px;
   border-top-left-radius: 30px;
@@ -75,31 +68,26 @@ body {
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_157 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 639px, left: 539px */
   top: 426px;
   left: 359px;
 }
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_158 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 639px, left: 539px */
   top: 426px;
   left: 359px;
 }
 
-/* ADJUSTED: Reduced image size from 275px×386px to 183px×257px */
 .v91_163 {
   width: 183px;
   height: 257px;
@@ -109,30 +97,27 @@ body {
   background-size: cover;
   opacity: 1;
   position: relative;
-  /* ADJUSTED: Repositioned from top: 651px, left: 148px */
   top: 434px;
   left: 99px;
   overflow: hidden;
 }
 
 /*this is for the self-service button*/
-/* ADJUSTED: Reduced button size from 335px×80px to 223px×53px and font size from 40px to 27px */
 .v91_164 {
   display: flex;
   justify-content: center;
   align-items: center;
   text-decoration: none;
-  width: 223px; /* ADJUSTED: Reduced from 335px */
-  height: 53px; /* ADJUSTED: Reduced from 80px */
+  width: 223px; 
+  height: 53px; 
   background: #ffc107;
   color: rgba(18, 45, 105, 1);
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 1096px, left: 118px */
   top: 731px;
   left: 79px;
   font-family: Poppins;
   font-weight: bold;
-  font-size: 27px; /* ADJUSTED: Reduced from 40px */
+  font-size: 27px; 
   border-radius: 30px;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   transition: transform 0.2s ease;
@@ -142,14 +127,12 @@ body {
 }
 /*this is for the self-service button*/
 
-/* ADJUSTED: Reduced service card size from 400px×587px to 267px×391px */
 .v91_194 {
   width: 267px;
   height: 391px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 638px, left: 539px */
   top: 425px;
   left: 359px;
   border-top-left-radius: 30px;
@@ -161,23 +144,21 @@ body {
 }
 
 /*this is for the drop off button*/
-/* ADJUSTED: Reduced button size from 210px×80px to 140px×53px and font size from 40px to 27px */
 .v91_166 {
   display: flex;
   justify-content: center;
   align-items: center;
   text-decoration: none;
-  width: 140px; /* ADJUSTED: Reduced from 210px */
-  height: 53px; /* ADJUSTED: Reduced from 80px */
+  width: 140px; 
+  height: 53px; 
   background: #ffc107;
   color: rgba(18, 45, 105, 1);
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 1096px, left: 634px */
   top: 731px;
   left: 423px;
   font-family: Poppins;
   font-weight: bold;
-  font-size: 27px; /* ADJUSTED: Reduced from 40px */
+  font-size: 27px; 
   border-radius: 30px;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   transition: transform 0.2s ease;
@@ -187,7 +168,6 @@ body {
 }
 /*this is for the drop off button*/
 
-/* ADJUSTED: Reduced image size from 476px×413px to 317px×275px */
 .v91_167 {
   width: 317px;
   height: 275px;
@@ -197,35 +177,31 @@ body {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 683px, left: 501px */
   top: 455px;
   left: 334px;
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced title font size from 50px to 33px */
 .v91_136 {
   width: 350px;
   color: rgba(18,45,105,1);
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 516px, left: 250px */
   top: 344px;
   left: 167px;
   font-family: Titan One;
   font-weight: Regular;
-  font-size: 33px; /* ADJUSTED: Reduced from 50px */
+  font-size: 33px;
   opacity: 1;
   text-align: left;
 }
 
-/* ADJUSTED: Language button positioning and sizing */
+/* Language button */
 .v91_144 {
   width: auto;
   height: auto;
   background: rgba(211,176,70,0.88);
   padding: 10px 20px;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 33px, left: 774px */
   top: 22px;
   left: 516px;
   border-radius: 50px;
@@ -242,21 +218,19 @@ body {
   gap: 10px;
 }
 
-/* ADJUSTED: Reduced profile image size from 70px to 47px */
 .v91_146 {
-  width: 47px; /* ADJUSTED: Reduced from 70px */
-  height: 47px; /* ADJUSTED: Reduced from 70px */
+  width: 47px; 
+  height: 47px; 
   background: url("../images/v91_146.png") no-repeat center center;
   background-size: cover;
   border-radius: 50%;
 }
 
-/* ADJUSTED: Reduced text size from 20px to 13px */
 .v91_147 {
   color: white;
   font-family: Poppins, sans-serif;
   font-weight: bold;
-  font-size: 13px; /* ADJUSTED: Reduced from 20px */
+  font-size: 18px; 
 }
 
 /*for language selection button*/
@@ -271,11 +245,10 @@ body {
   background-color: rgba(0,0,0,0.5);
 }
 
-/* ADJUSTED: Modal sizing for better proportion at 100% zoom */
 .language-modal {
   background-color: #fcd100;
   width: 30vw; 
-  height: 50vh; 
+  height: 60vh; 
   margin: auto;
   padding: 30px 30px 20px;
   border-radius: 25px;
@@ -303,11 +276,10 @@ body {
   cursor: pointer;
 }
 
-/* ADJUSTED: Reduced modal title font size from 24px to 16px */
 .modal-title {
   font-family: Poppins, sans-serif;
   font-weight: 700;
-  font-size: 16px; /* ADJUSTED: Reduced from 24px */
+  font-size: 25px; 
   margin-bottom: 20px;
   text-align: center;
   color: #333;
@@ -320,13 +292,12 @@ body {
   width: 100%;
 }
 
-/* ADJUSTED: Reduced language option button sizes and font size from 27px to 18px */
 .lang-option {
   display: flex;
   align-items: center;
   justify-content: start;
   padding: 20px 30px; 
-  font-size: 18px; /* ADJUSTED: Reduced from 27px */
+  font-size: 18px;
   font-weight: 600;
   font-family: Poppins, sans-serif;
   background-color: #f7b500;
@@ -338,10 +309,9 @@ body {
   min-height: 70px; 
 }
 
-/* ADJUSTED: Reduced flag image size from 50px to 33px */
 .lang-option img {
-  width: 33px; /* ADJUSTED: Reduced from 50px */
-  height: 33px; /* ADJUSTED: Reduced from 50px */
+  width: 33px; 
+  height: 33px; 
   margin-right: 15px; 
   border-radius: 50%;
 }
@@ -351,46 +321,41 @@ body {
 }
 /*for language selection button*/
 
-/* ADJUSTED: Reduced logo size from 264px×289px to 176px×193px */
 .v91_97 {
-  width: 176px; /* ADJUSTED: Reduced from 264px */
-  height: 193px; /* ADJUSTED: Reduced from 289px */
+  width: 176px; 
+  height: 193px;
   background: url("../images/v91_97.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 200px */
   top: 133px; 
   left: 50%; 
   transform: translateX(-50%); 
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced alternate logo size from 264px×289px to 176px×193px */
 .v197_284 {
-  width: 176px; /* ADJUSTED: Reduced from 264px */
-  height: 193px; /* ADJUSTED: Reduced from 289px */
+  width: 176px; 
+  height: 193px; 
   background: url("../images/v197_284.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  /* ADJUSTED: Repositioned from top: 200px */
   top: 133px; 
   left: 50%; 
   transform: translateX(-50%); 
   overflow: hidden;
 }
 
-/* ADJUSTED: Reduced center wrapper width from 70vw to 50vw for better proportion */
 .center-wrapper {
   margin: 0;
   padding: 0;
   height: 100vh;
-  width: 50vw; /* ADJUSTED: Reduced from 70vw */
+  width: 50vw;
   display: flex;
   justify-content: center;
   align-items: center;
