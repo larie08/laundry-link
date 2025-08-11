@@ -13,8 +13,9 @@ body {
   position: relative;
 }
 
+/* ADJUSTED: Reduced page wrapper width from 70vw to 50vw for better proportion at 100% zoom */
 .page-wrapper {
-  width: 70vw; 
+  width: 50vw; 
   height: 100vh;
   position: relative;
   display: flex;
@@ -22,11 +23,12 @@ body {
   align-items: center;
 }
 
+/* ADJUSTED: Reduced container dimensions from 900px×1200px to 600px×800px and removed scale transform */
 .v91_57 {
   position: relative;
-  width: 900px; 
-  height: 1200px; 
-  transform: scale(1.2); 
+  width: 600px; 
+  height: 800px; 
+  /* transform: scale(1.2); - REMOVED: No longer needed for 100% zoom */
   transform-origin: center center;
 }
 
@@ -39,36 +41,44 @@ body {
   top: 0;
   left: 0;
 }
+
+/* ADJUSTED: Reduced washing machine image size from 526px×520px to 350px×347px */
 .v91_91 {
-  width: 526px;
-  height: 520px;
+  width: 350px;
+  height: 347px;
   background: url("../images/v91_91.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 858px;
-  left: 363px;
+  /* ADJUSTED: Repositioned from top: 858px, left: 363px to fit smaller container */
+  top: 572px;
+  left: 242px;
   transform: rotate(-173deg);
   overflow: hidden;
 }
+
+/* ADJUSTED: Reduced main laundry image size from 500px×500px to 333px×333px */
 .v91_64 {
-  width: 500px;
-  height: 500px;
+  width: 333px;
+  height: 333px;
   background: url("../images/v91_64.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 71px;
-  left: 550px;
+  /* ADJUSTED: Repositioned from top: 71px, left: 550px to fit smaller container */
+  top: 47px;
+  left: 367px;
   overflow: hidden;
 }
+
+/* ADJUSTED: Reduced logo image size from 355px×216px to 237px×144px */
 .v91_65 {
-  width: 355px;
-  height: 216px;
+  width: 237px;
+  height: 144px;
   background: url("../images/v91_65.png");
   background-repeat: no-repeat;
   background-position: center center;
@@ -76,81 +86,97 @@ body {
   opacity: 1;
   position: absolute;
   top: 0px;
-  left: 92px;
+  /* ADJUSTED: Repositioned from left: 92px to left: 61px */
+  left: 61px;
   overflow: hidden;
 }
+
+/* ADJUSTED: Reduced "WELCOME TO" text size from 100px to 67px and repositioned */
 .v91_115 {
-  width: 743px;
+  width: 495px;
   color: #F2B456;
   position: absolute;
-  top: 135px;
-  left: 141px;
+  /* ADJUSTED: Repositioned from top: 135px, left: 141px */
+  top: 90px;
+  left: 94px;
   font-family: 'Titan One', cursive;
-  font-size: 100px;
+  font-size: 67px; /* ADJUSTED: Reduced from 100px */
   text-align: left;
 }
 
+/* ADJUSTED: Reduced "LAUNDRYLINK" text size from 100px to 67px and repositioned */
 .v91_116 {
-  width: 743px;
+  width: 495px;
   color: #70ADF1;
   position: absolute;
-  top: 235px; 
-  left: 141px;
+  /* ADJUSTED: Repositioned from top: 235px, left: 141px */
+  top: 157px; 
+  left: 94px;
   font-family: 'Titan One', cursive;
-  font-size: 100px;
+  font-size: 67px; /* ADJUSTED: Reduced from 100px */
   text-align: left;
 }
+
 .v91_127 {
-  width: 743px;
+  width: 495px;
   color: url("../images/v91_127.png");
   position: absolute;
-  top: 132px;
-  left: 141px;
+  top: 88px;
+  left: 94px;
   font-family: Titan One;
   font-weight: Regular;
-  font-size: 100px;
+  font-size: 67px; /* ADJUSTED: Reduced from 100px */
   opacity: 1;
   text-align: left;
 }
+
+/* ADJUSTED: Reduced background image size from 850px×752px to 567px×501px */
 .v91_122 {
-  width: 850px;
-  height: 752px;
+  width: 567px;
+  height: 501px;
   background: url("../images/v91_122.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 502px;
-  left: 22px;
+  /* ADJUSTED: Repositioned from top: 502px, left: 22px */
+  top: 335px;
+  left: 15px;
   overflow: hidden;
 }
+
+/* ADJUSTED: Reduced tagline text size from 33px to 22px and repositioned */
 .v91_124 {
-  width: 423px;
+  width: 282px;
   color: rgba(51,51,51,1);
   position: absolute;
-  top: 393px;
-  left: 301px;
+  /* ADJUSTED: Repositioned from top: 393px, left: 301px */
+  top: 262px;
+  left: 201px;
   text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   font-family: Poppins;
   font-weight: SemiBold;
-  font-size: 33px;
+  font-size: 22px; /* ADJUSTED: Reduced from 33px */
   opacity: 1;
   text-align: justified;
 }
+
+/* ADJUSTED: Reduced button size from 420px×102px to 280px×68px */
 .v91_118 {
   display: flex;
   justify-content: center;
   align-items: center;
   text-decoration: none;
-  width: 420px;
-  height: 102px;
+  width: 280px; /* ADJUSTED: Reduced from 420px */
+  height: 68px; /* ADJUSTED: Reduced from 102px */
   background: rgba(255, 193, 7, 0.92);
   margin: 10px;
   opacity: 1;
   position: absolute;
-  top: 1013px;
-  left: 340px;
+  /* ADJUSTED: Repositioned from top: 1013px, left: 340px */
+  top: 675px;
+  left: 227px;
   border-radius: 50px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
   overflow: hidden;
@@ -161,10 +187,11 @@ body {
   transform: scale(1.05);
 }
 
+/* ADJUSTED: Reduced button text size from 50px to 33px */
 .v91_119 {
   color: rgba(18, 45, 105, 1);
   font-family: Poppins;
   font-weight: bold;
-  font-size: 50px;
+  font-size: 33px; /* ADJUSTED: Reduced from 50px */
   text-align: center;
 }
