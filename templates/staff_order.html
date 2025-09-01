@@ -117,7 +117,7 @@
             <div class="w3-container w3-padding w3-margin">
                 <!-- ORDER TYPE, ORDER STATUS, FILTER AND SEARCH BOX -->
                 <div class="search-row">
-                    <form method="GET" action="{{ url_for('staff_orders') }}" class="filter-form">
+                    <form method="GET" action="{{ url_for('orders') }}" class="filter-form">
                         <select name="order_type" class="filter-dropdown">
                             <option value="">Order Type</option>
                             <option value="self-service" {% if request.args.get('order_type') == 'self-service' %}selected{% endif %}>Self-Service</option>
@@ -132,7 +132,7 @@
                         <button type="submit" class="filter-btn">Filter</button>
                     </form>
                     
-                    <form method="GET" action="{{ url_for('staff_orders') }}" class="search-container">
+                    <form method="GET" action="{{ url_for('orders') }}" class="search-container">
                         <input type="text" class="search-box" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
                         {% if request.args.get('q', '') %}
                         <a href="{{ url_for('orders') }}" class="clear-search-btn" title="Clear search">
