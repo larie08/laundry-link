@@ -19,6 +19,11 @@
             <span class="v100_95">OPTIONS</span>
             <span class="v100_161">OTHER</span>
             <form id="othersForm" action="{{ url_for('submit_others') }}" method="post">
+                <!-- Hidden inputs for pickup schedule and notes -->
+                <input type="hidden" name="pickup_date" id="hiddenPickupDate" />
+                <input type="hidden" name="pickup_time" id="hiddenPickupTime" />
+                <input type="hidden" name="order_note" id="hiddenOrderNote" />
+                
                 <div class="v100_96">
                     <button class="v100_97" type="submit">Next</button>
                 </div>
@@ -131,7 +136,7 @@
                 <div class="v245_301"></div>
                 <div class="v245_297"></div>
                 <div class="v245_304"></div>
-                <!-- SCHEDULE PICKUP, ADD NOTE, etc. remain unchanged -->
+                <!-- SCHEDULE PICKUP -->
                 <button class="v245_298" type="button" onclick="document.getElementById('scheduleModal').style.display='block'">SCHEDULE PICKUP</button>
                 <div id="scheduleModal" class="modal">
                     <div class="modal-content">
@@ -141,18 +146,18 @@
                         <div class="form-group">
                             <label for="pickup-date">Date</label>
                             <div class="input-icon">
-                                <input type="date" id="pickup-date" name="pickup-date"  />
+                                <input type="date" id="pickup-date" name="pickup-date" />
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="pickup-time">Time</label>
                             <div class="input-icon">
-                                <input type="time" id="pickup-time" name="pickup-time"  />
+                                <input type="time" id="pickup-time" name="pickup-time" />
                             </div>
                         </div>
                         <div class="modal-buttons">
-                            <button class="submit">Submit</button>
-                            <button class="cancel" onclick="closeScheduleModal()">Cancel</button>
+                            <button type="button" class="submit" onclick="saveSchedule()">Submit</button>
+                            <button type="button" class="cancel" onclick="closeScheduleModal()">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -165,7 +170,7 @@
                             <textarea id="note-text" placeholder="You can write your note here..."></textarea>
                         </div>
                         <div class="modal-buttons">
-                            <button type="submit" class="submit">Submit</button>
+                            <button type="button" class="submit" onclick="saveNote()">Submit</button>
                             <button type="button" class="cancel" onclick="document.getElementById('noteModal').style.display='none'">Cancel</button>
                         </div>
                     </div>
@@ -201,6 +206,45 @@
         input.value = val;
         input.dispatchEvent(new Event('change'));
     }
+    
+    // Save schedule pickup data to hidden inputs
+    function saveSchedule() {
+        const pickupDate = document.getElementById('pickup-date').value;
+        const pickupTime = document.getElementById('pickup-time').value;
+        
+        // Update hidden inputs (nullable - can be empty)
+        document.getElementById('hiddenPickupDate').value = pickupDate || '';
+        document.getElementById('hiddenPickupTime').value = pickupTime || '';
+        
+        // Visual indication on button if data is saved
+        const scheduleBtn = document.querySelector('button.v245_298');
+        if (pickupDate || pickupTime) {
+            scheduleBtn.classList.add('selected');
+        } else {
+            scheduleBtn.classList.remove('selected');
+        }
+        
+        closeScheduleModal();
+    }
+    
+    // Save note data to hidden input
+    function saveNote() {
+        const noteText = document.getElementById('note-text').value.trim();
+        
+        // Update hidden input (nullable - can be empty)
+        document.getElementById('hiddenOrderNote').value = noteText || '';
+        
+        // Visual indication on button if note is saved
+        const noteBtn = document.querySelector('button.v244_290');
+        if (noteText) {
+            noteBtn.classList.add('selected');
+        } else {
+            noteBtn.classList.remove('selected');
+        }
+        
+        document.getElementById('noteModal').style.display = 'none';
+    }
+    
     // Mutual exclusivity logic + selection indication + price calculation
     document.addEventListener('DOMContentLoaded', function() {
         // Helper: update total price
