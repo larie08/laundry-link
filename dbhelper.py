@@ -48,7 +48,7 @@ def initialize_database():
     )
     ''')
 
-    # ORDER_ITEM table - Updated to include PICKUP_SCHEDULE and ORDER_NOTE
+    # ORDER_ITEM table (removed PICKUP_SCHEDULE and ORDER_NOTE columns)
     cursor.execute('''
     IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ORDER_ITEM' AND xtype='U')
     CREATE TABLE ORDER_ITEM (
@@ -58,21 +58,8 @@ def initialize_database():
         IRON BIT,
         FOLD_CLOTHES BIT,
         PRIORITIZE_ORDER BIT,
-        PICKUP_SCHEDULE DATETIME,
-        ORDER_NOTE TEXT,
         DATE_CREATED DATETIME
     )
-    ''')
-
-    # Add columns to existing ORDER_ITEM table if they don't exist
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ORDER_ITEM' AND COLUMN_NAME = 'PICKUP_SCHEDULE')
-    ALTER TABLE ORDER_ITEM ADD PICKUP_SCHEDULE DATETIME
-    ''')
-
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ORDER_ITEM' AND COLUMN_NAME = 'ORDER_NOTE')
-    ALTER TABLE ORDER_ITEM ADD ORDER_NOTE TEXT
     ''')
 
     # DETERGENT table
@@ -340,31 +327,19 @@ def get_fabcon_total_value() -> dict:
     result = getallprocess(sql)
     return result[0] if result else {'ItemType': 'Fabric Conditioner', 'TotalValue': 0}
 
-# Updated add_order_item function to include pickup_schedule and order_note
-def add_order_item(customer_own_detergent: bool, customer_own_fabcon: bool, iron: bool, fold_clothes: bool, prioritize_order: bool, pickup_schedule: str = None, order_note: str = None) -> int:
+def add_order_item(customer_own_detergent: bool, customer_own_fabcon: bool, iron: bool, fold_clothes: bool, prioritize_order: bool) -> int:
     sql = '''
-    INSERT INTO ORDER_ITEM (CUSTOMER_OWN_DETERGENT, CUSTOMER_OWN_FABCON, IRON, FOLD_CLOTHES, PRIORITIZE_ORDER, PICKUP_SCHEDULE, ORDER_NOTE, DATE_CREATED)
-    VALUES (?, ?, ?, ?, ?, ?, ?, GETDATE())
+    INSERT INTO ORDER_ITEM (CUSTOMER_OWN_DETERGENT, CUSTOMER_OWN_FABCON, IRON, FOLD_CLOTHES, PRIORITIZE_ORDER, DATE_CREATED)
+    VALUES (?, ?, ?, ?, ?, GETDATE())
     '''
-    pickup_datetime = None
-    if pickup_schedule:
-        try:
-            pickup_datetime = pickup_schedule if pickup_schedule else None
-        except:
-            pickup_datetime = None
-    
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(sql, (customer_own_detergent, customer_own_fabcon, iron, fold_clothes, prioritize_order, pickup_datetime, order_note))
+    cursor.execute(sql, (customer_own_detergent, customer_own_fabcon, iron, fold_clothes, prioritize_order))
     conn.commit()
-    
-    # Get the last inserted ID
-    cursor.execute('SELECT @@IDENTITY')
-    orderitem_id = cursor.fetchone()[0]
-    
+    orderitem_id = cursor.lastrowid if hasattr(cursor, 'lastrowid') else cursor.execute('SELECT @@IDENTITY').fetchone()[0]
     cursor.close()
     conn.close()
-    return int(orderitem_id)
+    return orderitem_id
 
 def add_orderitem_detergent(orderitem_id: int, detergent_id: int, quantity: int, unit_price: float) -> bool:
     sql = '''
