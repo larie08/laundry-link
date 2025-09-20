@@ -63,21 +63,9 @@ def submit_others():
     iron = request.form.get('iron') == '1'
     fold = request.form.get('fold') == '1'
     priority = request.form.get('priority') == '1'
-    
-    # Get pickup schedule and notes data
-    pickup_date = request.form.get('pickup_date')
-    pickup_time = request.form.get('pickup_time')
-    order_note = request.form.get('order_note')
-    
-    # Combine date and time into a single datetime string if both are provided
-    pickup_schedule = None
-    if pickup_date and pickup_time:
-        pickup_schedule = f"{pickup_date} {pickup_time}"
-    elif pickup_date:
-        pickup_schedule = f"{pickup_date} 00:00"
-    
-    # Insert into ORDER_ITEM with pickup_schedule and order_note
-    orderitem_id = add_order_item(own_detergent, own_fabcon, iron, fold, priority, pickup_schedule, order_note)
+
+    # Insert into ORDER_ITEM
+    orderitem_id = add_order_item(own_detergent, own_fabcon, iron, fold, priority)
 
     # Only insert into ORDERITEM_DETERGENT if not own detergent
     if not own_detergent:
