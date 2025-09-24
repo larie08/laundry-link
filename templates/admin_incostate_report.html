@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/admin_incostate_report.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Income Statement</title>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+            
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>Dashboard</span>
+            </div>
+            
+            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <nav class="w3-container w3-padding w3-margin-top">
+                <!-- MAIN -->
+                <div class="section-title w3-padding w3-text-gray">Main</div>
+                <!-- DASHBOARD, DETERGENT, CONDITIONER, SCANNER -->
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('dashboard') }}">
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('detergent_inventory') }}">
+                            <span>Detergent</span>
+                        </a>      
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('fabric_conditioner') }}">
+                            <span>Fabric Conditioner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('scanner') }}">
+                            <span>Scanner</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customers') }}">
+                            <span>Customers</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('orders') }}">
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- LOGOUT -->
+                <ul class="w3-margin-left w3-margin-top">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('logout') }}">
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <!-- MAIN -->
+        <main>
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Income Statement</h1>
+                    <div class="breadcrumb">Main / Income Statement</div>
+                </div>
+            </header>
+            <div class="w3-container w3-padding w3-margin">
+                <!-- FILTERS / CONTROLS -->
+                <form class="filters" method="get" action="{{ url_for('income_statement') }}">
+                    <div class="row">
+                        <div class="field">
+                            <label>View</label>
+                            <select name="view">
+                                <option value="weekly" {{ 'selected' if view=='weekly' else '' }}>Weekly</option>
+                                <option value="monthly" {{ 'selected' if view=='monthly' else '' }}>Monthly</option>
+                                <option value="yearly" {{ 'selected' if view=='yearly' else '' }}>Yearly</option>
+                                <option value="custom" {{ 'selected' if view=='custom' else '' }}>Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Start</label>
+                            <input type="date" name="start" value="{{ start }}" />
+                        </div>
+                        <div class="field">
+                            <label>End</label>
+                            <input type="date" name="end" value="{{ end }}" />
+                        </div>
+                        <div class="field">
+                            <label>Customer</label>
+                            <select name="customer_id">
+                                <option value="" {{ 'selected' if not customer_id else '' }}>All Customers</option>
+                                {% for c in customers %}
+                                <option value="{{ c.CUSTOMER_ID }}" {{ 'selected' if customer_id==c.CUSTOMER_ID else '' }}>{{ c.FULLNAME }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Tax Rate</label>
+                            <select name="tax_rate">
+                                {% for rate in [0,0.01,0.05,0.08,0.12,0.20,0.25,0.30,0.35] %}
+                                <option value="{{ rate }}" {{ 'selected' if (rate==tax_rate) else '' }}>{{ (rate*100)|int }}%</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="actions">
+                            <button class="btn primary" type="submit">View</button>
+                            <button class="btn outline" type="button" onclick="window.print()">Print</button>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="field"><label>Detergents & Consumables</label><input type="number" step="0.01" name="detergents_consumables" value="{{ detergents_consumables }}" /></div>
+                        <div class="field"><label>Utilities (Direct)</label><input type="number" step="0.01" name="utilities_direct" value="{{ utilities_direct }}" /></div>
+                        <div class="field"><label>Direct Labor</label><input type="number" step="0.01" name="direct_labor" value="{{ direct_labor }}" /></div>
+                        <div class="field"><label>Salaries & Wages</label><input type="number" step="0.01" name="salaries_wages" value="{{ salaries_wages }}" /></div>
+                        <div class="field"><label>Rent & Utilities</label><input type="number" step="0.01" name="rent_utilities" value="{{ rent_utilities }}" /></div>
+                        <div class="field"><label>Maintenance & Repairs</label><input type="number" step="0.01" name="maintenance_repairs" value="{{ maintenance_repairs }}" /></div>
+                        <div class="field"><label>Depreciation</label><input type="number" step="0.01" name="depreciation" value="{{ depreciation }}" /></div>
+                        <div class="field"><label>Admin & Misc</label><input type="number" step="0.01" name="admin_misc" value="{{ admin_misc }}" /></div>
+                        <div class="field"><label>Other Income/(Expense)</label><input type="number" step="0.01" name="other_income_expense" value="{{ other_income_expense }}" /></div>
+                    </div>
+                    <div class="meta">
+                        <div>Period: <span>{{ period_label }}</span></div>
+                        <div>Prepared: <span>{{ (now() if false else 'Today') }}</span></div>
+                    </div>
+                </form>
+
+                <!-- KPI CARDS -->
+                <section class="kpis">
+                    <div class="card revenue">
+                        <div class="label">Total Revenues</div>
+                        <div class="value">₱ {{ '{:,.2f}'.format(net_sales) }}</div>
+                        <div class="hint">Service + Other Sales</div>
+                    </div>
+                    <div class="card expenses">
+                        <div class="label">Total Expenses</div>
+                        <div class="value">₱ {{ '{:,.2f}'.format(total_cogs + total_opex + (income_tax_amount if income_tax_amount>0 else 0)) }}</div>
+                        <div class="hint">COGS + Operating</div>
+                    </div>
+                    <div class="card gross">
+                        <div class="label">Gross Profit</div>
+                        <div class="value">₱ {{ '{:,.2f}'.format(gross_profit) }}</div>
+                        <div class="hint">Revenues − COGS</div>
+                    </div>
+                    <div class="card net">
+                        <div class="label">Net Income</div>
+                        <div class="value">₱ {{ '{:,.2f}'.format(net_income) }}</div>
+                        <div class="hint">After taxes</div>
+                    </div>
+                </section>
+
+                <!-- INCOME STATEMENT TABLE -->
+                <section class="statement">
+                    <div class="statement-header">
+                        <div class="company">
+                            <h3>LaundryLink</h3>
+                            <p>Income Statement</p>
+                            <p class="period">For the period: {{ period_label }}</p>
+                        </div>
+                    </div>
+
+                    <table class="table is">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="right">Amount (₱)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section"><td colspan="2">Revenue</td></tr>
+                            <tr>
+                                <td>Service Sales</td>
+                                <td class="right">{{ '{:,.2f}'.format(service_sales) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Other Sales (Detergents, Fabric Conditioners, etc.)</td>
+                                <td class="right">{{ '{:,.2f}'.format(other_sales) }}</td>
+                            </tr>
+                            <tr class="subtotal">
+                                <td>Net Sales</td>
+                                <td class="right">{{ '{:,.2f}'.format(net_sales) }}</td>
+                            </tr>
+
+                            <tr class="section"><td colspan="2">Cost of Sales</td></tr>
+                            <tr>
+                                <td>Detergents and Consumables</td>
+                                <td class="right">{{ '{:,.2f}'.format(detergents_consumables) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Utilities directly attributable</td>
+                                <td class="right">{{ '{:,.2f}'.format(utilities_direct) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Direct Labor (if separated)</td>
+                                <td class="right">{{ '{:,.2f}'.format(direct_labor) }}</td>
+                            </tr>
+                            <tr class="subtotal">
+                                <td>Total Cost of Goods Sold (COGS)</td>
+                                <td class="right">{{ '{:,.2f}'.format(total_cogs) }}</td>
+                            </tr>
+
+                            <tr class="highlight">
+                                <td>Gross Profit</td>
+                                <td class="right">{{ '{:,.2f}'.format(gross_profit) }}</td>
+                            </tr>
+
+                            <tr class="section"><td colspan="2">Operating Expenses</td></tr>
+                            <tr>
+                                <td>Staff Salaries and Wages</td>
+                                <td class="right">{{ '{:,.2f}'.format(salaries_wages) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Rent and Utilities</td>
+                                <td class="right">{{ '{:,.2f}'.format(rent_utilities) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Maintenance and Repairs</td>
+                                <td class="right">{{ '{:,.2f}'.format(maintenance_repairs) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Depreciation (Machines, IT)</td>
+                                <td class="right">{{ '{:,.2f}'.format(depreciation) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Administrative & Miscellaneous</td>
+                                <td class="right">{{ '{:,.2f}'.format(admin_misc) }}</td>
+                            </tr>
+                            <tr class="subtotal">
+                                <td>Total Operating Expenses</td>
+                                <td class="right">{{ '{:,.2f}'.format(total_opex) }}</td>
+                            </tr>
+
+                            <tr class="highlight">
+                                <td>Operating Income</td>
+                                <td class="right">{{ '{:,.2f}'.format(operating_income) }}</td>
+                            </tr>
+
+                            <tr class="section"><td colspan="2">Other Income / (Expenses)</td></tr>
+                            <tr>
+                                <td>Interest Income / (Expense)</td>
+                                <td class="right">{{ '{:,.2f}'.format(other_income_expense) }}</td>
+                            </tr>
+                            <tr class="highlight">
+                                <td>Income Before Tax</td>
+                                <td class="right">{{ '{:,.2f}'.format(income_before_tax) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Income Tax ({{ (tax_rate*100)|int }}% actual)</td>
+                                <td class="right">{{ '{:,.2f}'.format(income_tax_amount) }}</td>
+                            </tr>
+                            <tr class="total">
+                                <td>Net Income</td>
+                                <td class="right">{{ '{:,.2f}'.format(net_income) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- BREAKDOWNS -->
+                <section class="breakdowns">
+                    <div class="split">
+                        <div class="panel">
+                            <div class="panel-title">By Customer</div>
+                            <table class="table compact">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th class="right">Orders</th>
+                                        <th class="right">Revenue</th>
+                                        <th class="right">COGS</th>
+                                        <th class="right">Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in customers_breakdown %}
+                                    <tr class="clickable"><td colspan="5"><a href="#cust-{{ r.CUSTOMER_ID }}" class="row-link"><span>{{ r.FULLNAME }}</span><span class="right">{{ r.Orders }}</span><span class="right">{{ '{:,.2f}'.format(r.Revenue + r.OtherSales) }}</span><span class="right">{{ '{:,.2f}'.format(r.COGS) }}</span><span class="right">{{ '{:,.2f}'.format(r.Net) }}</span></a></td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-title">By Order</div>
+                            <table class="table compact">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th class="right">Revenue</th>
+                                        <th class="right">COGS</th>
+                                        <th class="right">Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for o in orders_breakdown %}
+                                    <tr>
+                                        <td>LL-{{ o.ORDER_ID }}</td>
+                                        <td>{{ o.FULLNAME }}</td>
+                                        <td class="right">{{ '{:,.2f}'.format(o.Revenue) }}</td>
+                                        <td class="right">{{ '{:,.2f}'.format(o.COGS) }}</td>
+                                        <td class="right">{{ '{:,.2f}'.format(o.Net) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CUSTOMER MODALS GENERATED FROM DATA -->
+                {% for r in customers_breakdown %}
+                <div id="cust-{{ r.CUSTOMER_ID }}" class="modal">
+                    <div class="modal-backdrop"><a class="close-area" href="#"></a></div>
+                    <div class="modal-panel">
+                        <div class="modal-header">
+                            <h4>Customer Statement • {{ r.FULLNAME }}</h4>
+                            <a class="btn close" href="#">Close</a>
+                        </div>
+                        <div class="modal-body">
+                            <div class="kpis mini">
+                                <div class="card"><div class="label">Orders</div><div class="value">{{ r.Orders }}</div></div>
+                                <div class="card"><div class="label">Revenue</div><div class="value">₱ {{ '{:,.2f}'.format(r.Revenue + r.OtherSales) }}</div></div>
+                                <div class="card"><div class="label">COGS</div><div class="value">₱ {{ '{:,.2f}'.format(r.COGS) }}</div></div>
+                                <div class="card"><div class="label">Net (pre-tax)</div><div class="value">₱ {{ '{:,.2f}'.format(r.Net) }}</div></div>
+                            </div>
+                            <table class="table is">
+                                <thead><tr><th>Line</th><th class="right">Amount (₱)</th></tr></thead>
+                                <tbody>
+                                    <tr class="section"><td>Revenue</td><td class="right">{{ '{:,.2f}'.format(r.Revenue + r.OtherSales) }}</td></tr>
+                                    <tr><td>Less: COGS</td><td class="right">{{ '{:,.2f}'.format(r.COGS) }}</td></tr>
+                                    <tr class="highlight"><td>Gross Profit</td><td class="right">{{ '{:,.2f}'.format(r.Net) }}</td></tr>
+                                    <tr><td>VAT ({{ (tax_rate*100)|int }}%)</td><td class="right">{{ '{:,.2f}'.format(max(r.Net,0)*tax_rate) }}</td></tr>
+                                    <tr class="total"><td>Net After VAT</td><td class="right">{{ '{:,.2f}'.format(r.Net - max(r.Net,0)*tax_rate) }}</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="modal-note">Computed for {{ period_label }}.</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+   
+</body>
+</html>

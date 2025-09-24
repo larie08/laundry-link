@@ -629,6 +629,118 @@ def download_inventory_report(format):
             return send_file(zip_buffer, download_name=f"{filename}.zip", as_attachment=True, mimetype='application/zip')
     else:
         return "Invalid format", 400
+        
+#INCOME STATEMENT REPORT
+@app.route('/income_statement')
+def income_statement():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+
+    view = request.args.get('view', 'monthly') 
+    start_str = request.args.get('start')
+    end_str = request.args.get('end')
+    customer_id = request.args.get('customer_id', type=int)
+    tax_rate = request.args.get('tax_rate', default=0.1, type=float)  # 0.0–0.35
+    q_detergents = request.args.get('detergents_consumables', type=float)
+    q_utilities_direct = request.args.get('utilities_direct', type=float)
+    q_direct_labor = request.args.get('direct_labor', type=float)
+    q_salaries = request.args.get('salaries_wages', type=float)
+    q_rent_utils = request.args.get('rent_utilities', type=float)
+    q_maintenance = request.args.get('maintenance_repairs', type=float)
+    q_depreciation = request.args.get('depreciation', type=float)
+    q_admin_misc = request.args.get('admin_misc', type=float)
+    q_interest = request.args.get('other_income_expense', type=float)
+
+    today = datetime.now()
+    if view == 'weekly':
+        start_dt = today - timedelta(days=today.weekday())  # Monday
+        end_dt = start_dt + timedelta(days=6, hours=23, minutes=59, seconds=59)
+    elif view == 'yearly':
+        start_dt = datetime(today.year, 1, 1)
+        end_dt = datetime(today.year, 12, 31, 23, 59, 59)
+    elif view == 'custom' and start_str and end_str:
+        start_dt = datetime.strptime(start_str, '%Y-%m-%d')
+        end_dt = datetime.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+    else:
+        start_dt = datetime(today.year, today.month, 1)
+        next_month = (start_dt.replace(day=28) + timedelta(days=4)).replace(day=1)
+        end_dt = next_month - timedelta(seconds=1)
+
+    try:
+        dbhelper.initialize_finance_tables()
+    except Exception:
+        pass
+
+    service_sales = dbhelper.sum_service_sales(start_dt, end_dt, customer_id)
+    other_sales = dbhelper.sum_other_sales(start_dt, end_dt, customer_id)
+    net_sales = service_sales + other_sales
+
+    detergents_consumables = (q_detergents if q_detergents is not None else dbhelper.sum_expenses(start_dt, end_dt, 'COGS', 'Detergents and Consumables', customer_id))
+    utilities_direct = (q_utilities_direct if q_utilities_direct is not None else dbhelper.sum_expenses(start_dt, end_dt, 'COGS', 'Utilities Direct', customer_id))
+    direct_labor = (q_direct_labor if q_direct_labor is not None else dbhelper.sum_expenses(start_dt, end_dt, 'COGS', 'Direct Labor', customer_id))
+    total_cogs = detergents_consumables + utilities_direct + direct_labor
+
+    gross_profit = net_sales - total_cogs
+
+    salaries_wages = (q_salaries if q_salaries is not None else dbhelper.sum_expenses(start_dt, end_dt, 'OPEX', 'Salaries and Wages', customer_id))
+    rent_utilities = (q_rent_utils if q_rent_utils is not None else dbhelper.sum_expenses(start_dt, end_dt, 'OPEX', 'Rent and Utilities', customer_id))
+    maintenance_repairs = (q_maintenance if q_maintenance is not None else dbhelper.sum_expenses(start_dt, end_dt, 'OPEX', 'Maintenance and Repairs', customer_id))
+    depreciation = (q_depreciation if q_depreciation is not None else dbhelper.sum_expenses(start_dt, end_dt, 'OPEX', 'Depreciation', customer_id))
+    admin_misc = (q_admin_misc if q_admin_misc is not None else dbhelper.sum_expenses(start_dt, end_dt, 'OPEX', 'Administrative & Miscellaneous', customer_id))
+    total_opex = salaries_wages + rent_utilities + maintenance_repairs + depreciation + admin_misc
+
+    operating_income = gross_profit - total_opex
+
+    other_income_expense = (q_interest if q_interest is not None else dbhelper.sum_other_income(start_dt, end_dt))
+    income_before_tax = operating_income + other_income_expense
+
+    income_tax_amount = max(income_before_tax, 0) * tax_rate
+    net_income = income_before_tax - income_tax_amount
+
+    # BREAKDOWNS
+    customers_breakdown = dbhelper.breakdown_by_customer(start_dt, end_dt) if not customer_id else []
+    orders_breakdown = dbhelper.breakdown_by_order(start_dt, end_dt, customer_id)
+    customers = dbhelper.get_all_customers()
+
+    period_label = {
+        'weekly': f"Week of {start_dt.strftime('%b %d, %Y')} - {end_dt.strftime('%b %d, %Y')}",
+        'monthly': start_dt.strftime('%B %Y'),
+        'yearly': start_dt.strftime('%Y'),
+        'custom': f"{start_dt.strftime('%b %d, %Y')} - {end_dt.strftime('%b %d, %Y')}"
+    }.get(view, start_dt.strftime('%B %Y'))
+
+    return render_template(
+        'admin_incostate_report.html',
+        view=view,
+        start=start_dt.strftime('%Y-%m-%d'),
+        end=end_dt.strftime('%Y-%m-%d'),
+        period_label=period_label,
+        customer_id=customer_id,
+        tax_rate=tax_rate,
+        service_sales=service_sales,
+        other_sales=other_sales,
+        net_sales=net_sales,
+        detergents_consumables=detergents_consumables,
+        utilities_direct=utilities_direct,
+        direct_labor=direct_labor,
+        total_cogs=total_cogs,
+        gross_profit=gross_profit,
+        salaries_wages=salaries_wages,
+        rent_utilities=rent_utilities,
+        maintenance_repairs=maintenance_repairs,
+        depreciation=depreciation,
+        admin_misc=admin_misc,
+        total_opex=total_opex,
+        operating_income=operating_income,
+        other_income_expense=other_income_expense,
+        income_before_tax=income_before_tax,
+        income_tax_amount=income_tax_amount,
+        net_income=net_income,
+        customers_breakdown=customers_breakdown,
+        orders_breakdown=orders_breakdown
+        ,customers=customers
+    )
+
 
 @app.route('/customer_report')
 def customer_report():
