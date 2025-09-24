@@ -351,6 +351,174 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     VALUES (?, ?, ?, ?)
     '''
     return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
+
+# INCOME STATEMENT AGGREGATION HELPERS (WEEKLY / MONTHLY / YEARLY)
+# ADD EXPENSES
+def add_expense(category: str, scope: str, amount: float, date_incurred=None, customer_id: int | None = None) -> bool:
+    if date_incurred is None:
+        sql = """
+            INSERT INTO EXPENSE_LEDGER (CATEGORY, SCOPE, AMOUNT, DATE_INCURRED, CUSTOMER_ID)
+            VALUES (?, ?, ?, GETDATE(), ?)
+        """
+        return postprocess(sql, (category, scope, amount, customer_id))
+    else:
+        sql = """
+            INSERT INTO EXPENSE_LEDGER (CATEGORY, SCOPE, AMOUNT, DATE_INCURRED, CUSTOMER_ID)
+            VALUES (?, ?, ?, ?, ?)
+        """
+        return postprocess(sql, (category, scope, amount, date_incurred, customer_id))
+
+# ADD OTHER INCOME EXPENSES
+def add_other_income_expense(description: str, amount: float, date_incurred=None) -> bool:
+    if date_incurred is None:
+        sql = """
+            INSERT INTO OTHER_INCOME_EXPENSE (DESCRIPTION, AMOUNT, DATE_INCURRED)
+            VALUES (?, ?, GETDATE())
+        """
+        return postprocess(sql, (description, amount))
+    else:
+        sql = """
+            INSERT INTO OTHER_INCOME_EXPENSE (DESCRIPTION, AMOUNT, DATE_INCURRED)
+            VALUES (?, ?, ?)
+        """
+        return postprocess(sql, (description, amount, date_incurred))
+
+# TOTAL EXPENSES
+def sum_expenses(start_dt, end_dt, scope: str, category: str | None = None, customer_id: int | None = None) -> float:
+    sql = """
+        SELECT COALESCE(SUM(AMOUNT), 0) AS total
+        FROM EXPENSE_LEDGER
+        WHERE DATE_INCURRED BETWEEN ? AND ? AND SCOPE = ?
+    """
+    params = [start_dt, end_dt, scope]
+    if category:
+        sql += " AND CATEGORY = ?"
+        params.append(category)
+    if customer_id:
+        sql += " AND CUSTOMER_ID = ?"
+        params.append(customer_id)
+    res = getallprocess(sql, tuple(params))
+    return float(res[0]['total']) if res else 0.0
+
+# TOTAL OF THE OTHER INCOME
+def sum_other_income(start_dt, end_dt) -> float:
+    sql = """
+        SELECT COALESCE(SUM(AMOUNT), 0) AS total
+        FROM OTHER_INCOME_EXPENSE
+        WHERE DATE_INCURRED BETWEEN ? AND ?
+    """
+    res = getallprocess(sql, (start_dt, end_dt))
+    return float(res[0]['total']) if res else 0.0
+
+# TOTAL SERVICE SALES
+def sum_service_sales(start_dt, end_dt, customer_id: int | None = None) -> float:
+    sql = """
+        SELECT COALESCE(SUM(TOTAL_PRICE), 0)
+        FROM [ORDER]
+        WHERE DATE_CREATED BETWEEN ? AND ?
+    """
+    params = [start_dt, end_dt]
+    if customer_id:
+        sql += " AND CUSTOMER_ID = ?"
+        params.append(customer_id)
+    result = getallprocess(sql, tuple(params))
+    return float(list(result[0].values())[0]) if result else 0.0
+
+# TOTAL OF THE OTHER SALES
+def sum_other_sales(start_dt, end_dt, customer_id: int | None = None) -> float:
+    """
+    Sum resell totals of detergents and fabcons from their junction tables.
+    This function is resilient to column name variations by trying common
+    alternatives without requiring schema changes.
+    """
+
+    def try_sum(table_alias: str, table_name: str, qty_col: str, price_col: str, params: list):
+        sql = f"""
+            SELECT COALESCE(SUM({table_alias}.{qty_col} * {table_alias}.{price_col}), 0) AS total
+            FROM {table_name} {table_alias}
+            JOIN ORDER_ITEM oi ON oi.ORDERITEM_ID = {table_alias}.ORDERITEM_ID
+            JOIN [ORDER] o ON o.ORDERITEM_ID = oi.ORDERITEM_ID
+            WHERE o.DATE_CREATED BETWEEN ? AND ?
+        """
+        p = list(params)
+        if customer_id:
+            sql += " AND o.CUSTOMER_ID = ?"
+            p.append(customer_id)
+        try:
+            res = getallprocess(sql, tuple(p))
+            return float(res[0]['total']) if res else 0.0
+        except Exception:
+            return None
+
+    def sum_component(table_name: str):
+        combos = [
+            ('QUANTITY', 'UNIT_PRICE'),
+            ('QTY', 'UNIT_PRICE'),
+            ('QUANTITY', 'PRICE'),
+            ('QTY', 'PRICE')
+        ]
+        params = [start_dt, end_dt]
+        for qty, price in combos:
+            val = try_sum('t', table_name, qty, price, params)
+            if val is not None:
+                return val
+        return 0.0
+
+    det_total = sum_component('ORDERITEM_DETERGENT')
+    fab_total = sum_component('ORDERITEM_FABCON')
+    return det_total + fab_total
+
+# CUSTOMER BREAKDOWN
+def breakdown_by_customer(start_dt, end_dt):
+    sql = """
+        SELECT c.CUSTOMER_ID, c.FULLNAME,
+               COUNT(o.ORDER_ID) AS Orders,
+               COALESCE(SUM(o.TOTAL_PRICE), 0) AS Revenue
+        FROM CUSTOMER c
+        LEFT JOIN [ORDER] o ON o.CUSTOMER_ID = c.CUSTOMER_ID
+            AND o.DATE_CREATED BETWEEN ? AND ?
+        GROUP BY c.CUSTOMER_ID, c.FULLNAME
+        HAVING COUNT(o.ORDER_ID) > 0
+        ORDER BY Revenue DESC
+    """
+    rows = getallprocess(sql, (start_dt, end_dt))
+    results = []
+    for r in rows:
+        cust_id = r['CUSTOMER_ID']
+        other = sum_other_sales(start_dt, end_dt, cust_id)
+        revenue = float(r['Revenue']) + other
+        results.append({
+            'CUSTOMER_ID': cust_id,
+            'FULLNAME': r['FULLNAME'],
+            'Orders': r['Orders'],
+            'Revenue': float(r['Revenue']),
+            'OtherSales': other,
+            'COGS': 0.0,  
+            'Net': revenue  
+        })
+    return results
+
+# ORDER BREAKDOWN
+def breakdown_by_order(start_dt, end_dt, customer_id: int | None = None):
+    sql = """
+        SELECT o.ORDER_ID, c.FULLNAME, o.TOTAL_PRICE AS Revenue, o.DATE_CREATED
+        FROM [ORDER] o
+        JOIN CUSTOMER c ON c.CUSTOMER_ID = o.CUSTOMER_ID
+        WHERE o.DATE_CREATED BETWEEN ? AND ?
+    """
+    params = [start_dt, end_dt]
+    if customer_id:
+        sql += " AND o.CUSTOMER_ID = ?"
+        params.append(customer_id)
+    sql += " ORDER BY o.DATE_CREATED DESC"
+    rows = getallprocess(sql, tuple(params))
+    return [{
+        'ORDER_ID': r['ORDER_ID'],
+        'FULLNAME': r['FULLNAME'],
+        'Revenue': float(r['Revenue']),
+        'COGS': 0.0,
+        'Net': float(r['Revenue'])
+    } for r in rows]
     
 if __name__ == "__main__":
     initialize_database()
