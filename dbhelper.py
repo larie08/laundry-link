@@ -355,6 +355,41 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     '''
     return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
 
+def add_order(customer_id, orderitem_id, user_id, order_type, total_weight, total_load, total_price,
+              qr_code, receipt_path, order_note, order_status, payment_method, payment_status, pickup_schedule):
+    sql = '''
+    INSERT INTO [ORDER] (
+        CUSTOMER_ID, ORDERITEM_ID, USER_ID, ORDER_TYPE, TOTAL_WEIGHT, TOTAL_LOAD, TOTAL_PRICE,
+        QR_CODE, RECEIPT_PATH, ORDER_NOTE, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS, PICKUP_SCHEDULE,
+        DATE_CREATED, DATE_UPDATED
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
+    '''
+    params = (
+        customer_id, orderitem_id, user_id, order_type, total_weight, total_load, total_price,
+        qr_code, receipt_path, order_note, order_status, payment_method, payment_status, pickup_schedule
+    )
+    return postprocess(sql, params)
+
+# pang check ra nako ni if na insert sa order table
+def add_order_with_orderitem_id(orderitem_id: int) -> bool:
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        sql = '''
+        INSERT INTO [ORDER] (ORDERITEM_ID)
+        VALUES (?)
+        '''
+        cursor.execute(sql, (orderitem_id,))
+        conn.commit()
+        success = cursor.rowcount > 0
+        cursor.close()
+        conn.close()
+        print(f"Inserted ORDERITEM_ID={orderitem_id} into ORDER table, success={success}")
+        return success
+    except Exception as e:
+        print(f"Error inserting ORDERITEM_ID into ORDER table: {e}")
+        return False
+
 # INCOME STATEMENT AGGREGATION HELPERS (WEEKLY / MONTHLY / YEARLY)
 # ADD EXPENSES
 def add_expense(category: str, scope: str, amount: float, date_incurred=None, customer_id: int | None = None) -> bool:
