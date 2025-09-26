@@ -81,10 +81,17 @@ def submit_others():
             price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
             add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
 
+    session['orderitem_id'] = orderitem_id  # Save to session
     return redirect(url_for('payments'))
 
-@app.route('/payments')
+@app.route('/payments', methods=['GET', 'POST'])
 def payments():
+    if request.method == 'POST':
+        orderitem_id = session.get('orderitem_id')
+        print(f"orderitem_id to insert: {orderitem_id}")  # Debug print
+        add_order_with_orderitem_id(orderitem_id)
+        session.pop('orderitem_id', None)
+        return redirect(url_for('home'))
     return render_template('payments.html')
 
 
@@ -1065,4 +1072,3 @@ def download_customer_report(format):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
