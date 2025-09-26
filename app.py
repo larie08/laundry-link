@@ -960,5 +960,43 @@ def download_customer_report(format):
     else:
         return "Invalid format", 400
 
+# Income Statement route (no separate function definition)
+app.add_url_rule(
+    '/income_statement',
+    'income_statement',
+    lambda: render_template(
+        'admin_incostate_report.html',
+        view='weekly',
+        start='',
+        end='',
+        customer_id=None,
+        customers=[],
+        tax_rate=0.12,
+        detergents_consumables=0.0,
+        utilities_direct=0.0,
+        direct_labor=0.0,
+        salaries_wages=0.0,
+        rent_utilities=0.0,
+        maintenance_repairs=0.0,
+        depreciation=0.0,
+        admin_misc=0.0,
+        other_income_expense=0.0,
+        period_label='This period',
+        service_sales=0.0,
+        other_sales=0.0,
+        net_sales=0.0,
+        total_cogs=0.0,
+        total_opex=0.0,
+        gross_profit=0.0,
+        operating_income=0.0,
+        income_before_tax=0.0,
+        income_tax_amount=0.0,
+        net_income=0.0,
+        customers_breakdown=[],
+        orders_breakdown=[]
+    ),
+    methods=['GET']
+)
+
 if __name__ == '__main__':
     app.run(debug=True)
