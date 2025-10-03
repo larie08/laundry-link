@@ -94,22 +94,28 @@
 
                 <div class="payment-section">
                 <h3>Mode of Payment</h3>
-                <div class="payment-methods">
-                    <label class="payment-method" data-method="cash">
-                        <input type="radio" name="payment_mode" value="cash" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment" onclick="openCashModal()">
-                    </label>
-                    
-                    <label class="payment-method" data-method="gcash">
-                        <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
-                    </label>
+                <form method="POST" action="{{ url_for('payments') }}">
+                    <div class="payment-methods">
+                        <label class="payment-method" data-method="cash">
+                            <input type="radio" name="payment_mode" value="cash" class="payment-radio">
+                            <!-- Change img to button for cash -->
+                            <button type="submit" style="background:none;border:none;padding:0;">
+                                <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
+                            </button>
+                        </label>
+                        
+                        <label class="payment-method" data-method="gcash">
+                            <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
+                            <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
+                        </label>
 
-                    <label class="payment-method" data-method="maya">
-                        <input type="radio" name="payment_mode" value="maya" class="payment-radio">
-                        <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
-                    </label>
-                </div>
+                        <label class="payment-method" data-method="maya">
+                            <input type="radio" name="payment_mode" value="maya" class="payment-radio">
+                            <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
+                        </label>
+                    </div>
+                    <input type="hidden" id="selected_payment_method" name="payment_method" value="cash">
+                </form>
                 </div>
 
                 <!-- GCash QR Modal -->
@@ -138,8 +144,6 @@
                     </div>
                 </div>
             </div>
-            
-            <input type="hidden" id="selected_payment_method" name="payment_method" value="">
         </div>
         </body>
         <script>

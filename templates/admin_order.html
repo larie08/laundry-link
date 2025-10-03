@@ -77,6 +77,33 @@
                         </a>
                     </li>
                 </ul>
+                <!-- REPORTS -->
+                <div class="section-title w3-padding w3-text-gray">Reports</div>
+                <ul class="w3-margin-left">
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('admin_order_report')}}">
+                            <span>Order Reports</span>
+                        </a>
+                    </li>
+
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('inventory_report') }}">
+                            <span>Inventory Reports</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="#">
+                            <span>Income Statement</span>
+                        </a>
+                    </li>
+                    
+                    <li class="w3-padding w3-bar-item w3-button">
+                        <a href="{{ url_for('customer_report') }}">
+                            <span>Customer Reports</span>
+                        </a>
+                    </li>
+                </ul>
             </nav>
         </aside>
         

@@ -151,8 +151,14 @@ def submit_others():
 
     return redirect(url_for('payments'))
 
-@app.route('/payments')
+@app.route('/payments', methods=['GET', 'POST'])
 def payments():
+    if request.method == 'POST':
+        orderitem_id = session.get('orderitem_id')
+        print(f"orderitem_id to insert: {orderitem_id}")  # Debug print
+        add_order_with_orderitem_id(orderitem_id)
+        session.pop('orderitem_id', None)
+        return redirect(url_for('home'))
     return render_template('payments.html')
 
 
@@ -697,6 +703,8 @@ def download_inventory_report(format):
             return send_file(zip_buffer, download_name=f"{filename}.zip", as_attachment=True, mimetype='application/zip')
     else:
         return "Invalid format", 400
+     
+
 
 @app.route('/customer_report')
 def customer_report():
@@ -1021,4 +1029,3 @@ def download_customer_report(format):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
