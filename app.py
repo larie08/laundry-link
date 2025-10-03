@@ -63,6 +63,22 @@ def submit_others():
     iron = request.form.get('iron') == '1'
     fold = request.form.get('fold') == '1'
     priority = request.form.get('priority') == '1'
+    
+    # Get order note and pickup schedule from hidden inputs
+    order_note = request.form.get('order_note', '').strip()
+    pickup_date = request.form.get('pickup_date', '').strip()
+    pickup_time = request.form.get('pickup_time', '').strip()
+    
+    # Combine pickup date and time into SQL datetime format
+    pickup_schedule = None
+    if pickup_date and pickup_time:
+        pickup_schedule = f"{pickup_date} {pickup_time}:00"
+    elif pickup_date:
+        pickup_schedule = f"{pickup_date} 00:00:00"
+    
+    # If order_note is empty, set to None for database
+    if not order_note:
+        order_note = None
 
     # Insert into ORDER_ITEM
     orderitem_id = add_order_item(own_detergent, own_fabcon, iron, fold, priority)
@@ -80,6 +96,58 @@ def submit_others():
             qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
             price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
             add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
+
+    # Get the last customer (most recently added)
+    customers = get_all_customers()
+    if not customers:
+        flash('No customer found. Please start from the beginning.')
+        return redirect(url_for('contact'))
+    
+    last_customer = customers[-1]  # Get most recent customer
+    customer_id = last_customer['CUSTOMER_ID']
+    
+    # Calculate totals (you may need to adjust this based on your pricing logic)
+    total_price = 0.0
+    
+    # Add detergent costs
+    if not own_detergent:
+        for det_id in detergent_ids:
+            qty = int(request.form.get(f'detergent_qty_{det_id}', 1))
+            price = float(request.form.get(f'detergent_price_{det_id}', 0))
+            total_price += qty * price
+    
+    # Add fabcon costs
+    if not own_fabcon:
+        for fab_id in fabcon_ids:
+            qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
+            price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
+            total_price += qty * price
+    
+    # Add additional service costs
+    if iron:
+        total_price += 70.00
+    if fold:
+        total_price += 50.00
+    if priority:
+        total_price += 50.00
+    
+    # Create the ORDER record
+    order_id = add_order(
+        customer_id=customer_id,
+        orderitem_id=orderitem_id,
+        user_id=session.get('user_id', 1),  # Default to user 1 if no staff logged in
+        order_type='Walk-in',
+        total_weight=0.0,  # You'll need to get this from weight page
+        total_load=0,      # You'll need to get this from weight page
+        total_price=total_price,
+        order_note=order_note,
+        pickup_schedule=pickup_schedule
+    )
+    
+    # Store in session for payments page
+    session['order_id'] = order_id
+    session['customer_id'] = customer_id
+    session['total_price'] = total_price
 
     return redirect(url_for('payments'))
 

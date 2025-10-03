@@ -354,6 +354,37 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     VALUES (?, ?, ?, ?)
     '''
     return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
+
+# Add this function to dbhelper.py after the add_orderitem_fabcon function
+
+def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str, 
+              total_weight: float, total_load: int, total_price: float, 
+              order_note: str = None, pickup_schedule: str = None,
+              order_status: str = 'Pending', payment_method: str = None, 
+              payment_status: str = 'Unpaid') -> int:
+    
+    sql = '''
+    INSERT INTO [ORDER] (
+        CUSTOMER_ID, ORDERITEM_ID, USER_ID, ORDER_TYPE, 
+        TOTAL_WEIGHT, TOTAL_LOAD, TOTAL_PRICE, 
+        ORDER_NOTE, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS,
+        PICKUP_SCHEDULE, DATE_CREATED, DATE_UPDATED
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
+    '''
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(sql, (
+        customer_id, orderitem_id, user_id, order_type,
+        total_weight, total_load, total_price,
+        order_note, order_status, payment_method, payment_status,
+        pickup_schedule
+    ))
+    conn.commit()
+    order_id = cursor.execute('SELECT @@IDENTITY').fetchone()[0]
+    cursor.close()
+    conn.close()
+    return order_id
     
 if __name__ == "__main__":
     initialize_database()
