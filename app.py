@@ -28,6 +28,10 @@ def service_type():
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    order_type = request.args.get("order_type") 
+    if order_type:
+        session['order_type'] = order_type  
+
     if request.method == 'POST':
         fullname = request.form['name']
         phone_number = request.form['contact']
@@ -36,12 +40,14 @@ def contact():
         
         if success:
             flash('Customer added successfully!')
-            return redirect(url_for('weight_laundry'))  # go to next step
+            return redirect(url_for('weight_laundry'))
         else:
             flash('An error occurred. Please try again.')
             return redirect(url_for('contact'))
 
-    return render_template('contact.html')
+    return render_template('contact.html', order_type=session.get('order_type'))
+
+
 
 @app.route('/weight_laundry', methods=['GET'])
 def weight_laundry():
@@ -136,7 +142,7 @@ def submit_others():
         customer_id=customer_id,
         orderitem_id=orderitem_id,
         user_id=session.get('user_id', 1),  # Default to user 1 if no staff logged in
-        order_type='Walk-in',
+        order_type = session.get('order_type'),
         total_weight=0.0,  # You'll need to get this from weight page
         total_load=0,      # You'll need to get this from weight page
         total_price=total_price,
