@@ -5,8 +5,8 @@ import pyodbc
 # DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
 
 # DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-SERVER = 'DESKTOP-EPCAAU1\\SQLEXPRESS' 
-DATABASE = 'LAUNDRYLINK'         
+SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' 
+DATABASE = 'LAUNDRYLINK_DB'         
 
 # SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' ==lars
 
@@ -355,38 +355,37 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     '''
     return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
 
-def add_order(customer_id, orderitem_id, user_id, order_type, total_weight, total_load, total_price,
-              qr_code, receipt_path, order_note, order_status, payment_method, payment_status, pickup_schedule):
+# Add this function to dbhelper.py after the add_orderitem_fabcon function
+
+def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str, 
+              total_weight: float, total_load: int, total_price: float, 
+              order_note: str = None, pickup_schedule: str = None,
+              order_status: str = 'Pending', payment_method: str = None, 
+              payment_status: str = 'Unpaid') -> int:
+    
     sql = '''
     INSERT INTO [ORDER] (
-        CUSTOMER_ID, ORDERITEM_ID, USER_ID, ORDER_TYPE, TOTAL_WEIGHT, TOTAL_LOAD, TOTAL_PRICE,
-        QR_CODE, RECEIPT_PATH, ORDER_NOTE, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS, PICKUP_SCHEDULE,
-        DATE_CREATED, DATE_UPDATED
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
-    '''
-    params = (
-        customer_id, orderitem_id, user_id, order_type, total_weight, total_load, total_price,
-        qr_code, receipt_path, order_note, order_status, payment_method, payment_status, pickup_schedule
+        CUSTOMER_ID, ORDERITEM_ID, USER_ID, ORDER_TYPE, 
+        TOTAL_WEIGHT, TOTAL_LOAD, TOTAL_PRICE, 
+        ORDER_NOTE, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS,
+        PICKUP_SCHEDULE, DATE_CREATED, DATE_UPDATED
     )
-    return postprocess(sql, params)
-
-# pang check ra nako ni if na insert sa order table
-def add_order_with_orderitem_id(orderitem_id: int) -> bool:
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        sql = '''
-        INSERT INTO [ORDER] (ORDERITEM_ID)
-        VALUES (?)
-        '''
-        cursor.execute(sql, (orderitem_id,))
-        conn.commit()
-        success = cursor.rowcount > 0
-        cursor.close()
-        conn.close()
-        print(f"Inserted ORDERITEM_ID={orderitem_id} into ORDER table, success={success}")
-        return success
-    except Exception as e:
-        print(f"Error inserting ORDERITEM_ID into ORDER table: {e}")
-        return False
-
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
+    '''
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(sql, (
+        customer_id, orderitem_id, user_id, order_type,
+        total_weight, total_load, total_price,
+        order_note, order_status, payment_method, payment_status,
+        pickup_schedule
+    ))
+    conn.commit()
+    order_id = cursor.execute('SELECT @@IDENTITY').fetchone()[0]
+    cursor.close()
+    conn.close()
+    return order_id
+    
+if __name__ == "__main__":
+    initialize_database()
+    print("Connected to SQL Server successfully.")
