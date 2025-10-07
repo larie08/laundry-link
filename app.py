@@ -49,8 +49,14 @@ def contact():
 
 
 
-@app.route('/weight_laundry', methods=['GET'])
+@app.route('/weight_laundry', methods=['GET', 'POST'])
 def weight_laundry():
+    if request.method == 'POST':
+        weight = float(request.form.get('weight', 0))
+        total_load = int(request.form.get('total_load', 0))
+        session['total_weight'] = weight
+        session['total_load'] = total_load
+        return redirect(url_for('other_services'))
     return render_template('weight.html')
 
 @app.route('/other_services')
@@ -112,39 +118,46 @@ def submit_others():
     last_customer = customers[-1]  # Get most recent customer
     customer_id = last_customer['CUSTOMER_ID']
     
+    # Get weight and load from session (move this up before using total_load)
+    total_weight = session.get('total_weight', 0.0)
+    total_load = session.get('total_load', 0)
+
     # Calculate totals (you may need to adjust this based on your pricing logic)
     total_price = 0.0
-    
-    # Add detergent costs
+
+    # Load price (50 per load)
+    total_price += total_load * 50
+
+    # Detergent costs
     if not own_detergent:
         for det_id in detergent_ids:
             qty = int(request.form.get(f'detergent_qty_{det_id}', 1))
             price = float(request.form.get(f'detergent_price_{det_id}', 0))
             total_price += qty * price
-    
-    # Add fabcon costs
+
+    # Fabcon costs
     if not own_fabcon:
         for fab_id in fabcon_ids:
             qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
             price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
             total_price += qty * price
-    
-    # Add additional service costs
+
+    # Additional service costs
     if iron:
-        total_price += 70.00
-    if fold:
         total_price += 50.00
+    if fold:
+        total_price += 70.00
     if priority:
         total_price += 50.00
     
-    # Create the ORDER record
+    # Create the ORDER record with null user_id
     order_id = add_order(
         customer_id=customer_id,
         orderitem_id=orderitem_id,
-        user_id=session.get('user_id', 1),  # Default to user 1 if no staff logged in
-        order_type = session.get('order_type'),
-        total_weight=0.0,  # You'll need to get this from weight page
-        total_load=0,      # You'll need to get this from weight page
+        user_id=None,
+        order_type=session.get('order_type'),
+        total_weight=total_weight,
+        total_load=total_load,
         total_price=total_price,
         order_note=order_note,
         pickup_schedule=pickup_schedule
@@ -160,12 +173,54 @@ def submit_others():
 @app.route('/payments', methods=['GET', 'POST'])
 def payments():
     if request.method == 'POST':
-        orderitem_id = session.get('orderitem_id')
-        print(f"orderitem_id to insert: {orderitem_id}")  # Debug print
-        add_order_with_orderitem_id(orderitem_id)
-        session.pop('orderitem_id', None)
+        # Handle payment submission
+        order_id = session.get('order_id')
+        payment_method = request.form.get('payment_method')
+        
+        # Update order payment status
+        update_order_payment(order_id, payment_method, 'PAID')
         return redirect(url_for('home'))
-    return render_template('payments.html')
+    
+    # Get latest customer
+    latest_customer = get_latest_customer()
+    if not latest_customer:
+        flash('No customer found. Please add customer details first.')
+        return redirect(url_for('contact'))
+    
+    # Get order details from session
+    order_id = session.get('order_id')
+    
+    # Get order data
+    order = get_order_by_id(order_id)
+    if not order:
+        flash('Order not found.')
+        return redirect(url_for('home'))
+        
+    orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
+    
+    # Calculate price per load (8kg = 1 load at ₱50)
+    load_price = order['TOTAL_LOAD'] * 50.00
+    
+    # Get detergents and fabric conditioners from junction tables
+    orderitem_detergents = []
+    if not orderitem['CUSTOMER_OWN_DETERGENT']:
+        orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
+    
+    orderitem_fabcons = []
+    if not orderitem['CUSTOMER_OWN_FABCON']:
+        orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
+    
+    # Format the current date
+    current_date = datetime.now().strftime('%B %d, %Y')
+    
+    return render_template('payments.html',
+                         order=order,
+                         customer=latest_customer,
+                         orderitem=orderitem,
+                         load_price=load_price,
+                         orderitem_detergents=orderitem_detergents,
+                         orderitem_fabcons=orderitem_fabcons,
+                         current_date=current_date)
 
 
 

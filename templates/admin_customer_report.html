@@ -14,10 +14,10 @@
 <body>
     <div class="container">
         <!-- SIDEBAR -->
-        <aside class="w3-sidebar w3-bar-block w3-card-2 width">
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
             <!-- LOGO -->
             <div class="w3-center w3-bar-item logo">
-                <img src="../static/images/logo.jpg" alt="Logo" class="logo-img">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
             </div>
             
             <!-- MAIN TITLE (DASHBOARD)-->
@@ -89,7 +89,7 @@
                         </a>
                     </li>
                     
-                    <li class="w3-padding w3-bar-item w3-button w3-blue">
+                    <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
                             <span>Customer Reports</span>
                         </a>

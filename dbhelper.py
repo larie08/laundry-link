@@ -1,12 +1,12 @@
 import pyodbc
 
 # # # # SQL Server connection setup(I comment lang pls)-cedyy
-# SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
-# DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
+SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
+DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
 
 # DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' 
-DATABASE = 'LAUNDRYLINK_DB'         
+# SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' 
+# DATABASE = 'LAUNDRYLINK_DB'         
 
 # SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' ==lars
 
@@ -97,7 +97,7 @@ def initialize_database():
         ORDER_ID INT PRIMARY KEY IDENTITY(1,1),
         CUSTOMER_ID INT FOREIGN KEY REFERENCES CUSTOMER(CUSTOMER_ID),
         ORDERITEM_ID INT FOREIGN KEY REFERENCES ORDER_ITEM(ORDERITEM_ID),
-        USER_ID INT FOREIGN KEY REFERENCES [USER](USER_ID),
+        USER_ID INT FOREIGN KEY REFERENCES [USER](USER_ID) NULL,  # Added NULL here
         ORDER_TYPE VARCHAR(50),
         TOTAL_WEIGHT DECIMAL(6,2),
         TOTAL_LOAD INT,
@@ -385,6 +385,55 @@ def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str
     cursor.close()
     conn.close()
     return order_id
+
+def get_order_by_id(order_id):
+    sql = "SELECT * FROM [ORDER] WHERE ORDER_ID = ?"
+    result = getallprocess(sql, (order_id,))
+    return result[0] if result else None
+
+def get_orderitem_by_id(orderitem_id):
+    sql = "SELECT * FROM ORDER_ITEM WHERE ORDERITEM_ID = ?"
+    result = getallprocess(sql, (orderitem_id,))
+    return result[0] if result else None
+
+def get_latest_customer():
+    """Get the most recently added customer"""
+    sql = """
+        SELECT TOP 1 *
+        FROM CUSTOMER
+        ORDER BY CUSTOMER_ID DESC
+    """
+    result = getallprocess(sql)
+    return result[0] if result else None
+
+def get_orderitem_detergents(orderitem_id):
+    sql = """
+        SELECT d.DETERGENT_NAME, od.QUANTITY, od.UNIT_PRICE,
+               (od.QUANTITY * od.UNIT_PRICE) as total_price
+        FROM ORDERITEM_DETERGENT od
+        JOIN DETERGENT d ON od.DETERGENT_ID = d.DETERGENT_ID
+        WHERE od.ORDERITEM_ID = ?
+    """
+    return getallprocess(sql, (orderitem_id,))
+
+def get_orderitem_fabcons(orderitem_id):
+    sql = """
+        SELECT f.FABCON_NAME, fc.QUANTITY, fc.UNIT_PRICE,
+               (fc.QUANTITY * fc.UNIT_PRICE) as total_price
+        FROM ORDERITEM_FABCON fc
+        JOIN FABCON f ON fc.FABCON_ID = f.FABCON_ID
+        WHERE fc.ORDERITEM_ID = ?
+    """
+    return getallprocess(sql, (orderitem_id,))
+
+def update_order_payment(order_id, payment_method, payment_status):
+    sql = """
+        UPDATE [ORDER]
+        SET PAYMENT_METHOD = ?, PAYMENT_STATUS = ?, DATE_UPDATED = GETDATE()
+        WHERE ORDER_ID = ?
+    """
+    return postprocess(sql, (payment_method, payment_status, order_id))
+
     
 if __name__ == "__main__":
     initialize_database()
