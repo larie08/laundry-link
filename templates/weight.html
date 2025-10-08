@@ -36,23 +36,31 @@
             <div class="content-container">
                 <div class="v93_144">
                     <div class="v95_13"></div>
-                    <div class="weight-info">
-                    <input type="text" id="weight_label_input" class="v95_24" name="weight_label" value="8 kg = 1 load" title="weight" placeholder="e.g. 8 kg = 1 load">
-                    <input type="number" id="price_input" class="v95_36" name="price" step="0.01" placeholder="Enter price" title="price">
-                </div>
-
-                    
-                    <!-- Navigation buttons inside container -->
-                    <div class="button-container">
-                        <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
-                            <span class="v103_10">Previous</span>
-                        </a>
-                        <a href="{{ url_for('other_services') }}" class="v103_7" style="text-decoration: none;">
-                            <span class="v103_8">Next</span>
-                        </a>
-                    </div>
+                    <!-- Weight input form -->
+                    <form method="POST" action="{{ url_for('weight_laundry') }}" id="weightForm">
+                        <div class="weight-info">
+                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" placeholder="Enter total weight (kg)" required>
+                            <input type="text" id="total_load" class="v95_36" name="total_load" placeholder="Total load (auto)" readonly>
+                        </div>
+                        <div class="button-container">
+                            <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
+                                <span class="v103_10">Previous</span>
+                            </a>
+                            <button type="submit" class="v103_7" style="text-decoration: none;">
+                                <span class="v103_8">Next</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+        <script>
+            // Calculate total load as user types
+            document.getElementById('weight_input').addEventListener('input', function() {
+                const weight = parseFloat(this.value) || 0;
+                const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
+                document.getElementById('total_load').value = totalLoad;
+            });
+        </script>
     </body>
 </html>
