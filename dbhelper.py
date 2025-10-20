@@ -1,440 +1,613 @@
-import pyodbc
+# BISAYA, TAGALOG UG ENGLISH NANING COMMENT PARA MAS MAKASABOT SI OKS OR KITANG TANAN HAHAHHAHAHAHHA 
+import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-# # # # SQL Server connection setup(I comment lang pls)-cedyy
-SERVER = 'LAPTOP-2E6VUSUM\\SQLEXPRESS' # Change this to your server name
-DATABASE = 'LAUNDRYLINK_DB'         # Change this to your database name
+# FIRBASE SDK CODE - DAPAT ADMIN ARI
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-# DO NOT DELETE THIS PLEASE, JUST COMMENT IT OUT ~~ ALEXA
-# SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' 
-# DATABASE = 'LAUNDRYLINK_DB'         
+# PLACEHOLDER PALANG NIS FIRESTORE CLIENT (LAZY INITIALIZATION)
+db = None
 
-# SERVER = 'DESKTOP-FI14OJ7\\SQLEXPRESS' ==lars
+# ARI NA JUD MAGSUGOD A TUNG HELPERS HAHHAHAH
+# GLOBAL FIRESTORE CLIENT 
+'''
+GAGI ING ANI MAN DIAY MAG COMMENT PARA DILI NA MAG TAGSA2x T_T
+    === FIREBASE_CREDENTIALS env var
+    === GOOGLE_APPLICATION_CREDENTIALS env var
+    === serviceAccountKey.json  ===== kani siya kay ako ray mo hatag ani nga file since gikuha ni nako sa akung firebase accountkeys 
+    === pero ma change ra jud ni siya depende kang kinsa jung firebase gamiton. - BY ALEXA
+'''
+# REQURE_DB
+def _require_db():
+    global db
+    if db is not None:
+        return
+    # INITIALIZATION OF FIREBASE ADMIN
+    if not firebase_admin._apps:
+        cred_path = os.getenv('FIREBASE_CREDENTIALS') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS') or 'serviceAccountKey.json'
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        else:
+            # IF DILI TA MAKA CONNECT SA CLOUD PLWEDE TA MO USE UG EMULATOR WHICH ALLOW US TO USE THE WEBSITE WITHOUT CREDENTIALS
+            if os.getenv('FIRESTORE_EMULATOR_HOST'):
+                firebase_admin.initialize_app()
+            else:
+                raise RuntimeError(
+                    "Firebase credentials not found. Set FIREBASE_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS to your serviceAccountKey.json, or place serviceAccountKey.json in project root."
+                )
+    # CREATE A CLIENT
+    db = firestore.client()
+
+# DEFAULT USERS 
+def _ensure_default_users():
+
+    # INITIALIZING THE FIRESTORE CLIENT
+    _require_db()
+
+    # REFERENCE TO USER COLLECTION IN THE FIRESTORE - GAMIT NAKO AKUNG ACCOUNT ARI - ALEXA
+    users_ref = db.collection('USER')
+    # MAO NI TABLE SA FIRESTORE LIKE COLLECTION ANG NAKA BUTANG 
+
+    # ADMIN ACCOUNT
+    admin_q = users_ref.where('USERNAME', '==', 'admin').limit(1).get()
+    if not admin_q:
+        transaction = db.transaction()
+        admin_id = _get_next_id(transaction, 'USER_ID')
+        users_ref.add({
+            'USER_ID': admin_id,
+            'USERNAME': 'admin',
+            'PASSWORD': 'admin123',
+            'ROLE': 'admin',
+            'FULLNAME': 'Administrator',
+            'DATE_CREATED': _now(),
+        })
+
+    # STAFF ACCOUNT
+    staff_q = users_ref.where('USERNAME', '==', 'staff').limit(1).get()
+    if not staff_q:
+        transaction = db.transaction()
+        staff_id = _get_next_id(transaction, 'USER_ID')
+        users_ref.add({
+            'USER_ID': staff_id,
+            'USERNAME': 'staff',
+            'PASSWORD': 'staff123',
+            'ROLE': 'staff',
+            'FULLNAME': 'Staff',
+            'DATE_CREATED': _now(),
+        })
+
+# HELPER FUNCTIONS 
+def _now() -> datetime:
+    """Return current timestamp as Python datetime (Firestore stores natively)."""
+    return datetime.now()
+
+def _get_counter_doc():
+    """Return reference to the single counters document we use for IDs."""
+    _require_db()
+    return db.collection('counters').document('global')
+
+@firestore.transactional
+def _get_next_id(transaction: firestore.Transaction, key: str) -> int:
+    """Atomically increment and return the next integer for the given key.
+
+    Example keys: CUSTOMER_ID, USER_ID, ORDER_ID, etc.
+    """
+    counter_ref = _get_counter_doc()
+    snapshot = counter_ref.get(transaction=transaction)
+    data = snapshot.to_dict() or {}
+    next_val = int(data.get(key, 0)) + 1
+    transaction.set(counter_ref, {key: next_val}, merge=True)
+    return next_val
 
 
-def get_connection():
-    conn_str = (
-        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-        f"SERVER={SERVER};"
-        f"DATABASE={DATABASE};"
-        f"Trusted_Connection=yes;"
-    )
-    return pyodbc.connect(conn_str)
+# MAO NI ANG CODE PAR
+# KANI ARI NGA CODE KAY PARA NI DILI MAUSAB ATUNG CODE SA app.py SINCE GI CONVERT MAN NATO ATUNG CODE FROM SQL TO FIREBASE DAPAT JUD USBON TANAN HASTA ANG app.py 
+# BUT, SINCE DBHELPER PAMAN ATUNG GI USAB E AS-IS LANG SA NI ARI. 
+# TO CONCLUDE, DO NOT CHANGE OR REMOVE THIS!!!!
+def _as_sql_row(data: Dict[str, Any]) -> Dict[str, Any]:
+    return data
+
+def _ensure_junction_collections():
+    """Junction collections are now created, nothing to do."""
+    pass
 
 def initialize_database():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # CUSTOMER table
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CUSTOMER' AND xtype='U')
-    CREATE TABLE CUSTOMER (
-        CUSTOMER_ID INT PRIMARY KEY IDENTITY(1,1),
-        FULLNAME VARCHAR(100),
-        PHONE_NUMBER VARCHAR(20),
-        DATE_CREATED DATETIME
-    )
-    ''')
-
-    # USER table
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='USER' AND xtype='U')
-    CREATE TABLE [USER] (
-        USER_ID INT PRIMARY KEY IDENTITY(1,1),
-        USERNAME VARCHAR(50),
-        PASSWORD VARCHAR(255),
-        ROLE VARCHAR(20),
-        FULLNAME VARCHAR(100),
-        DATE_CREATED DATETIME
-    )
-    ''')
-
-    # ORDER_ITEM table (removed PICKUP_SCHEDULE and ORDER_NOTE columns)
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ORDER_ITEM' AND xtype='U')
-    CREATE TABLE ORDER_ITEM (
-        ORDERITEM_ID INT PRIMARY KEY IDENTITY(1,1),
-        CUSTOMER_OWN_DETERGENT BIT,
-        CUSTOMER_OWN_FABCON BIT,
-        IRON BIT,
-        FOLD_CLOTHES BIT,
-        PRIORITIZE_ORDER BIT,
-        DATE_CREATED DATETIME
-    )
-    ''')
-
-    # DETERGENT table
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DETERGENT' AND xtype='U')
-    CREATE TABLE DETERGENT (
-        DETERGENT_ID INT PRIMARY KEY IDENTITY(1,1),
-        DETERGENT_NAME VARCHAR(100),
-        DETERGENT_PRICE DECIMAL(10,2),
-        QTY SMALLINT,
-        DATE_CREATED DATETIME,
-        DATE_UPDATED DATETIME,
-        IMAGE_FILENAME VARCHAR(255) NULL
-    )
-    ''')
-
-    # FABCON table
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FABCON' AND xtype='U')
-    CREATE TABLE FABCON (
-        FABCON_ID INT PRIMARY KEY IDENTITY(1,1),
-        FABCON_NAME VARCHAR(100),
-        FABCON_PRICE DECIMAL(10,2),
-        QTY SMALLINT,
-        DATE_CREATED DATETIME,
-        DATE_UPDATED DATETIME,
-        IMAGE_FILENAME VARCHAR(255) NULL
-    )
-    ''')
-
-    # ORDER table
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ORDER' AND xtype='U')
-    CREATE TABLE [ORDER] (
-        ORDER_ID INT PRIMARY KEY IDENTITY(1,1),
-        CUSTOMER_ID INT FOREIGN KEY REFERENCES CUSTOMER(CUSTOMER_ID),
-        ORDERITEM_ID INT FOREIGN KEY REFERENCES ORDER_ITEM(ORDERITEM_ID),
-        USER_ID INT FOREIGN KEY REFERENCES [USER](USER_ID) NULL,  # Added NULL here
-        ORDER_TYPE VARCHAR(50),
-        TOTAL_WEIGHT DECIMAL(6,2),
-        TOTAL_LOAD INT,
-        TOTAL_PRICE DECIMAL(10,2),
-        QR_CODE TEXT,
-        RECEIPT_PATH TEXT,
-        ORDER_NOTE TEXT,
-        ORDER_STATUS VARCHAR(30),
-        PAYMENT_METHOD VARCHAR(30),
-        PAYMENT_STATUS VARCHAR(30),
-        PICKUP_SCHEDULE DATETIME,
-        DATE_CREATED DATETIME DEFAULT GETDATE(),
-        DATE_UPDATED DATETIME DEFAULT GETDATE()
-    )
-    ''')
-
-    # ORDERITEM_DETERGENT (junction table)
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ORDERITEM_DETERGENT' AND xtype='U')
-    CREATE TABLE ORDERITEM_DETERGENT (
-        ORDERITEM_ID INT,
-        DETERGENT_ID INT,
-        QUANTITY INT,
-        UNIT_PRICE DECIMAL(10,2),
-        PRIMARY KEY (ORDERITEM_ID, DETERGENT_ID),
-        FOREIGN KEY (ORDERITEM_ID) REFERENCES ORDER_ITEM(ORDERITEM_ID),
-        FOREIGN KEY (DETERGENT_ID) REFERENCES DETERGENT(DETERGENT_ID)
-    )
-    ''')
-
-    # ORDERITEM_FABCON (junction table)
-    cursor.execute('''
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ORDERITEM_FABCON' AND xtype='U')
-    CREATE TABLE ORDERITEM_FABCON (
-        ORDERITEM_ID INT,
-        FABCON_ID INT,
-        QUANTITY INT,
-        UNIT_PRICE DECIMAL(10,2),
-        PRIMARY KEY (ORDERITEM_ID, FABCON_ID),
-        FOREIGN KEY (ORDERITEM_ID) REFERENCES ORDER_ITEM(ORDERITEM_ID),
-        FOREIGN KEY (FABCON_ID) REFERENCES FABCON(FABCON_ID)
-    )
-    ''')
-    
-    # ADMIN_USER table
-    cursor.execute('''
-        IF NOT EXISTS (SELECT * FROM [USER] WHERE USERNAME='admin')
-        INSERT INTO [USER] (USERNAME, PASSWORD, ROLE, FULLNAME, DATE_CREATED)
-        VALUES ('admin', 'admin123', 'admin', 'Administrator', GETDATE())
-    ''')
-
-    # STAFF_USER table
-    cursor.execute('''
-        IF NOT EXISTS (SELECT * FROM [USER] WHERE USERNAME='staff')
-        INSERT INTO [USER] (USERNAME, PASSWORD, ROLE, FULLNAME, DATE_CREATED)
-        VALUES ('staff', 'staff123', 'staff', 'Staff', GETDATE())
-    ''')
-
-    conn.commit()
-    conn.close()
-    print("Database tables initialized successfully.")
+    """Initialize Firestore and ensure default users exist."""
+    _require_db()
+    _ensure_default_users()
+    # No need to call _ensure_junction_collections anymore
+    print("Firebase initialized and default users ensured.")
 
 def postprocess(sql: str, params: tuple = ()) -> bool:
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(sql, params)
-        conn.commit()
-        return cursor.rowcount > 0
-    except Exception as e:
-        print(f"Database error: {e}")
-        return False
-    finally:
-        cursor.close()
-        conn.close()
+    """SQL helper kept for backward-compatibility (no-op under Firestore)."""
+    print("postprocess not supported under Firestore. Called with:", sql, params)
+    return False
 
 def getallprocess(sql: str, params: tuple = ()) -> list:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(sql, params)
-    columns = [column[0] for column in cursor.description]
-    results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-    cursor.close()
-    conn.close()
-    return results
+    """Very small SQL emulation for specific queries used in reports.
 
-# Customer management functions
+    Supported queries:
+      - Latest order for a customer (TOP 1 ... ORDER BY DATE_CREATED)
+      - Count orders per customer (SELECT COUNT(*))
+      - TOP 1 customer by CUSTOMER_ID
+    """
+    _require_db()
+    text = sql.strip().upper()
+    if 'FROM [ORDER]' in text and 'WHERE CUSTOMER_ID' in text and 'ORDER BY DATE_CREATED' in text:
+        customer_id = params[0]
+        direction = 'DESC' if 'DESC' in text else 'ASC'
+        orders = db.collection('ORDER').where('CUSTOMER_ID', '==', customer_id).order_by('DATE_CREATED', direction=firestore.Query.DESCENDING if direction == 'DESC' else firestore.Query.ASCENDING).limit(1).get()
+        out: List[Dict[str, Any]] = []
+        for doc in orders:
+            d = doc.to_dict()
+            out.append({'ORDER_ID': d.get('ORDER_ID'), 'ORDER_STATUS': d.get('ORDER_STATUS'), 'PAYMENT_STATUS': d.get('PAYMENT_STATUS')})
+        return out
+    if 'SELECT COUNT(*) AS TOTAL_ORDERS' in text and 'FROM [ORDER]' in text and 'WHERE CUSTOMER_ID' in text:
+        customer_id = params[0]
+        orders = db.collection('ORDER').where('CUSTOMER_ID', '==', customer_id).get()
+        return [{'total_orders': len(orders)}]
+    if text.startswith('SELECT TOP 1 * FROM CUSTOMER'):
+        docs = db.collection('CUSTOMER').order_by('CUSTOMER_ID', direction=firestore.Query.DESCENDING).limit(1).get()
+        return [doc.to_dict() for doc in docs]
+    print('getallprocess: unsupported SQL under Firestore:', sql)
+    return []
+
+# ==================================================
+# CUSTOMER TABLE
+# - add_customer(): create new customer
+# - get_all_customers(): list customers (ORDER BY FULLNAME)
+# - get_customer_by_id(): fetch single customer
+# - update_customer(): edit customer info
+# - delete_customer(): remove customer
+# ==================================================
 def add_customer(fullname: str, phone_number: str) -> bool:
-    sql = '''
-    INSERT INTO CUSTOMER (FULLNAME, PHONE_NUMBER, DATE_CREATED)
-    VALUES (?, ?, GETDATE())
-    '''
-    return postprocess(sql, (fullname, phone_number))
+    """Create a new customer and assign an incremental CUSTOMER_ID."""
+    _require_db()
+    transaction = db.transaction()
+    customer_id = _get_next_id(transaction, 'CUSTOMER_ID')
+    db.collection('CUSTOMER').add({
+        'CUSTOMER_ID': customer_id,
+        'FULLNAME': fullname,
+        'PHONE_NUMBER': phone_number,
+        'DATE_CREATED': _now(),
+    })
+    return True
 
 def get_all_customers() -> list:
-    sql = "SELECT * FROM CUSTOMER ORDER BY FULLNAME"
-    return getallprocess(sql)
+    """Return all customers ordered by FULLNAME (like SQL ORDER BY)."""
+    _require_db()
+    docs = db.collection('CUSTOMER').order_by('FULLNAME').get()
+    return [_as_sql_row(doc.to_dict()) for doc in docs]
 
 def get_customer_by_id(customer_id: int) -> dict:
-    sql = "SELECT * FROM CUSTOMER WHERE CUSTOMER_ID=?"
-    result = getallprocess(sql, (customer_id,))
-    return result[0] if result else None
+    """Fetch a single customer by CUSTOMER_ID."""
+    _require_db()
+    docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def update_customer(customer_id: int, fullname: str, phone_number: str) -> bool:
-    sql = "UPDATE CUSTOMER SET FULLNAME=?, PHONE_NUMBER=? WHERE CUSTOMER_ID=?"
-    return postprocess(sql, (fullname, phone_number, customer_id))
+    """Update FULLNAME and PHONE_NUMBER for a customer."""
+    _require_db()
+    docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('CUSTOMER').document(docs[0].id).update({
+        'FULLNAME': fullname,
+        'PHONE_NUMBER': phone_number,
+    })
+    return True
 
 def delete_customer(customer_id: int) -> bool:
-    sql = "DELETE FROM CUSTOMER WHERE CUSTOMER_ID=?"
-    return postprocess(sql, (customer_id,))
+    """Delete a customer document by CUSTOMER_ID."""
+    _require_db()
+    docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('CUSTOMER').document(docs[0].id).delete()
+    return True
 
 def add_user(username: str, password: str, role: str, fullname: str) -> bool:
-    sql = '''
-    INSERT INTO [USER] (USERNAME, PASSWORD, ROLE, FULLNAME, DATE_CREATED)
-    VALUES (?, ?, ?, ?, GETDATE())
-    '''
-    return postprocess(sql, (username, password, role, fullname))
+    """Create a new user (admin or staff) with incremented USER_ID."""
+    _require_db()
+    transaction = db.transaction()
+    user_id = _get_next_id(transaction, 'USER_ID')
+    db.collection('USER').add({
+        'USER_ID': user_id,
+        'USERNAME': username,
+        'PASSWORD': password,
+        'ROLE': role,
+        'FULLNAME': fullname,
+        'DATE_CREATED': _now(),
+    })
+    return True
 
-# User management functions
+# ==================================================
+# USER TABLE
+# - add_user(): create new user (admin/staff)
+# - get_all_users(): list users
+# - get_user_by_id(): fetch single user
+# - update_user(): edit user info
+# - authenticate_user(): login helper
+# ==================================================
 def get_all_users() -> list:
-    return getallprocess("SELECT * FROM [USER] ORDER BY FULLNAME")
+    """Return all users ordered by FULLNAME."""
+    _require_db()
+    docs = db.collection('USER').order_by('FULLNAME').get()
+    return [doc.to_dict() for doc in docs]
 
 def get_user_by_id(user_id: int) -> dict:
-    result = getallprocess("SELECT * FROM [USER] WHERE USER_ID=?", (user_id,))
-    return result[0] if result else None
+    """Fetch a single user by USER_ID."""
+    _require_db()
+    docs = db.collection('USER').where('USER_ID', '==', user_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def update_user(user_id: int, username: str, password: str, role: str, fullname: str) -> bool:
-    sql = '''
-    UPDATE [USER]
-    SET USERNAME=?, PASSWORD=?, ROLE=?, FULLNAME=?
-    WHERE USER_ID=?
-    '''
-    return postprocess(sql, (username, password, role, fullname, user_id))
+    """Update user fields for an existing USER_ID."""
+    _require_db()
+    docs = db.collection('USER').where('USER_ID', '==', user_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('USER').document(docs[0].id).update({
+        'USERNAME': username,
+        'PASSWORD': password,
+        'ROLE': role,
+        'FULLNAME': fullname,
+    })
+    return True
 
 def authenticate_user(username: str, password: str) -> dict:
-    sql = "SELECT * FROM [USER] WHERE USERNAME=? AND PASSWORD=?"
-    result = getallprocess(sql, (username, password))
-    return result[0] if result else None
+    """Return the user dict if username/password match, else None.
 
-# Detergent management functions
+    We also auto-create default users if they don't exist yet (first run).
+    """
+    _require_db()
+    # Ensure default users exist (first-run convenience)
+    _ensure_default_users()
+    docs = db.collection('USER').where('USERNAME', '==', username).where('PASSWORD', '==', password).limit(1).get()
+    return docs[0].to_dict() if docs else None
+
+# ==================================================
+# DETERGENT TABLE
+# - add_detergent(): create detergent item
+# - update_detergent(): edit detergent
+# - delete_detergent(): remove detergent
+# - get_all_detergents(): list items
+# - get_detergent_by_id(): fetch single item
+# - search_detergents(): simple name/ID search
+# - get_detergent_total_value(): compute total value
+# ==================================================
 def add_detergent(name: str, price: float, qty: int, image_filename: str = None) -> bool:
-    sql = '''
-    INSERT INTO DETERGENT (DETERGENT_NAME, DETERGENT_PRICE, QTY, DATE_CREATED, DATE_UPDATED, IMAGE_FILENAME)
-    VALUES (?, ?, ?, GETDATE(), GETDATE(), ?)
-    '''
-    return postprocess(sql, (name, price, qty, image_filename))
+    """Add a detergent to inventory with auto-increment DETERGENT_ID."""
+    _require_db()
+    transaction = db.transaction()
+    det_id = _get_next_id(transaction, 'DETERGENT_ID')
+    now = _now()
+    db.collection('DETERGENT').add({
+        'DETERGENT_ID': det_id,
+        'DETERGENT_NAME': name,
+        'DETERGENT_PRICE': float(price),
+        'QTY': int(qty),
+        'DATE_CREATED': now,
+        'DATE_UPDATED': now,
+        'IMAGE_FILENAME': image_filename,
+    })
+    return True
 
 def update_detergent(detergent_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
-    sql = '''
-    UPDATE DETERGENT
-    SET DETERGENT_NAME=?, DETERGENT_PRICE=?, QTY=?, DATE_UPDATED=GETDATE(), IMAGE_FILENAME=?
-    WHERE DETERGENT_ID=?
-    '''
-    return postprocess(sql, (name, price, qty, image_filename, detergent_id))
+    """Update a detergent by DETERGENT_ID."""
+    _require_db()
+    docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('DETERGENT').document(docs[0].id).update({
+        'DETERGENT_NAME': name,
+        'DETERGENT_PRICE': float(price),
+        'QTY': int(qty),
+        'DATE_UPDATED': _now(),
+        'IMAGE_FILENAME': image_filename,
+    })
+    return True
 
 def delete_detergent(detergent_id: int) -> bool:
-    sql = "DELETE FROM DETERGENT WHERE DETERGENT_ID=?"
-    return postprocess(sql, (detergent_id,))
+    """Delete a detergent by DETERGENT_ID."""
+    _require_db()
+    docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('DETERGENT').document(docs[0].id).delete()
+    return True
 
 def get_all_detergents() -> list:
-    sql = 'SELECT * FROM DETERGENT ORDER BY DETERGENT_NAME'
-    return getallprocess(sql)
+    """Return all detergents ordered by name."""
+    _require_db()
+    docs = db.collection('DETERGENT').order_by('DETERGENT_NAME').get()
+    return [doc.to_dict() for doc in docs]
 
 def get_detergent_by_id(detergent_id: int) -> dict:
-    sql = "SELECT * FROM DETERGENT WHERE DETERGENT_ID=?"
-    result = getallprocess(sql, (detergent_id,))
-    return result[0] if result else None
+    """Fetch a detergent by DETERGENT_ID."""
+    _require_db()
+    docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def search_detergents(query: str) -> list:
-    sql = """
-        SELECT * FROM DETERGENT
-        WHERE DETERGENT_NAME LIKE ?
-           OR CAST(DETERGENT_ID AS VARCHAR) LIKE ?
-        ORDER BY DETERGENT_NAME
-    """
-    like_query = f'%{query}%'
-    return getallprocess(sql, (like_query, like_query))
+    """Search detergents by partial name or ID (simple client-side filter)."""
+    _require_db()
+    q = query.lower()
+    docs = db.collection('DETERGENT').get()
+    results = []
+    for doc in docs:
+        d = doc.to_dict()
+        if q in d.get('DETERGENT_NAME', '').lower() or q in str(d.get('DETERGENT_ID', '')):
+            results.append(d)
+    results.sort(key=lambda x: x.get('DETERGENT_NAME', ''))
+    return results
 
 def get_detergent_total_value() -> dict:
-    """Get the total value of detergents (quantity * price)"""
-    sql = "EXEC sp_CalculateDetergentTotalValue"
-    result = getallprocess(sql)
-    return result[0] if result else {'ItemType': 'Detergent', 'TotalValue': 0}
+    """Compute total inventory value for detergents (price * qty)."""
+    _require_db()
+    docs = db.collection('DETERGENT').get()
+    total = 0.0
+    for doc in docs:
+        d = doc.to_dict()
+        total += float(d.get('DETERGENT_PRICE', 0)) * int(d.get('QTY', 0))
+    return {'ItemType': 'Detergent', 'TotalValue': total}
 
-# Fabric Conditioner management functions
+# ==================================================
+# FABCON TABLE (Fabric Conditioner)
+# - add_fabric_conditioner(): create fabcon item
+# - update_fabric_conditioner(): edit fabcon
+# - delete_fabric_conditioner(): remove fabcon
+# - get_all_fabric_conditioners(): list items
+# - get_fabric_conditioner_by_id(): fetch single item
+# - search_fabric_conditioners(): simple name/ID search
+# - get_fabcon_total_value(): compute total value
+# ==================================================
 def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: str = None) -> bool:
-    sql = '''
-    INSERT INTO FABCON (FABCON_NAME, FABCON_PRICE, QTY, DATE_CREATED, DATE_UPDATED, IMAGE_FILENAME)
-    VALUES (?, ?, ?, GETDATE(), GETDATE(), ?)
-    '''
-    return postprocess(sql, (name, price, qty, image_filename))
+    """Add a fabric conditioner to inventory with auto-increment FABCON_ID."""
+    _require_db()
+    transaction = db.transaction()
+    fab_id = _get_next_id(transaction, 'FABCON_ID')
+    now = _now()
+    db.collection('FABCON').add({
+        'FABCON_ID': fab_id,
+        'FABCON_NAME': name,
+        'FABCON_PRICE': float(price),
+        'QTY': int(qty),
+        'DATE_CREATED': now,
+        'DATE_UPDATED': now,
+        'IMAGE_FILENAME': image_filename,
+    })
+    return True
 
 def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
-    sql = '''
-    UPDATE FABCON
-    SET FABCON_NAME=?, FABCON_PRICE=?, QTY=?, DATE_UPDATED=GETDATE(), IMAGE_FILENAME=?
-    WHERE FABCON_ID=?
-    '''
-    return postprocess(sql, (name, price, qty, image_filename, fabric_conditioner_id))
+    """Update a fabric conditioner by FABCON_ID."""
+    _require_db()
+    docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('FABCON').document(docs[0].id).update({
+        'FABCON_NAME': name,
+        'FABCON_PRICE': float(price),
+        'QTY': int(qty),
+        'DATE_UPDATED': _now(),
+        'IMAGE_FILENAME': image_filename,
+    })
+    return True
 
 def delete_fabric_conditioner(fabric_conditioner_id: int) -> bool:
-    sql = "DELETE FROM FABCON WHERE FABCON_ID=?"
-    return postprocess(sql, (fabric_conditioner_id,))
+    """Delete a fabric conditioner by FABCON_ID."""
+    _require_db()
+    docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('FABCON').document(docs[0].id).delete()
+    return True
 
 def get_all_fabric_conditioners() -> list:
-    sql = 'SELECT * FROM FABCON ORDER BY FABCON_NAME'
-    return getallprocess(sql)
+    """Return all fabric conditioners ordered by name."""
+    _require_db()
+    docs = db.collection('FABCON').order_by('FABCON_NAME').get()
+    return [doc.to_dict() for doc in docs]
 
 def get_fabric_conditioner_by_id(fabric_conditioner_id: int) -> dict:
-    sql = "SELECT * FROM FABCON WHERE FABCON_ID=?"
-    result = getallprocess(sql, (fabric_conditioner_id,))
-    return result[0] if result else None
+    """Fetch a fabric conditioner by FABCON_ID."""
+    _require_db()
+    docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def search_fabric_conditioners(query: str) -> list:
-    sql = """
-        SELECT * FROM FABCON
-        WHERE FABCON_NAME LIKE ?
-           OR CAST(FABCON_ID AS VARCHAR) LIKE ?
-        ORDER BY FABCON_NAME
-    """
-    like_query = f'%{query}%'
-    return getallprocess(sql, (like_query, like_query))
+    """Search fabric conditioners by partial name or ID (client-side filter)."""
+    _require_db()
+    q = query.lower()
+    docs = db.collection('FABCON').get()
+    results = []
+    for doc in docs:
+        d = doc.to_dict()
+        if q in d.get('FABCON_NAME', '').lower() or q in str(d.get('FABCON_ID', '')):
+            results.append(d)
+    results.sort(key=lambda x: x.get('FABCON_NAME', ''))
+    return results
 
 def get_fabcon_total_value() -> dict:
-    """Get the total value of fabric conditioners (quantity * price)"""
-    sql = "EXEC sp_CalculateFabconTotalValue"
-    result = getallprocess(sql)
-    return result[0] if result else {'ItemType': 'Fabric Conditioner', 'TotalValue': 0}
+    """Compute total inventory value for fabric conditioners (price * qty)."""
+    _require_db()
+    docs = db.collection('FABCON').get()
+    total = 0.0
+    for doc in docs:
+        d = doc.to_dict()
+        total += float(d.get('FABCON_PRICE', 0)) * int(d.get('QTY', 0))
+    return {'ItemType': 'Fabric Conditioner', 'TotalValue': total}
 
+##################################################
+# ORDER_ITEM TABLE
+# - add_order_item(): create order item flags/options
+##################################################
 def add_order_item(customer_own_detergent: bool, customer_own_fabcon: bool, iron: bool, fold_clothes: bool, prioritize_order: bool) -> int:
-    sql = '''
-    INSERT INTO ORDER_ITEM (CUSTOMER_OWN_DETERGENT, CUSTOMER_OWN_FABCON, IRON, FOLD_CLOTHES, PRIORITIZE_ORDER, DATE_CREATED)
-    VALUES (?, ?, ?, ?, ?, GETDATE())
-    '''
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(sql, (customer_own_detergent, customer_own_fabcon, iron, fold_clothes, prioritize_order))
-    conn.commit()
-    orderitem_id = cursor.lastrowid if hasattr(cursor, 'lastrowid') else cursor.execute('SELECT @@IDENTITY').fetchone()[0]
-    cursor.close()
-    conn.close()
+    """Create an ORDER_ITEM record and return its ORDERITEM_ID."""
+    _require_db()
+    transaction = db.transaction()
+    orderitem_id = _get_next_id(transaction, 'ORDERITEM_ID')
+    db.collection('ORDER_ITEM').add({
+        'ORDERITEM_ID': orderitem_id,
+        'CUSTOMER_OWN_DETERGENT': bool(customer_own_detergent),
+        'CUSTOMER_OWN_FABCON': bool(customer_own_fabcon),
+        'IRON': bool(iron),
+        'FOLD_CLOTHES': bool(fold_clothes),
+        'PRIORITIZE_ORDER': bool(prioritize_order),
+        'DATE_CREATED': _now(),
+    })
     return orderitem_id
 
+##################################################
+# ORDERITEM_DETERGENT (JUNCTION TABLE)
+# - add_orderitem_detergent(): link ORDER_ITEM to DETERGENT
+##################################################
 def add_orderitem_detergent(orderitem_id: int, detergent_id: int, quantity: int, unit_price: float) -> bool:
-    sql = '''
-    INSERT INTO ORDERITEM_DETERGENT (ORDERITEM_ID, DETERGENT_ID, QUANTITY, UNIT_PRICE)
-    VALUES (?, ?, ?, ?)
-    '''
-    return postprocess(sql, (orderitem_id, detergent_id, quantity, unit_price))
+    """Link an ORDER_ITEM to a DETERGENT with quantity and unit price.
+    Prevent duplicate (ORDERITEM_ID, DETERGENT_ID) pairs (mimics SQL PK).
+    """
+    _require_db()
+    docs = db.collection('ORDERITEM_DETERGENT') \
+        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
+        .where(field_path='DETERGENT_ID', op_string='==', value=detergent_id).limit(1).get()
+    if docs:
+        return False
+    db.collection('ORDERITEM_DETERGENT').add({
+        'ORDERITEM_ID': orderitem_id,
+        'DETERGENT_ID': detergent_id,
+        'QUANTITY': int(quantity),
+        'UNIT_PRICE': float(unit_price),
+    })
+    return True
 
+##################################################
+# ORDERITEM_FABCON (JUNCTION TABLE)
+# - add_orderitem_fabcon(): link ORDER_ITEM to FABCON
+##################################################
 def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_price: float) -> bool:
-    sql = '''
-    INSERT INTO ORDERITEM_FABCON (ORDERITEM_ID, FABCON_ID, QUANTITY, UNIT_PRICE)
-    VALUES (?, ?, ?, ?)
-    '''
-    return postprocess(sql, (orderitem_id, fabcon_id, quantity, unit_price))
+    """Link an ORDER_ITEM to a FABCON with quantity and unit price.
+    Prevent duplicate (ORDERITEM_ID, FABCON_ID) pairs (mimics SQL PK).
+    """
+    _require_db()
+    docs = db.collection('ORDERITEM_FABCON') \
+        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
+        .where(field_path='FABCON_ID', op_string='==', value=fabcon_id).limit(1).get()
+    if docs:
+        return False
+    db.collection('ORDERITEM_FABCON').add({
+        'ORDERITEM_ID': orderitem_id,
+        'FABCON_ID': fabcon_id,
+        'QUANTITY': int(quantity),
+        'UNIT_PRICE': float(unit_price),
+    })
+    return True
 
-# Add this function to dbhelper.py after the add_orderitem_fabcon function
-
+##################################################
+# ORDER TABLE
+# - add_order(): create order
+# - get_order_by_id(): fetch order
+# - update_order_payment(): set payment method/status
+##################################################
 def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str, 
               total_weight: float, total_load: int, total_price: float, 
               order_note: str = None, pickup_schedule: str = None,
               order_status: str = 'Pending', payment_method: str = None, 
               payment_status: str = 'Unpaid') -> int:
-    
-    sql = '''
-    INSERT INTO [ORDER] (
-        CUSTOMER_ID, ORDERITEM_ID, USER_ID, ORDER_TYPE, 
-        TOTAL_WEIGHT, TOTAL_LOAD, TOTAL_PRICE, 
-        ORDER_NOTE, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS,
-        PICKUP_SCHEDULE, DATE_CREATED, DATE_UPDATED
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())
-    '''
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(sql, (
-        customer_id, orderitem_id, user_id, order_type,
-        total_weight, total_load, total_price,
-        order_note, order_status, payment_method, payment_status,
-        pickup_schedule
-    ))
-    conn.commit()
-    order_id = cursor.execute('SELECT @@IDENTITY').fetchone()[0]
-    cursor.close()
-    conn.close()
+    """Create a new ORDER row and return its ORDER_ID."""
+    _require_db()
+    transaction = db.transaction()
+    order_id = _get_next_id(transaction, 'ORDER_ID')
+    db.collection('ORDER').add({
+        'ORDER_ID': order_id,
+        'CUSTOMER_ID': customer_id,
+        'ORDERITEM_ID': orderitem_id,
+        'USER_ID': user_id,
+        'ORDER_TYPE': order_type,
+        'TOTAL_WEIGHT': float(total_weight),
+        'TOTAL_LOAD': int(total_load),
+        'TOTAL_PRICE': float(total_price),
+        'QR_CODE': None,
+        'RECEIPT_PATH': None,
+        'ORDER_NOTE': order_note,
+        'ORDER_STATUS': order_status,
+        'PAYMENT_METHOD': payment_method,
+        'PAYMENT_STATUS': payment_status,
+        'PICKUP_SCHEDULE': pickup_schedule,
+        'DATE_CREATED': _now(),
+        'DATE_UPDATED': _now(),
+    })
     return order_id
 
 def get_order_by_id(order_id):
-    sql = "SELECT * FROM [ORDER] WHERE ORDER_ID = ?"
-    result = getallprocess(sql, (order_id,))
-    return result[0] if result else None
+    """Fetch an ORDER by ORDER_ID."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def get_orderitem_by_id(orderitem_id):
-    sql = "SELECT * FROM ORDER_ITEM WHERE ORDERITEM_ID = ?"
-    result = getallprocess(sql, (orderitem_id,))
-    return result[0] if result else None
+    """Fetch an ORDER_ITEM by ORDERITEM_ID."""
+    _require_db()
+    docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
 def get_latest_customer():
-    """Get the most recently added customer"""
-    sql = """
-        SELECT TOP 1 *
-        FROM CUSTOMER
-        ORDER BY CUSTOMER_ID DESC
-    """
-    result = getallprocess(sql)
-    return result[0] if result else None
+    """Get the most recently added customer by DATE_CREATED descending."""
+    _require_db()
+    docs = db.collection('CUSTOMER').order_by('DATE_CREATED', direction=firestore.Query.DESCENDING).limit(1).get()
+    return docs[0].to_dict() if docs else None
 
+##################################################
+# REPORT/RETRIEVAL HELPERS (ORDER ITEMS DETAIL)
+# - get_orderitem_detergents(): list detergents in an order item
+##################################################
 def get_orderitem_detergents(orderitem_id):
-    sql = """
-        SELECT d.DETERGENT_NAME, od.QUANTITY, od.UNIT_PRICE,
-               (od.QUANTITY * od.UNIT_PRICE) as total_price
-        FROM ORDERITEM_DETERGENT od
-        JOIN DETERGENT d ON od.DETERGENT_ID = d.DETERGENT_ID
-        WHERE od.ORDERITEM_ID = ?
-    """
-    return getallprocess(sql, (orderitem_id,))
+    """Return detergents linked to an ORDER_ITEM with computed line totals."""
+    _require_db()
+    # Fetch junction entries then enrich names
+    jdocs = db.collection('ORDERITEM_DETERGENT').where('ORDERITEM_ID', '==', orderitem_id).get()
+    out = []
+    for j in jdocs:
+        jd = j.to_dict()
+        ddocs = db.collection('DETERGENT').where('DETERGENT_ID', '==', jd['DETERGENT_ID']).limit(1).get()
+        name = ddocs[0].to_dict().get('DETERGENT_NAME') if ddocs else 'Unknown'
+        total_price = float(jd.get('UNIT_PRICE', 0)) * int(jd.get('QUANTITY', 0))
+        out.append({'DETERGENT_NAME': name, 'QUANTITY': jd.get('QUANTITY', 0), 'UNIT_PRICE': jd.get('UNIT_PRICE', 0), 'total_price': total_price})
+    return out
 
+##################################################
+# REPORT/RETRIEVAL HELPERS (ORDER ITEMS DETAIL)
+# - get_orderitem_fabcons(): list fabcons in an order item
+##################################################
 def get_orderitem_fabcons(orderitem_id):
-    sql = """
-        SELECT f.FABCON_NAME, fc.QUANTITY, fc.UNIT_PRICE,
-               (fc.QUANTITY * fc.UNIT_PRICE) as total_price
-        FROM ORDERITEM_FABCON fc
-        JOIN FABCON f ON fc.FABCON_ID = f.FABCON_ID
-        WHERE fc.ORDERITEM_ID = ?
-    """
-    return getallprocess(sql, (orderitem_id,))
+    """Return fabric conditioners linked to an ORDER_ITEM with line totals."""
+    _require_db()
+    jdocs = db.collection('ORDERITEM_FABCON').where('ORDERITEM_ID', '==', orderitem_id).get()
+    out = []
+    for j in jdocs:
+        jd = j.to_dict()
+        fdocs = db.collection('FABCON').where('FABCON_ID', '==', jd['FABCON_ID']).limit(1).get()
+        name = fdocs[0].to_dict().get('FABCON_NAME') if fdocs else 'Unknown'
+        total_price = float(jd.get('UNIT_PRICE', 0)) * int(jd.get('QUANTITY', 0))
+        out.append({'FABCON_NAME': name, 'QUANTITY': jd.get('QUANTITY', 0), 'UNIT_PRICE': jd.get('UNIT_PRICE', 0), 'total_price': total_price})
+    return out
 
 def update_order_payment(order_id, payment_method, payment_status):
-    sql = """
-        UPDATE [ORDER]
-        SET PAYMENT_METHOD = ?, PAYMENT_STATUS = ?, DATE_UPDATED = GETDATE()
-        WHERE ORDER_ID = ?
-    """
-    return postprocess(sql, (payment_method, payment_status, order_id))
+    """Update payment method/status for an order and bump DATE_UPDATED."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('ORDER').document(docs[0].id).update({
+        'PAYMENT_METHOD': payment_method,
+        'PAYMENT_STATUS': payment_status,
+        'DATE_UPDATED': _now(),
+    })
+    return True
 
     
 if __name__ == "__main__":
     initialize_database()
-    print("Connected to SQL Server successfully.")
+    print("Connected to Firebase Firestore successfully.")
