@@ -66,25 +66,6 @@ body {
     color: #dc3545;
 }
 
-/* Sidebar toggle functionality */
-aside.collapsed {
-    width: 70px !important;
-}
-
-aside.collapsed .main-title {
-    padding: 16px 0;
-    justify-content: center;
-}
-
-aside.collapsed .section-title,
-aside.collapsed span {
-    display: none;
-}
-
-main.expanded {
-    margin-left: 70px !important;
-}
-
 .w3-sidebar {
     background-color: #ffffff;
     color: #122D69;
