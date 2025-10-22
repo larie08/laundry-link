@@ -1,6 +1,6 @@
 # BISAYA, TAGALOG UG ENGLISH NANING COMMENT PARA MAS MAKASABOT SI OKS OR KITANG TANAN HAHAHHAHAHAHHA 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 # FIRBASE SDK CODE - DAPAT ADMIN ARI
@@ -606,6 +606,158 @@ def update_order_payment(order_id, payment_method, payment_status):
         'DATE_UPDATED': _now(),
     })
     return True
+
+def get_customers_with_orders() -> list:
+    """Get all customers with their latest order details."""
+    _require_db()
+    
+    # Get all customers
+    customers = []
+    customer_docs = db.collection('CUSTOMER').order_by('CUSTOMER_ID').get()
+    
+    for customer_doc in customer_docs:
+        customer = customer_doc.to_dict()
+        
+        try:
+            # Get latest order for this customer
+            order_docs = db.collection('ORDER') \
+                .where('CUSTOMER_ID', '==', customer['CUSTOMER_ID']) \
+                .order_by('DATE_CREATED', direction=firestore.Query.DESCENDING) \
+                .limit(1) \
+                .get()
+                
+            # Add order details to customer dict
+            if len(order_docs) > 0:
+                order = order_docs[0].to_dict()
+                customer['ORDER_ID'] = order.get('ORDER_ID', 'N/A')
+                customer['ORDER_STATUS'] = order.get('ORDER_STATUS', 'N/A')
+                customer['PAYMENT_STATUS'] = order.get('PAYMENT_STATUS', 'N/A')
+            else:
+                customer['ORDER_ID'] = 'N/A'
+                customer['ORDER_STATUS'] = 'N/A'
+                customer['PAYMENT_STATUS'] = 'N/A'
+                
+        except Exception as e:
+            # Fallback if index not ready: get all orders and sort in memory
+            print(f"Warning: Falling back to client-side sorting: {str(e)}")
+            all_customer_orders = db.collection('ORDER') \
+                .where('CUSTOMER_ID', '==', customer['CUSTOMER_ID']) \
+                .get()
+                
+            orders = [doc.to_dict() for doc in all_customer_orders]
+            if orders:
+                # Sort by date created
+                latest_order = max(orders, key=lambda x: x.get('DATE_CREATED', datetime.min))
+                customer['ORDER_ID'] = latest_order.get('ORDER_ID', 'N/A')
+                customer['ORDER_STATUS'] = latest_order.get('ORDER_STATUS', 'N/A') 
+                customer['PAYMENT_STATUS'] = latest_order.get('PAYMENT_STATUS', 'N/A')
+            else:
+                customer['ORDER_ID'] = 'N/A'
+                customer['ORDER_STATUS'] = 'N/A'
+                customer['PAYMENT_STATUS'] = 'N/A'
+            
+        customers.append(customer)
+        
+    return customers
+
+def get_customer_statistics():
+    """Get customer and order statistics."""
+    _require_db()
+    
+    # Get all customers
+    customer_docs = db.collection('CUSTOMER').get()
+    total_customers = len(customer_docs)
+    
+    # Get last month's customer count for growth calculation
+    last_month = datetime.now() - timedelta(days=30)
+    last_month_customers = len(db.collection('CUSTOMER')
+        .where('DATE_CREATED', '<', last_month).get())
+    
+    # Calculate monthly growth
+    if last_month_customers > 0:
+        monthly_growth = ((total_customers - last_month_customers) / last_month_customers) * 100
+    else:
+        monthly_growth = 100 if total_customers > 0 else 0
+        
+    # Get order counts
+    order_docs = db.collection('ORDER').get()
+    orders = [doc.to_dict() for doc in order_docs]
+    
+    paid_orders = len([o for o in orders if o.get('PAYMENT_STATUS', '').upper() == 'PAID'])
+    pending_orders = len([o for o in orders if o.get('ORDER_STATUS', '').upper() == 'PENDING'])
+    total_orders = len(orders)
+
+    # Calculate percentages
+    paid_percentage = (paid_orders / total_orders * 100) if total_orders > 0 else 0
+    pending_percentage = (pending_orders / total_orders * 100) if total_orders > 0 else 0
+    
+    return {
+        'total_customers': total_customers,
+        'paid_orders': paid_orders,
+        'pending_orders': pending_orders,
+        'monthly_growth': round(monthly_growth, 1),
+        'paid_percentage': round(paid_percentage, 1),
+        'pending_percentage': round(pending_percentage, 1),
+        'unpaid_percentage': round(100 - paid_percentage, 1),
+        'monthly_data': get_monthly_customer_data()
+    }
+
+def get_monthly_customer_data():
+    """Get customer counts for the last 6 months."""
+    _require_db()
+    
+    months = []
+    counts = []
+    
+    # Get last 6 months
+    for i in range(5, -1, -1):
+        start_date = datetime.now() - timedelta(days=30 * (i + 1))
+        end_date = datetime.now() - timedelta(days=30 * i)
+        
+        # Count customers created in this month
+        customer_count = len(db.collection('CUSTOMER')
+            .where('DATE_CREATED', '>=', start_date)
+            .where('DATE_CREATED', '<', end_date)
+            .get())
+            
+        months.append(start_date.strftime('%b'))
+        counts.append(customer_count)
+    
+    return {
+        'months': months,
+        'counts': counts
+    }
+
+def get_all_orders_with_priority():
+    """Return all orders with priority info and customer name."""
+    _require_db()
+    orders = db.collection('ORDER').order_by('DATE_CREATED', direction=firestore.Query.DESCENDING).get()
+    out = []
+    for doc in orders:
+        order = doc.to_dict()
+        # Get order item for priority
+        orderitem = None
+        if order.get('ORDERITEM_ID') is not None:
+            orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', order['ORDERITEM_ID']).limit(1).get()
+            orderitem = orderitem_docs[0].to_dict() if orderitem_docs else None
+        # Get customer name
+        customer = None
+        if order.get('CUSTOMER_ID') is not None:
+            customer_docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', order['CUSTOMER_ID']).limit(1).get()
+            customer = customer_docs[0].to_dict() if customer_docs else None
+        out.append({
+            'ORDER_ID': order.get('ORDER_ID'),
+            'CUSTOMER_ID': order.get('CUSTOMER_ID'),
+            'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+            'ORDER_TYPE': order.get('ORDER_TYPE'),
+            'PRIORITY': 'Priority' if orderitem and orderitem.get('PRIORITIZE_ORDER') else 'Normal',
+            'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
+            'ORDER_STATUS': order.get('ORDER_STATUS'),
+            'DATE_CREATED': order.get('DATE_CREATED'),
+        })
+    # Sort: priority first, then by date created descending
+    out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
+    return out
 
     
 if __name__ == "__main__":
