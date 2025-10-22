@@ -128,8 +128,8 @@
                         </div>
                         <div class="stat-content">
                             <h3>Total Customers</h3>
-                            <div class="stat-number">1</div>
-                            <div class="stat-detail">+12% from last month</div>
+                            <div class="stat-number">{{ stats.total_customers }}</div>
+                            <div class="stat-detail">{{ '{:+.1f}'.format(stats.monthly_growth) }}% from last month</div>
                         </div>
                     </div>
                     
@@ -139,8 +139,8 @@
                         </div>
                         <div class="stat-content">
                             <h3>Paid Orders</h3>
-                            <div class="stat-number">0</div>
-                            <div class="stat-detail">71.5% of total</div>
+                            <div class="stat-number">{{ stats.paid_orders }}</div>
+                            <div class="stat-detail">{{ stats.paid_percentage }}% of total</div>
                         </div>
                     </div>
                     
@@ -150,8 +150,8 @@
                         </div>
                         <div class="stat-content">
                             <h3>Pending Orders</h3>
-                            <div class="stat-number">1</div>
-                            <div class="stat-detail">28.5% of total</div>
+                            <div class="stat-number">{{ stats.pending_orders }}</div>
+                            <div class="stat-detail">{{ stats.pending_percentage }}% of total</div>
                         </div>
                     </div>
                     
@@ -161,7 +161,7 @@
                         </div>
                         <div class="stat-content">
                             <h3>Monthly Growth</h3>
-                            <div class="stat-number">+1%</div>
+                            <div class="stat-number">{{ '{:+.1f}%'.format(stats.monthly_growth) }}</div>
                             <div class="stat-detail">vs last month</div>
                         </div>
                     </div>
@@ -229,14 +229,29 @@
                             </tr>
                         </thead>
                        <tbody>
+                            {% for customer in customers %}
                             <tr>
-                                <td>1000</td>
-                                <td>Marianne Mae</td>
-                                <td>09254412457</td>
-                                <td><span class="status-badge status-unpaid">Unpaid</span></td>
-                                <td>ORD-001</td>
-                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td>{{ customer.CUSTOMER_ID }}</td>
+                                <td>{{ customer.FULLNAME }}</td>
+                                <td>{{ customer.PHONE_NUMBER }}</td>
+                                <td>
+                                    <span class="status-badge status-{% if customer.PAYMENT_STATUS == 'PAID' %}paid{% else %}unpaid{% endif %}">
+                                        {{ customer.PAYMENT_STATUS }}
+                                    </span>
+                                </td>
+                                <td>{{ customer.ORDER_ID }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ customer.ORDER_STATUS.lower() }}">
+                                        {{ customer.ORDER_STATUS }}
+                                    </span>
+                                </td>
                             </tr>
+                            {% endfor %}
+                            {% if not customers %}
+                            <tr>
+                                <td colspan="6" class="text-center">No customers found</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                     <div class="pagination">
@@ -252,19 +267,24 @@
     <script>
         // PAYMENT STATUS DISTRIBUTION CHART
         const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        const paymentData = {
+            paid: {{ stats.paid_percentage|default(0) }},
+            unpaid: {{ stats.unpaid_percentage|default(0) }}
+        };
+        
         const paymentChart = new Chart(paymentCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Paid', 'Unpaid'],
                 datasets: [{
-                    data: [71.5, 28.5],
+                    data: [paymentData.paid, paymentData.unpaid],
                     backgroundColor: [
-                        '#28a745',
-                        '#dc3545'
+                        '#77dd77',  // Light green for paid
+                        '#ff6961'   // Light red for unpaid
                     ],
                     borderColor: [
-                        '#28a745',
-                        '#dc3545'
+                        '#28a745',  // Darker green border
+                        '#dc3545'   // Darker red border
                     ],
                     borderWidth: 2
                 }]
@@ -273,6 +293,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    },
                     legend: {
                         position: 'bottom',
                         labels: {
@@ -293,10 +320,10 @@
         const growthChart = new Chart(growthCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: {{ stats.monthly_data.months|tojson }},
                 datasets: [{
                     label: 'New Customers',
-                    data: [65, 78, 90, 85, 95, 110],
+                    data: {{ stats.monthly_data.counts|tojson }},
                     borderColor: '#122D69',
                     backgroundColor: 'rgba(18, 45, 105, 0.1)',
                     borderWidth: 3,
