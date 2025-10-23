@@ -13,7 +13,7 @@ FLASK_SERVER = "http://192.168.32.236:5000"  # <-- set to your computer's IP fro
 
 # Connect to WiFi
 SSID = "chuchuz"  # <-- your WiFi name
-PASSWORD = "<1234567890>"  # <-- your WiFi password
+PASSWORD = "1234567890"  # <-- your WiFi password
 
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(True)
@@ -54,4 +54,5 @@ while True:
     except Exception as e:
         print("Error:", e)
         sleep(1)
+
 
