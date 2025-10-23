@@ -39,7 +39,7 @@
                     <!-- Weight input form -->
                     <form method="POST" action="{{ url_for('weight_laundry') }}" id="weightForm">
                         <div class="weight-info">
-                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" placeholder="Enter total weight (kg)" required>
+                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" placeholder="Waiting for weight..." required readonly>
                             <input type="text" id="total_load" class="v95_36" name="total_load" placeholder="Total load (auto)" readonly>
                         </div>
                         <div class="button-container">
@@ -55,12 +55,19 @@
             </div>
         </div>
         <script>
-            // Calculate total load as user types
-            document.getElementById('weight_input').addEventListener('input', function() {
-                const weight = parseFloat(this.value) || 0;
-                const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
-                document.getElementById('total_load').value = totalLoad;
-            });
+            // Poll the backend for latest weight every second
+            function pollWeight() {
+                fetch('/get_latest_weight')
+                    .then(response => response.json())
+                    .then(data => {
+                        const weight = parseFloat(data.weight) || 0;
+                        document.getElementById('weight_input').value = weight > 0 ? weight.toFixed(2) : '';
+                        const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
+                        document.getElementById('total_load').value = totalLoad;
+                    });
+            }
+            setInterval(pollWeight, 1000);
+            pollWeight();
         </script>
     </body>
 </html>

@@ -52,8 +52,16 @@ def contact():
 @app.route('/weight_laundry', methods=['GET', 'POST'])
 def weight_laundry():
     if request.method == 'POST':
-        weight = float(request.form.get('weight', 0))
-        total_load = int(request.form.get('total_load', 0))
+        weight_str = request.form.get('weight', '')
+        total_load_str = request.form.get('total_load', '')
+        try:
+            weight = float(weight_str) if weight_str else 0.0
+        except ValueError:
+            weight = 0.0
+        try:
+            total_load = int(total_load_str) if total_load_str else 0
+        except ValueError:
+            total_load = 0
         session['total_weight'] = weight
         session['total_load'] = total_load
         return redirect(url_for('other_services'))
@@ -110,14 +118,13 @@ def submit_others():
             add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
 
     # Get the last customer (most recently added)
-    customers = get_all_customers()
-    if not customers:
+    last_customer = get_latest_customer()  # Use helper instead of get_all_customers()
+    if not last_customer:
         flash('No customer found. Please start from the beginning.')
         return redirect(url_for('contact'))
-    
-    last_customer = customers[-1]  # Get most recent customer
+
     customer_id = last_customer['CUSTOMER_ID']
-    
+
     # Get weight and load from session (move this up before using total_load)
     total_weight = session.get('total_weight', 0.0)
     total_load = session.get('total_load', 0)
@@ -1262,6 +1269,24 @@ app.add_url_rule(
     methods=['GET']
 )
 
+# Store latest weight in a global variable
+latest_weight = 0.0
+
+@app.route('/api/weight', methods=['POST'])
+def api_weight():
+    global latest_weight
+    data = request.get_json()
+    try:
+        latest_weight = float(data.get('weight', 0.0))
+    except Exception:
+        latest_weight = 0.0
+    return jsonify({"status": "ok"})
+
+@app.route('/get_latest_weight')
+def get_latest_weight():
+    global latest_weight
+    return jsonify({"weight": latest_weight})
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
