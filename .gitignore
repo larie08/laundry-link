@@ -1,3 +1,5 @@
-__pycache__ /
+_pycache_ /
 __pycache__/
 *.pyc
+serviceAccountKey.json
+"serviceAccountKey.json" 
