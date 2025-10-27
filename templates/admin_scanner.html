@@ -51,7 +51,7 @@
                         </a>
                     </li>
 
-                    <li class="w3-padding w3-bar-item w3-button">
+                    <li class="w3-padding w3-bar-item w3-button active">
                         <a href="{{ url_for('scanner') }}">
                             <span>Scanner</span>
                         </a>
@@ -149,10 +149,10 @@
                                 <td>200</td>
                                 <td><img src="../static/images/logo.jpg" alt="Tide" class="product-img"></td>
                                 <td>
-                                    <button class="action-btn pickup-btn" onclick="completePickup('F001')">
+                                    <button class="action-btn pickup-btn" title="Complete Pickup" onclick="completePickup('F001')">
                                         <img src="../static/images/delivery.png" alt="Complete Pick-up" class="delivery-icon" style="width: 20px; height: 20px;">
                                     </button>
-                                    <button class="action-btn resend-btn" onclick="resendMessage('F001')">
+                                    <button class="action-btn resend-btn" title="Resend Message" onclick="resendMessage('F001')">
                                         <img src="../static/images/expired.png" alt="Resend Message" class="expired-icon" style="width: 20px; height: 20px;">
                                     </button>
                                 </td>
