@@ -12,10 +12,10 @@
     <body>
         <div class="v100_93">
             <div class="v100_94"></div>
-            <div class="v100_133"></div>
-            <div class="v100_140"></div>
-            <div class="v100_138"></div>
-            <div class="v100_151"></div>
+            <div class="v100_133" onclick="openDetergentModal()"></div>
+            <div class="v100_140" onclick="document.getElementById('ownDetergentBtn').click()"></div>
+            <div class="v100_138" onclick="openFabconModal()"></div>
+            <div class="v100_151" onclick="document.getElementById('ownFabconBtn').click()"></div>
             <span class="v100_95">OPTIONS</span>
             <span class="v100_161">OTHER</span>
             <form id="othersForm" action="{{ url_for('submit_others') }}" method="post">
@@ -42,8 +42,10 @@
                     <span class="v100_110">3</span>
                 </div>
                 <span class="v100_111">YOU</span>
+                
                 <!-- Trigger Button -->
                 <button class="v100_145" type="button" onclick="openDetergentModal()">DETERGENT</button>
+
                 <!-- Modal -->
                 <div id="detergentModal" class="modal">
                     <div class="modal-content">
@@ -81,6 +83,7 @@
                 <input type="hidden" name="own_fabcon" id="ownFabconInput" value="0" />
                 <div class="v100_160"></div>
                 <button class="v100_147" type="button" onclick="openFabconModal()">FABCON</button>
+
                 <!-- FABCON Modal -->
                 <div id="fabconModal" class="modal">
                     <div class="modal-content">
@@ -135,6 +138,7 @@
                 <div class="v245_301"></div>
                 <div class="v245_297"></div>
                 <div class="v245_304"></div>
+
                 <!-- SCHEDULE PICKUP -->
                 <button class="v245_298" type="button" onclick="document.getElementById('scheduleModal').style.display='block'">SCHEDULE PICKUP</button>
                 <div id="scheduleModal" class="modal">
@@ -145,13 +149,13 @@
                         <div class="form-group">
                             <label for="pickup-date">Date</label>
                             <div class="input-icon">
-                                <input type="date" id="pickup-date" name="pickup-date" />
+                                <input type="date" id="pickup-date" name="pickup-date" onchange="validatePickupDate()" />
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="pickup-time">Time</label>
+                            <label for="pickup-time">Time (6:00 AM - 6:00 PM)</label>
                             <div class="input-icon">
-                                <input type="time" id="pickup-time" name="pickup-time" />
+                                <input type="time" id="pickup-time" name="pickup-time" min="06:00" max="18:00" onchange="validatePickupTime()" />
                             </div>
                         </div>
                         <div class="modal-buttons">
@@ -179,6 +183,17 @@
         </div>
 </body>
 <script>
+    function toggleBoxHighlight(boxClass, isSelected) {
+        const box = document.querySelector(boxClass);
+        if (box) {
+            if (isSelected) {
+                box.classList.add('selected');
+            } else {
+                box.classList.remove('selected');
+            }
+        }
+    }
+
     function openDetergentModal() {
         document.getElementById('detergentModal').style.display = 'block';
     }
@@ -206,47 +221,155 @@
         input.dispatchEvent(new Event('change'));
     }
     
-    // Save schedule pickup data to hidden inputs
+    // Alert 
+    function customAlert(message) {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert-overlay';
+        
+        const alertBox = document.createElement('div');
+        alertBox.className = 'custom-alert';
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'custom-alert-message';
+        messageDiv.textContent = message;
+        
+        const button = document.createElement('button');
+        button.className = 'custom-alert-button';
+        button.textContent = 'OK';
+        button.onclick = function() {
+            document.body.removeChild(overlay);
+            document.body.removeChild(alertBox);
+        };
+        
+        alertBox.appendChild(messageDiv);
+        alertBox.appendChild(button);
+        
+        document.body.appendChild(overlay);
+        document.body.appendChild(alertBox);
+    }
+    
+    const philippineHolidays = [
+        // every year nani nga holiday guys
+        { month: 0, day: 1 },   // New Year's Day
+        { month: 3, day: 9 },   // Araw ng Kagitingan
+        { month: 4, day: 1 },   // Labor Day
+        { month: 5, day: 12 },  // Independence Day
+        { month: 7, day: 21 },  // Ninoy Aquino Day
+        { month: 7, day: 28 },  // National Heroes Day 
+        { month: 10, day: 1 },  // All Saints' Day
+        { month: 10, day: 30 }, // Bonifacio Day
+        { month: 11, day: 25 }, // Christmas
+        { month: 11, day: 30 }, // Rizal Day
+    ];
+    
+    function isHoliday(date) {
+        const month = date.getMonth();
+        const day = date.getDate();
+        return philippineHolidays.some(h => h.month === month && h.day === day);
+    }
+    
+    function isTuesday(date) {
+        return date.getDay() === 2; 
+    }
+    
+    function validatePickupDate() {
+        const pickupDate = document.getElementById('pickup-date').value;
+        
+        if (pickupDate) {
+            const selectedDate = new Date(pickupDate + 'T00:00:00');
+            if (isTuesday(selectedDate)) {
+                customAlert('Sorry, we are not available on Tuesdays. Please select another day.');
+                document.getElementById('pickup-date').value = '';
+                return false;
+            }
+            if (isHoliday(selectedDate)) {
+                customAlert('Sorry, we are not available on holidays. Please select another day.');
+                document.getElementById('pickup-date').value = '';
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    function validatePickupTime() {
+        const pickupTime = document.getElementById('pickup-time').value;
+        
+        if (pickupTime) {
+            const [hours, minutes] = pickupTime.split(':').map(Number);
+            const timeInMinutes = hours * 60 + minutes;
+            const minTime = 6 * 60; // 6:00 AM
+            const maxTime = 18 * 60; // 6:00 PM
+            
+            if (timeInMinutes < minTime || timeInMinutes > maxTime) {
+                customAlert('Pickup time must be between 6:00 AM and 6:00 PM.');
+                document.getElementById('pickup-time').value = '';
+                return false;
+            }
+        }
+        return true;
+    }
+    
     function saveSchedule() {
         const pickupDate = document.getElementById('pickup-date').value;
         const pickupTime = document.getElementById('pickup-time').value;
         
-        // Update hidden inputs (nullable - can be empty)
+        if (pickupDate) {
+            const selectedDate = new Date(pickupDate + 'T00:00:00');
+            if (isTuesday(selectedDate)) {
+                customAlert('Sorry, pickups are not available on Tuesdays. Please select another day.');
+                return;
+            }
+            if (isHoliday(selectedDate)) {
+                customAlert('Sorry, pickups are not available on holidays. Please select another day.');
+                return;
+            }
+        }
+        
+        if (pickupTime) {
+            const [hours, minutes] = pickupTime.split(':').map(Number);
+            const timeInMinutes = hours * 60 + minutes;
+            const minTime = 6 * 60; // 6:00 AM
+            const maxTime = 18 * 60; // 6:00 PM
+            
+            if (timeInMinutes < minTime || timeInMinutes > maxTime) {
+                customAlert('Pickup time must be between 6:00 AM and 6:00 PM.');
+                return;
+            }
+        }
+        
         document.getElementById('hiddenPickupDate').value = pickupDate || '';
         document.getElementById('hiddenPickupTime').value = pickupTime || '';
         
-        // Visual indication on button if data is saved
         const scheduleBtn = document.querySelector('button.v245_298');
         if (pickupDate || pickupTime) {
             scheduleBtn.classList.add('selected');
+            toggleBoxHighlight('.v245_297', true);
         } else {
             scheduleBtn.classList.remove('selected');
+            toggleBoxHighlight('.v245_297', false);
         }
         
         closeScheduleModal();
     }
     
-    // Save note data to hidden input
     function saveNote() {
         const noteText = document.getElementById('note-text').value.trim();
-        
-        // Update hidden input (nullable - can be empty)
+    
         document.getElementById('hiddenOrderNote').value = noteText || '';
-        
-        // Visual indication on button if note is saved
+    
         const noteBtn = document.querySelector('button.v244_290');
         if (noteText) {
             noteBtn.classList.add('selected');
+            toggleBoxHighlight('.v244_285', true);
         } else {
             noteBtn.classList.remove('selected');
+            toggleBoxHighlight('.v244_285', false);
         }
         
         document.getElementById('noteModal').style.display = 'none';
     }
-    
-    // Mutual exclusivity logic + selection indication + price calculation
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Helper: update total price
         function updateTotals() {
             let detTotal = 0;
             let anyDetSelected = false;
@@ -260,7 +383,6 @@
                 }
             });
             document.getElementById('detergentTotal').textContent = 'Price: ' + detTotal.toFixed(2);
-            // Indicate on DETERGENT button
             const detergentBtn = document.querySelector('button.v100_145');
             if (anyDetSelected) {
                 detergentBtn.classList.add('selected');
@@ -280,7 +402,6 @@
                 }
             });
             document.getElementById('fabconTotal').textContent = 'Price: ' + fabTotal.toFixed(2);
-            // Indicate on FABCON button
             const fabconBtn = document.querySelector('button.v100_147');
             if (anyFabSelected) {
                 fabconBtn.classList.add('selected');
@@ -288,7 +409,6 @@
                 fabconBtn.classList.remove('selected');
             }
         }
-        // Helper: toggle selected class
         function toggleButtonSelected(btn, input) {
             if (input.value === '1') {
                 btn.classList.add('selected');
@@ -296,6 +416,7 @@
                 btn.classList.remove('selected');
             }
         }
+        
         // Own Detergent
         const ownDetBtn = document.getElementById('ownDetergentBtn');
         const ownDetInput = document.getElementById('ownDetergentInput');
@@ -303,88 +424,104 @@
             var isActive = ownDetInput.value === '1';
             ownDetInput.value = isActive ? '0' : '1';
             toggleButtonSelected(ownDetBtn, ownDetInput);
-            // Uncheck all detergent checkboxes if own is selected
+            toggleBoxHighlight('.v100_140', !isActive);
             if (!isActive) {
                 document.querySelectorAll('.detergent-checkbox').forEach(cb => cb.checked = false);
                 document.querySelectorAll('.detergent-option').forEach(opt => opt.classList.remove('selected'));
+                toggleBoxHighlight('.v100_133', false);
             }
             updateTotals();
         });
         toggleButtonSelected(ownDetBtn, ownDetInput);
-        // Own Fabcon
+        toggleBoxHighlight('.v100_140', ownDetInput.value === '1');
+        
         const ownFabBtn = document.getElementById('ownFabconBtn');
         const ownFabInput = document.getElementById('ownFabconInput');
         ownFabBtn.addEventListener('click', function() {
             var isActive = ownFabInput.value === '1';
             ownFabInput.value = isActive ? '0' : '1';
             toggleButtonSelected(ownFabBtn, ownFabInput);
-            // Uncheck all fabcon checkboxes if own is selected
+            toggleBoxHighlight('.v100_151', !isActive);
             if (!isActive) {
                 document.querySelectorAll('.fabcon-checkbox').forEach(cb => cb.checked = false);
                 document.querySelectorAll('#fabconModal .detergent-option').forEach(opt => opt.classList.remove('selected'));
+                toggleBoxHighlight('.v100_138', false);
             }
             updateTotals();
         });
         toggleButtonSelected(ownFabBtn, ownFabInput);
-        // If any detergent checkbox is checked, unset own detergent
+        toggleBoxHighlight('.v100_151', ownFabInput.value === '1');
+        
         document.querySelectorAll('.detergent-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
                 if (this.checked) {
                     ownDetInput.value = '0';
                     toggleButtonSelected(ownDetBtn, ownDetInput);
+                    toggleBoxHighlight('.v100_140', false);
                 }
-                // Visual indication
                 const opt = this.closest('.detergent-option');
                 if (opt) {
                     if (this.checked) opt.classList.add('selected');
                     else opt.classList.remove('selected');
                 }
+                
+                const anyDetSelected = Array.from(document.querySelectorAll('.detergent-checkbox')).some(cb => cb.checked);
+                toggleBoxHighlight('.v100_133', anyDetSelected);
+                
                 updateTotals();
             });
         });
-        // If any fabcon checkbox is checked, unset own fabcon
         document.querySelectorAll('.fabcon-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
                 if (this.checked) {
                     ownFabInput.value = '0';
                     toggleButtonSelected(ownFabBtn, ownFabInput);
+                    toggleBoxHighlight('.v100_151', false);
                 }
-                // Visual indication
                 const opt = this.closest('.detergent-option');
                 if (opt) {
                     if (this.checked) opt.classList.add('selected');
                     else opt.classList.remove('selected');
                 }
+                
+                const anyFabSelected = Array.from(document.querySelectorAll('.fabcon-checkbox')).some(cb => cb.checked);
+                toggleBoxHighlight('.v100_138', anyFabSelected);
+                
                 updateTotals();
             });
         });
-        // Quantity change triggers total update
         document.querySelectorAll('.quantity input[type="number"]').forEach(inp => {
             inp.addEventListener('change', updateTotals);
         });
-        // Iron, Fold, Priority toggles
         const ironBtn = document.getElementById('ironBtn');
         const ironInput = document.getElementById('ironInput');
         ironBtn.addEventListener('click', function() {
             ironInput.value = ironInput.value === '1' ? '0' : '1';
             toggleButtonSelected(ironBtn, ironInput);
+            toggleBoxHighlight('.v100_163', ironInput.value === '1');
         });
         toggleButtonSelected(ironBtn, ironInput);
+        toggleBoxHighlight('.v100_163', ironInput.value === '1');
+        
         const foldBtn = document.getElementById('foldBtn');
         const foldInput = document.getElementById('foldInput');
         foldBtn.addEventListener('click', function() {
             foldInput.value = foldInput.value === '1' ? '0' : '1';
             toggleButtonSelected(foldBtn, foldInput);
+            toggleBoxHighlight('.v100_165', foldInput.value === '1');
         });
         toggleButtonSelected(foldBtn, foldInput);
+        toggleBoxHighlight('.v100_165', foldInput.value === '1');
+        
         const priorityBtn = document.getElementById('priorityBtn');
         const priorityInput = document.getElementById('priorityInput');
         priorityBtn.addEventListener('click', function() {
             priorityInput.value = priorityInput.value === '1' ? '0' : '1';
             toggleButtonSelected(priorityBtn, priorityInput);
+            toggleBoxHighlight('.v244_284', priorityInput.value === '1');
         });
         toggleButtonSelected(priorityBtn, priorityInput);
-        // Initial total
+        toggleBoxHighlight('.v244_284', priorityInput.value === '1');
         updateTotals();
     });
 </script>
