@@ -12,6 +12,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from xlsxwriter.workbook import Workbook
+import qrcode
+import requests  # Use requests to forward to ESP32
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -51,7 +53,9 @@ def contact():
 
 @app.route('/weight_laundry', methods=['GET', 'POST'])
 def weight_laundry():
+    global weight_page_active
     if request.method == 'POST':
+        weight_page_active = False  # User leaving page
         weight_str = request.form.get('weight', '')
         total_load_str = request.form.get('total_load', '')
         try:
@@ -65,6 +69,7 @@ def weight_laundry():
         session['total_weight'] = weight
         session['total_load'] = total_load
         return redirect(url_for('other_services'))
+    weight_page_active = True  # User is on page
     return render_template('weight.html')
 
 @app.route('/other_services')
@@ -220,6 +225,19 @@ def payments():
     # Format the current date
     current_date = datetime.now().strftime('%B %d, %Y')
     
+    # Generate QR code if not present
+    qr_code_path = order.get('QR_CODE')
+    if not qr_code_path:
+        qr_img = qrcode.make(str(order_id))
+        qr_filename = f"qr_order_{order_id}.png"
+        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
+        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
+        qr_img.save(qr_filepath)
+        # Save relative path for template
+        qr_code_path = f"qr/{qr_filename}"
+        # Update order in Firestore using helper
+        dbhelper.update_order_qr_code(order_id, qr_code_path)
+
     return render_template('payments.html',
                          order=order,
                          customer=latest_customer,
@@ -227,7 +245,8 @@ def payments():
                          load_price=load_price,
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
-                         current_date=current_date)
+                         current_date=current_date,
+                         qr_code_path=qr_code_path)
 
 
 
@@ -562,6 +581,7 @@ def order_details(order_id):
     return jsonify({
         'ORDER_ID': order.get('ORDER_ID'),
         'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',  # <-- Add this line
         'ORDER_TYPE': order.get('ORDER_TYPE'),
         'ORDER_STATUS': order.get('ORDER_STATUS'),
         'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
@@ -1277,6 +1297,7 @@ def api_weight():
     global latest_weight
     data = request.get_json()
     try:
+        # Weight is now sent in kilograms from ESP32
         latest_weight = float(data.get('weight', 0.0))
     except Exception:
         latest_weight = 0.0
@@ -1286,6 +1307,43 @@ def api_weight():
 def get_latest_weight():
     global latest_weight
     return jsonify({"weight": latest_weight})
+
+# Track if weight page is active
+weight_page_active = False
+
+@app.route('/weight_page_active', methods=['GET', 'POST'])
+def weight_page_active_api():
+    global weight_page_active
+    if request.method == 'POST':
+        data = request.get_json()
+        weight_page_active = bool(data.get('active', False))
+        return jsonify({"active": weight_page_active})
+    else:
+        return jsonify({"active": weight_page_active})
+
+@app.route('/api/send_sms', methods=['POST'])
+def api_send_sms():
+    data = request.get_json()
+    phone = data.get('phone')
+    message = data.get('message')
+    print("Forwarding SMS to ESP32:", phone, message)  # Debug print
+    if not phone or not message:
+        # FIX: Use correct dictionary syntax
+        return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
+    try:
+        # Use the correct ESP32 IP address
+        esp32_ip = os.getenv('ESP32_IP', '192.168.32.199')  # <-- Update default IP here
+        esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+        print("ESP32 URL:", esp32_url)  # Debug print
+        resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+        print("ESP32 response:", resp.text)  # Debug print
+        if resp.status_code == 200:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'error', 'msg': 'ESP32 GSM error'}), 500
+    except Exception as e:
+        print("Error forwarding SMS to ESP32:", e)
+        return jsonify({'status': 'error', 'msg': str(e)}), 500
 
 
 if __name__ == '__main__':
