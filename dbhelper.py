@@ -607,6 +607,18 @@ def update_order_payment(order_id, payment_method, payment_status):
     })
     return True
 
+def update_order_qr_code(order_id, qr_code_path):
+    """Update QR_CODE field for an order."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('ORDER').document(docs[0].id).update({
+        'QR_CODE': qr_code_path,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
 def get_customers_with_orders() -> list:
     """Get all customers with their latest order details."""
     _require_db()

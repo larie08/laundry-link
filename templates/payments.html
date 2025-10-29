@@ -188,29 +188,27 @@
                 </form>
                 </div>
 
-                <!-- GCash QR Modal -->
-                <div id="gcashModal" class="qr-modal">
-                    <div class="modal-content">
-                        <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
-                        <h2>GCash Payment</h2>
-                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
-                        <div class="qr-container">
-                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code">
-                        </div>
-                        <p class="qr-instructions">Scan QR code using GCash app to pay</p>
-                    </div>
+                <!-- Display QR Code for Order -->
+                {% if qr_code_path %}
+                <div class="order-qr-section" style="margin-top:20px;">
+                    <h4>Order QR Code</h4>
+                    <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:140px;height:140px;cursor:pointer;" onclick="openOrderQRModal()">
+                    <br>
+                    <button type="button" onclick="openOrderQRModal()" style="margin-top:8px;">View QR Code</button>
                 </div>
+                {% endif %}
 
-                <!-- Maya QR Modal -->
-                <div id="mayaModal" class="qr-modal">
+                <!-- Order QR Modal -->
+                <div id="orderQRModal" class="qr-modal">
                     <div class="modal-content">
-                        <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
-                        <h2>Maya Payment</h2>
-                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <span class="close-modal" onclick="closeOrderQRModal()">&times;</span>
+                        <h2>Order QR Code</h2>
+                        {% if qr_code_path %}
                         <div class="qr-container">
-                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code">
+                            <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:220px;height:220px;">
                         </div>
-                        <p class="qr-instructions">Scan QR code using Maya app to pay</p>
+                        {% endif %}
+                        <p class="qr-instructions">Scan this QR code for order details.</p>
                     </div>
                 </div>
             </div>
@@ -271,6 +269,14 @@
 
             function closeCashModal() {
                 document.getElementById('cashModal').style.display = 'none';
+            }
+
+            // Order QR Modal Functions
+            function openOrderQRModal() {
+                document.getElementById('orderQRModal').style.display = 'block';
+            }
+            function closeOrderQRModal() {
+                document.getElementById('orderQRModal').style.display = 'none';
             }
         </script>
 </html>
