@@ -12,6 +12,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from xlsxwriter.workbook import Workbook
+import qrcode
+import requests  # Use requests to forward to ESP32
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -51,12 +53,23 @@ def contact():
 
 @app.route('/weight_laundry', methods=['GET', 'POST'])
 def weight_laundry():
+    global weight_page_active
     if request.method == 'POST':
-        weight = float(request.form.get('weight', 0))
-        total_load = int(request.form.get('total_load', 0))
+        weight_page_active = False  # User leaving page
+        weight_str = request.form.get('weight', '')
+        total_load_str = request.form.get('total_load', '')
+        try:
+            weight = float(weight_str) if weight_str else 0.0
+        except ValueError:
+            weight = 0.0
+        try:
+            total_load = int(total_load_str) if total_load_str else 0
+        except ValueError:
+            total_load = 0
         session['total_weight'] = weight
         session['total_load'] = total_load
         return redirect(url_for('other_services'))
+    weight_page_active = True  # User is on page
     return render_template('weight.html')
 
 @app.route('/other_services')
@@ -110,14 +123,13 @@ def submit_others():
             add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
 
     # Get the last customer (most recently added)
-    customers = get_all_customers()
-    if not customers:
+    last_customer = get_latest_customer()  # Use helper instead of get_all_customers()
+    if not last_customer:
         flash('No customer found. Please start from the beginning.')
         return redirect(url_for('contact'))
-    
-    last_customer = customers[-1]  # Get most recent customer
+
     customer_id = last_customer['CUSTOMER_ID']
-    
+
     # Get weight and load from session (move this up before using total_load)
     total_weight = session.get('total_weight', 0.0)
     total_load = session.get('total_load', 0)
@@ -213,6 +225,19 @@ def payments():
     # Format the current date
     current_date = datetime.now().strftime('%B %d, %Y')
     
+    # Generate QR code if not present
+    qr_code_path = order.get('QR_CODE')
+    if not qr_code_path:
+        qr_img = qrcode.make(str(order_id))
+        qr_filename = f"qr_order_{order_id}.png"
+        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
+        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
+        qr_img.save(qr_filepath)
+        # Save relative path for template
+        qr_code_path = f"qr/{qr_filename}"
+        # Update order in Firestore using helper
+        dbhelper.update_order_qr_code(order_id, qr_code_path)
+
     return render_template('payments.html',
                          order=order,
                          customer=latest_customer,
@@ -220,7 +245,8 @@ def payments():
                          load_price=load_price,
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
-                         current_date=current_date)
+                         current_date=current_date,
+                         qr_code_path=qr_code_path)
 
 
 
@@ -423,9 +449,30 @@ def customers():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return redirect(url_for('admin_login'))
     
+    # Get customers with their orders
+    customers_data = get_customers_with_orders()
+    
+    # Get statistics
+    stats = get_customer_statistics()
+    
+    # Filter by search query if provided
+    search_query = request.args.get('q', '').strip().lower()
+    if search_query:
+        customers_data = [c for c in customers_data if 
+            search_query in str(c['CUSTOMER_ID']).lower() or
+            search_query in c['FULLNAME'].lower() or
+            (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'].lower())]
+    
+    # Filter by payment status if provided
+    payment_status = request.args.get('payment_status')
+    if payment_status:
+        customers_data = [c for c in customers_data if c['PAYMENT_STATUS'].lower() == payment_status.lower()]
+    
     # BASED ON ROLE
     template_name = 'admin_customers.html' if session['role'] == 'admin' else 'staff_customers.html'
-    return render_template(template_name)
+    return render_template(template_name, 
+                         customers=customers_data,
+                         stats=stats)
 
 # ADMIN AND STAFF
 @app.route('/orders')
@@ -433,9 +480,125 @@ def orders():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return redirect(url_for('admin_login'))
     
-    # BASED ON ROLE
+    orders_data = dbhelper.get_all_orders_with_priority()
+
+    # Filtering
+    order_type = request.args.get('order_type', '').strip().lower()
+    order_status = request.args.get('order_status', '').strip().lower()
+    search_query = request.args.get('q', '').strip().lower()
+
+    filtered_orders = orders_data
+    if order_type:
+        filtered_orders = [o for o in filtered_orders if (o['ORDER_TYPE'] or '').lower() == order_type]
+    if order_status:
+        filtered_orders = [o for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == order_status]
+    if search_query:
+        filtered_orders = [
+            o for o in filtered_orders
+            if search_query in str(o['ORDER_ID']).lower()
+            or search_query in str(o['CUSTOMER_ID']).lower()
+            or search_query in (o['CUSTOMER_NAME'] or '').lower()
+        ]
+
+    # Compute stats for charts
+    priority_count = sum(1 for o in filtered_orders if o['PRIORITY'] == 'Priority')
+    normal_count = sum(1 for o in filtered_orders if o['PRIORITY'] == 'Normal')
+    pending_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'pending')
+    pickup_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'pickup')
+    completed_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'completed')
+    stats = {
+        'priority_count': priority_count,
+        'normal_count': normal_count,
+        'pending_count': pending_count,
+        'pickup_count': pickup_count,
+        'completed_count': completed_count
+    }
+
     template_name = 'admin_order.html' if session['role'] == 'admin' else 'staff_order.html'
-    return render_template(template_name)
+    return render_template(template_name, orders=filtered_orders, stats=stats)
+
+@app.route('/order_details/<int:order_id>')
+def order_details(order_id):
+    order = dbhelper.get_order_by_id(order_id)
+    if not order:
+        return jsonify({'error': 'Order not found'}), 404
+
+    customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+    orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+
+    detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+    fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+
+    # Calculate total price breakdown
+    total_price = 0.0
+    breakdown = {}
+
+    # Priority
+    if orderitem and orderitem.get('PRIORITIZE_ORDER'):
+        breakdown['priority'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['priority'] = 0.0
+
+    # Ironing
+    if orderitem and orderitem.get('IRON'):
+        breakdown['ironing'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['ironing'] = 0.0
+
+    # Folding
+    if orderitem and orderitem.get('FOLD_CLOTHES'):
+        breakdown['folding'] = 70.0
+        total_price += 70.0
+    else:
+        breakdown['folding'] = 0.0
+
+    # Total Load (₱50 per load)
+    load_price = 0.0
+    if order.get('TOTAL_LOAD'):
+        load_price = float(order['TOTAL_LOAD']) * 50.0
+        breakdown['load'] = load_price
+        total_price += load_price
+    else:
+        breakdown['load'] = 0.0
+
+    # Detergents
+    det_total = 0.0
+    for det in detergents:
+        det_total += float(det.get('total_price', 0))
+    breakdown['detergents'] = det_total
+    total_price += det_total
+
+    # Fabcons
+    fab_total = 0.0
+    for fab in fabcons:
+        fab_total += float(fab.get('total_price', 0))
+    breakdown['fabcons'] = fab_total
+    total_price += fab_total
+
+    # Compose response
+    return jsonify({
+        'ORDER_ID': order.get('ORDER_ID'),
+        'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',  # <-- Add this line
+        'ORDER_TYPE': order.get('ORDER_TYPE'),
+        'ORDER_STATUS': order.get('ORDER_STATUS'),
+        'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
+        'PAYMENT_METHOD': order.get('PAYMENT_METHOD'),
+        'DATE_CREATED': order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else '',
+        'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
+        'TOTAL_LOAD': order.get('TOTAL_LOAD'),
+        'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
+        'ORDER_NOTE': order.get('ORDER_NOTE'),
+        'PRIORITY': orderitem.get('PRIORITIZE_ORDER') if orderitem else False,
+        'IRON': orderitem.get('IRON') if orderitem else False,
+        'FOLD': orderitem.get('FOLD_CLOTHES') if orderitem else False,
+        'DETERGENTS': detergents,
+        'FABCONS': fabcons,
+        'TOTAL_PRICE': round(total_price, 2),
+        'BREAKDOWN': breakdown
+    })
 
 #LOGOUT
 @app.route('/logout')
@@ -1126,5 +1289,62 @@ app.add_url_rule(
     methods=['GET']
 )
 
+# Store latest weight in a global variable
+latest_weight = 0.0
+
+@app.route('/api/weight', methods=['POST'])
+def api_weight():
+    global latest_weight
+    data = request.get_json()
+    try:
+        # Weight is now sent in kilograms from ESP32
+        latest_weight = float(data.get('weight', 0.0))
+    except Exception:
+        latest_weight = 0.0
+    return jsonify({"status": "ok"})
+
+@app.route('/get_latest_weight')
+def get_latest_weight():
+    global latest_weight
+    return jsonify({"weight": latest_weight})
+
+# Track if weight page is active
+weight_page_active = False
+
+@app.route('/weight_page_active', methods=['GET', 'POST'])
+def weight_page_active_api():
+    global weight_page_active
+    if request.method == 'POST':
+        data = request.get_json()
+        weight_page_active = bool(data.get('active', False))
+        return jsonify({"active": weight_page_active})
+    else:
+        return jsonify({"active": weight_page_active})
+
+@app.route('/api/send_sms', methods=['POST'])
+def api_send_sms():
+    data = request.get_json()
+    phone = data.get('phone')
+    message = data.get('message')
+    print("Forwarding SMS to ESP32:", phone, message)  # Debug print
+    if not phone or not message:
+        # FIX: Use correct dictionary syntax
+        return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
+    try:
+        # Use the correct ESP32 IP address
+        esp32_ip = os.getenv('ESP32_IP', '192.168.1.12')  # <-- Update default IP here
+        esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+        print("ESP32 URL:", esp32_url)  # Debug print
+        resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+        print("ESP32 response:", resp.text)  # Debug print
+        if resp.status_code == 200:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'error', 'msg': 'ESP32 GSM error'}), 500
+    except Exception as e:
+        print("Error forwarding SMS to ESP32:", e)
+        return jsonify({'status': 'error', 'msg': str(e)}), 500
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
