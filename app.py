@@ -1332,7 +1332,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.32.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '192.168.1.12')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
