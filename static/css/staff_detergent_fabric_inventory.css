@@ -272,7 +272,10 @@ main {
     gap: 8px;
 }
 
-.pagination-btn {
+.pagination-btn, .page-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: #233872;
     color: white;
     border: none;
@@ -280,25 +283,30 @@ main {
     padding: 8px 16px;
     font-size: 1rem;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    text-decoration: none;
 }
 
-.pagination-btn:hover {
+.pagination-btn:hover:not(.disabled), .page-number:hover:not(.active) {
     background: #1a2a5a;
+    transform: translateY(-1px);
 }
 
 .pagination-btn.disabled {
     background: #bfc8da;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .page-number {
-    background: #233872;
-    color: white;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 1rem;
     font-weight: 600;
+}
+
+.page-number.active {
+    background: #1a2a5a;
+    cursor: default;
+    pointer-events: none;
 }
 
 /* Modal Styles */

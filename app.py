@@ -300,12 +300,54 @@ def dashboard():
     low_detergents = [d for d in detergents if d['QTY'] <= 10]
     low_fabcons = [f for f in fabric_conditioners if f['QTY'] <= 10]
 
+    # Get all orders with full details for dashboard
+    all_orders = dbhelper.get_all_orders_with_priority()
+    
+    # Format time for display - data already includes TOTAL_LOAD, TOTAL_PRICE, etc.
+    orders_with_details = []
+    for order in all_orders:
+        date_created = order.get('DATE_CREATED')
+        # Format time for display
+        if date_created and hasattr(date_created, 'strftime'):
+            order['TIME_FORMATTED'] = date_created.strftime('%I:%M %p')
+        else:
+            order['TIME_FORMATTED'] = 'N/A'
+        # Ensure defaults for missing values
+        order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
+        order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
+        orders_with_details.append(order)
+    
+    # Separate orders into priority orders (drop-off) and self-service orders
+    priority_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off']
+    self_service_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service']
+    
+    # Limit to 5 most recent for each section
+    priority_orders = priority_orders[:5]
+    self_service_orders = self_service_orders[:5]
+    
+    # Calculate statistics
+    total_orders = len(orders_with_details)
+    self_service_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service'])
+    drop_off_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off'])
+    
+    pending_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pending'])
+    pickup_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pickup'])
+    completed_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'completed'])
+
     # BASED ON ROLE
     template_name = 'admin_dashboard.html' if session['role'] == 'admin' else 'staff_dashboard.html'
 
     return render_template(template_name,
         low_detergents=low_detergents,
-        low_fabcons=low_fabcons
+        low_fabcons=low_fabcons,
+        priority_orders=priority_orders,
+        self_service_orders=self_service_orders,
+        total_orders=total_orders,
+        self_service_count=self_service_count,
+        drop_off_count=drop_off_count,
+        pending_count=pending_count,
+        pickup_count=pickup_count,
+        completed_count=completed_count
     )
 
 # ADMIN AND STAFF
@@ -350,13 +392,22 @@ def detergent_inventory():
     else:
         detergents = get_all_detergents()
     
+    # PAGINATION
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    total_items = len(detergents)
+    total_pages = (total_items + per_page - 1) // per_page
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    current_items = detergents[start_idx:end_idx]
+    
     # LOW STOCK DETERGENTS
     low_stock_detergents = [d for d in detergents if d['QTY'] <= 10]
     
     # TOTAL DETERGENTS
-    total_items = len(detergents)
     low_stock_count = len(low_stock_detergents)
     out_of_stock_count = len([d for d in detergents if d['QTY'] == 0])
+    
     
     # TOTAL INVENTORY VALUE
     total_value = sum(d['DETERGENT_PRICE'] * d['QTY'] for d in detergents)
@@ -365,7 +416,9 @@ def detergent_inventory():
     template_name = 'admin_detergent_inventory.html' if session['role'] == 'admin' else 'staff_detergent_inventory.html'
     
     return render_template(template_name, 
-                         detergents=detergents,
+                         detergents=current_items,
+                         current_page=page,
+                         total_pages=total_pages,
                          low_stock_detergents=low_stock_detergents,
                          total_items=total_items,
                          low_stock_count=low_stock_count,
@@ -414,11 +467,19 @@ def fabric_conditioner():
     else:
         fabric_conditioners = get_all_fabric_conditioners()
     
+    # PAGINATION
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    total_items = len(fabric_conditioners)
+    total_pages = (total_items + per_page - 1) // per_page
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    current_items = fabric_conditioners[start_idx:end_idx]
+    
     # Get total inventory value
     total_value = get_fabcon_total_value()['TotalValue']
     
     # Calculate additional statistics
-    total_items = len(fabric_conditioners)
     low_stock_count = len([f for f in fabric_conditioners if f['QTY'] <= 10])
     out_of_stock_count = len([f for f in fabric_conditioners if f['QTY'] == 0])
     
@@ -426,11 +487,13 @@ def fabric_conditioner():
     template_name = 'admin_fabric_conditioner.html' if session['role'] == 'admin' else 'staff_fabric_conditioner.html'
     
     return render_template(template_name,
-        fabric_conditioners=fabric_conditioners,
+        fabric_conditioners=current_items,
         total_items=total_items,
         low_stock_count=low_stock_count,
         out_of_stock_count=out_of_stock_count,
-        total_value=total_value
+        total_value=total_value,
+        current_page=page,
+        total_pages=total_pages
     )
 
 # ADMIN AND STAFF
@@ -468,11 +531,27 @@ def customers():
     if payment_status:
         customers_data = [c for c in customers_data if c['PAYMENT_STATUS'].lower() == payment_status.lower()]
     
+    # PAGINATION
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
+    total_items = len(customers_data)
+    total_pages = (total_items + per_page - 1) // per_page  # Ceiling division
+    
+    # Ensure page is within valid range
+    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    
+    # Slice the data for current page
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_customers = customers_data[start_idx:end_idx]
+    
     # BASED ON ROLE
     template_name = 'admin_customers.html' if session['role'] == 'admin' else 'staff_customers.html'
     return render_template(template_name, 
-                         customers=customers_data,
-                         stats=stats)
+                         customers=paginated_customers,
+                         stats=stats,
+                         current_page=page,
+                         total_pages=total_pages)
 
 # ADMIN AND STAFF
 @app.route('/orders')
@@ -514,8 +593,30 @@ def orders():
         'completed_count': completed_count
     }
 
+    # PAGINATION
+    items_per_page = 10
+    page = request.args.get('page', 1, type=int)
+    total_orders = len(filtered_orders)
+    total_pages = (total_orders + items_per_page - 1) // items_per_page if total_orders > 0 else 1
+    
+    # Ensure page is within valid range
+    if page < 1:
+        page = 1
+    elif page > total_pages and total_pages > 0:
+        page = total_pages
+    
+    # Calculate start and end indices
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_orders = filtered_orders[start_idx:end_idx]
+
     template_name = 'admin_order.html' if session['role'] == 'admin' else 'staff_order.html'
-    return render_template(template_name, orders=filtered_orders, stats=stats)
+    return render_template(template_name, 
+                         orders=paginated_orders, 
+                         stats=stats,
+                         current_page=page,
+                         total_pages=total_pages,
+                         total_orders=total_orders)
 
 @app.route('/order_details/<int:order_id>')
 def order_details(order_id):
@@ -1345,6 +1446,174 @@ def api_send_sms():
         print("Error forwarding SMS to ESP32:", e)
         return jsonify({'status': 'error', 'msg': str(e)}), 500
 
+# =================================================================================================================================
+# THIS API HERE IS FOR THE STAFF AND ADMIN DASHBOARS, SPECIFICALLY FOR THE CALENDAR AND DATE DETAILS MODAL
+# THE BLUE DOT ON DATES WITH ORDER
+# YELLOW DOT ON DATES WITH PICKUPS
+# API endpoint to get orders for a specific date
+@app.route('/api/orders_by_date', methods=['GET'])
+def api_orders_by_date():
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'error': 'Date parameter required'}), 400
+    
+    try:
+        # Parse date (format: YYYY-MM-DD)
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        start_datetime = datetime.combine(target_date, datetime.min.time())
+        end_datetime = datetime.combine(target_date, datetime.max.time())
+        
+        # Get all orders
+        all_orders = dbhelper.get_all_orders_with_priority()
+        
+        # Filter orders for the target date
+        orders_for_date = []
+        for order in all_orders:
+            date_created = order.get('DATE_CREATED')
+            if date_created:
+                # Handle both datetime and Firestore timestamp
+                if hasattr(date_created, 'date'):
+                    order_date = date_created.date()
+                elif isinstance(date_created, datetime):
+                    order_date = date_created.date()
+                else:
+                    continue
+                
+                if start_datetime.date() <= order_date <= end_datetime.date():
+                    # Format time for display
+                    if hasattr(date_created, 'strftime'):
+                        order['TIME_FORMATTED'] = date_created.strftime('%I:%M %p')
+                    else:
+                        order['TIME_FORMATTED'] = 'N/A'
+                    # Ensure defaults for missing values
+                    order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
+                    order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
+                    orders_for_date.append(order)
+        
+        return jsonify({'orders': orders_for_date})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API endpoint to get pickups for a specific date
+@app.route('/api/pickups_by_date', methods=['GET'])
+def api_pickups_by_date():
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'error': 'Date parameter required'}), 400
+    
+    try:
+        # Parse date (format: YYYY-MM-DD)
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get all orders
+        all_orders = dbhelper.get_all_orders_with_priority()
+        
+        # Filter orders with pickup schedule for the target date
+        pickups_for_date = []
+        for order in all_orders:
+            pickup_schedule = order.get('PICKUP_SCHEDULE')
+            if pickup_schedule:
+                # Parse pickup schedule (format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD)
+                try:
+                    if isinstance(pickup_schedule, str):
+                        if ' ' in pickup_schedule:
+                            pickup_datetime = datetime.strptime(pickup_schedule.split()[0], '%Y-%m-%d')
+                        else:
+                            pickup_datetime = datetime.strptime(pickup_schedule, '%Y-%m-%d')
+                    else:
+                        pickup_datetime = pickup_schedule
+                    
+                    if hasattr(pickup_datetime, 'date'):
+                        pickup_date = pickup_datetime.date()
+                    else:
+                        pickup_date = pickup_datetime.date()
+                    
+                    if pickup_date == target_date:
+                        # Ensure defaults for missing values
+                        order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
+                        order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
+                        # Format pickup time
+                        if isinstance(pickup_schedule, str) and ' ' in pickup_schedule:
+                            time_part = pickup_schedule.split()[1]
+                            if ':' in time_part:
+                                hour, minute = time_part.split(':')[:2]
+                                try:
+                                    pickup_time = datetime.strptime(f"{hour}:{minute}", '%H:%M').strftime('%I:%M %p')
+                                except:
+                                    pickup_time = time_part
+                            else:
+                                pickup_time = time_part
+                        else:
+                            pickup_time = 'N/A'
+                        order['PICKUP_TIME'] = pickup_time
+                        order['ORDER_STATUS'] = order.get('ORDER_STATUS', 'Pending')
+                        pickups_for_date.append(order)
+                except Exception as e:
+                    continue
+        
+        return jsonify({'pickups': pickups_for_date})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API endpoint to get dates with orders (for calendar marking)
+@app.route('/api/calendar_dates', methods=['GET'])
+def api_calendar_dates():
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get all orders
+        all_orders = dbhelper.get_all_orders_with_priority()
+        
+        # Collect dates with orders
+        dates_with_orders = set()
+        dates_with_pickups = set()
+        
+        for order in all_orders:
+            # Check DATE_CREATED
+            date_created = order.get('DATE_CREATED')
+            if date_created:
+                if hasattr(date_created, 'date'):
+                    order_date = date_created.date()
+                elif isinstance(date_created, datetime):
+                    order_date = date_created.date()
+                else:
+                    continue
+                dates_with_orders.add(order_date.strftime('%Y-%m-%d'))
+            
+            # Check PICKUP_SCHEDULE
+            pickup_schedule = order.get('PICKUP_SCHEDULE')
+            if pickup_schedule:
+                try:
+                    if isinstance(pickup_schedule, str):
+                        if ' ' in pickup_schedule:
+                            pickup_datetime = datetime.strptime(pickup_schedule.split()[0], '%Y-%m-%d')
+                        else:
+                            pickup_datetime = datetime.strptime(pickup_schedule, '%Y-%m-%d')
+                    else:
+                        pickup_datetime = pickup_schedule
+                    
+                    if hasattr(pickup_datetime, 'date'):
+                        pickup_date = pickup_datetime.date()
+                    else:
+                        pickup_date = pickup_datetime.date()
+                    dates_with_pickups.add(pickup_date.strftime('%Y-%m-%d'))
+                except:
+                    pass
+        
+        return jsonify({
+            'dates_with_orders': list(dates_with_orders),
+            'dates_with_pickups': list(dates_with_pickups)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+# =================================================================================================================================
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
