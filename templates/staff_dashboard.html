@@ -206,7 +206,7 @@
                                                     {% set order_type_lower = (order.ORDER_TYPE or '').lower() %}
                                                     <div class="order-card {{ status_class }}">
                                                         <div class="order-card-header">
-                                                            <div class="order-id">#ORD-{{ "%03d" % order.ORDER_ID }}</div>
+                                                            <div class="order-id">ORD-{{ "%03d" % order.ORDER_ID }}</div>
                                                             <div class="order-time">{{ order.TIME_FORMATTED or 'N/A' }}</div>
                                                         </div>
                                                         <div class="order-card-body">
