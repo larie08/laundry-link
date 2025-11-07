@@ -102,8 +102,8 @@
                             </div>
                             <div class="stat-content">
                                 <h3>List of Orders</h3>
-                                <p class="stat-number">24</p>
-                                <p class="stat-detail">12 Self-service • 12 Drop-off</p>
+                                <p class="stat-number">{{ total_orders }}</p>
+                                <p class="stat-detail">{{ self_service_count }} Self-service • {{ drop_off_count }} Drop-off</p>
                             </div>
                         </div>
 
@@ -148,7 +148,7 @@
                             <div class="card-header">
                                 <h3><i class="fas fa-clock"></i> List of Orders</h3>
                                 <div class="order-stats">
-                                    <span class="order-count">24</span>
+                                    <span class="order-count">{{ total_orders }}</span>
                                     <span class="order-label">Total Orders</span>
                                 </div>
                             </div>
@@ -160,7 +160,7 @@
                                                 <i class="fas fa-clock"></i>
                                             </div>
                                             <div class="summary-details">
-                                                <span class="summary-number">8</span>
+                                                <span class="summary-number">{{ pending_count }}</span>
                                                 <span class="summary-label">Pending</span>
                                             </div>
                                         </div>
@@ -169,7 +169,7 @@
                                                 <i class="fas fa-cog"></i>
                                             </div>
                                             <div class="summary-details">
-                                                <span class="summary-number">12</span>
+                                                <span class="summary-number">{{ pickup_count }}</span>
                                                 <span class="summary-label">Pick-up</span>
                                             </div>
                                         </div>
@@ -178,7 +178,7 @@
                                                 <i class="fas fa-check-circle"></i>
                                             </div>
                                             <div class="summary-details">
-                                                <span class="summary-number">4</span>
+                                                <span class="summary-number">{{ completed_count }}</span>
                                                 <span class="summary-label">Completed</span>
                                             </div>
                                         </div>
@@ -199,260 +199,87 @@
                                             <h4 class="section-subtitle">Priority Orders</h4>
 
                                             <div class="order-cards">
-                                                <div class="order-card pending">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-001</div>
-                                                        <div class="order-time">2:30 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
+                                                {% if priority_orders %}
+                                                    {% for order in priority_orders %}
+                                                    {% set order_status_lower = (order.ORDER_STATUS or '').lower().replace('-', '').replace('_', '') %}
+                                                    {% set status_class = 'pending' if order_status_lower == 'pending' else ('pick-up' if 'pickup' in order_status_lower or 'pick' in order_status_lower else 'completed') %}
+                                                    {% set order_type_lower = (order.ORDER_TYPE or '').lower() %}
+                                                    <div class="order-card {{ status_class }}">
+                                                        <div class="order-card-header">
+                                                            <div class="order-id">ORD-{{ "%03d" % order.ORDER_ID }}</div>
+                                                            <div class="order-time">{{ order.TIME_FORMATTED or 'N/A' }}</div>
+                                                        </div>
+                                                        <div class="order-card-body">
+                                                            <div class="customer-info">
+                                                                <div class="customer-avatar">
+                                                                    <i class="fas fa-user"></i>
+                                                                </div>
+                                                                <div class="customer-details">
+                                                                    <span class="customer-name">{{ order.CUSTOMER_NAME or 'N/A' }}</span>
+                                                                    <span class="order-type-badge {{ 'self-service' if order_type_lower == 'self-service' else 'drop-off' }}">{{ order.ORDER_TYPE or 'N/A' }}</span>
+                                                                </div>
                                                             </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Cedy</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            <div class="order-details">
+                                                                <div class="order-items">
+                                                                    <span class="load-count">{{ order.TOTAL_LOAD or 0 }} load{% if (order.TOTAL_LOAD or 0) != 1 %}s{% endif %}</span>
+                                                                    <span class="order-value">₱{{ '%.2f'|format(order.TOTAL_PRICE or 0) }}</span>
+                                                                </div>
+                                                                <div class="order-status-badge {{ status_class }}">{{ order.ORDER_STATUS or 'N/A' }}</div>
                                                             </div>
                                                         </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱150</span>
-                                                            </div>
-                                                            <div class="order-status-badge pending">Pending</div>
-                                                        </div>
                                                     </div>
-                                                </div>
-
-                                                <div class="order-card pick-up">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-002</div>
-                                                        <div class="order-time">1:45 PM</div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div style="text-align: center; padding: 20px; color: #6c757d;">
+                                                        <p>No priority orders available</p>
                                                     </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Iyan</span>
-                                                                <span class="order-type-badge drop-off">Drop-off</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱280</span>
-                                                            </div>
-                                                            <div class="order-status-badge pick-up">Pick-up</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="order-card completed">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-003</div>
-                                                        <div class="order-time">12:00 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Sam</span>
-                                                                <span class="order-type-badge drop-off">Drop-off</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱180</span>
-                                                            </div>
-                                                            <div class="order-status-badge completed">Completed</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="order-card pending">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-004</div>
-                                                        <div class="order-time">3:15 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Pat</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱120</span>
-                                                            </div>
-                                                            <div class="order-status-badge pending">Pending</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="order-card pick-up">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-005</div>
-                                                        <div class="order-time">4:45 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Kim</span>
-                                                                <span class="order-type-badge drop-off">Drop-off</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱210</span>
-                                                            </div>
-                                                            <div class="order-status-badge pick-up">Pick-up</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div class="self-service-orders-section" id="selfServiceOrdersSection" style="display:none;">
                                             <h4 class="section-subtitle">Self-Service Orders</h4>
                                             <div class="order-cards">
-                                                <div class="order-card pending">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-101</div>
-                                                        <div class="order-time">10:00 AM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
+                                                {% if self_service_orders %}
+                                                    {% for order in self_service_orders %}
+                                                    {% set order_status_lower = (order.ORDER_STATUS or '').lower().replace('-', '').replace('_', '') %}
+                                                    {% set status_class = 'pending' if order_status_lower == 'pending' else ('pick-up' if 'pickup' in order_status_lower or 'pick' in order_status_lower else 'completed') %}
+                                                    {% set order_type_lower = (order.ORDER_TYPE or '').lower() %}
+                                                    <div class="order-card {{ status_class }}">
+                                                        <div class="order-card-header">
+                                                            <div class="order-id">#ORD-{{ "%03d" % order.ORDER_ID }}</div>
+                                                            <div class="order-time">{{ order.TIME_FORMATTED or 'N/A' }}</div>
+                                                        </div>
+                                                        <div class="order-card-body">
+                                                            <div class="customer-info">
+                                                                <div class="customer-avatar">
+                                                                    <i class="fas fa-user"></i>
+                                                                </div>
+                                                                <div class="customer-details">
+                                                                    <span class="customer-name">{{ order.CUSTOMER_NAME or 'N/A' }}</span>
+                                                                    <span class="order-type-badge {{ 'self-service' if order_type_lower == 'self-service' else 'drop-off' }}">{{ order.ORDER_TYPE or 'N/A' }}</span>
+                                                                </div>
                                                             </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Alex</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
+                                                            <div class="order-details">
+                                                                <div class="order-items">
+                                                                    <span class="load-count">{{ order.TOTAL_LOAD or 0 }} load{% if (order.TOTAL_LOAD or 0) != 1 %}s{% endif %}</span>
+                                                                    <span class="order-value">₱{{ '%.2f'|format(order.TOTAL_PRICE or 0) }}</span>
+                                                                </div>
+                                                                <div class="order-status-badge {{ status_class }}">{{ order.ORDER_STATUS or 'N/A' }}</div>
                                                             </div>
                                                         </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱100</span>
-                                                            </div>
-                                                            <div class="order-status-badge pending">Pending</div>
-                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div class="order-card pick-up">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-102</div>
-                                                        <div class="order-time">11:30 AM</div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div style="text-align: center; padding: 20px; color: #6c757d;">
+                                                        <p>No self-service orders available</p>
                                                     </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Jamie</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱200</span>
-                                                            </div>
-                                                            <div class="order-status-badge pick-up">Pick-up</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="order-card completed">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-103</div>
-                                                        <div class="order-time">12:45 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Dana</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱160</span>
-                                                            </div>
-                                                            <div class="order-status-badge completed">Completed</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="order-card pending">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-104</div>
-                                                        <div class="order-time">2:20 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Lee</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱110</span>
-                                                            </div>
-                                                            <div class="order-status-badge pending">Pending</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="order-card pick-up">
-                                                    <div class="order-card-header">
-                                                        <div class="order-id">#ORD-105</div>
-                                                        <div class="order-time">5:10 PM</div>
-                                                    </div>
-                                                    <div class="order-card-body">
-                                                        <div class="customer-info">
-                                                            <div class="customer-avatar">
-                                                                <i class="fas fa-user"></i>
-                                                            </div>
-                                                            <div class="customer-details">
-                                                                <span class="customer-name">Rae</span>
-                                                                <span class="order-type-badge self-service">Self-service</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="order-details">
-                                                            <div class="order-items">
-                                                                <span class="load-count">1 load</span>
-                                                                <span class="order-value">₱190</span>
-                                                            </div>
-                                                            <div class="order-status-badge pick-up">Pick-up</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="view-all">
-                                    <a href="#" class="view-all-link">View All Orders <i class="fas fa-arrow-right"></i></a>
+                                    <a href="{{ url_for('orders') }}" class="view-all-link">View All Orders <i class="fas fa-arrow-right"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -636,76 +463,24 @@
                     <!-- ORDERS FOR THE DAY -->
                     <div class="date-details-card">
                         <div class="details-card-header">
-                            <h3><i class="fas fa-shopping-cart"></i> Orders for Today</h3>
-                            <span class="details-badge">5</span>
+                            <h3><i class="fas fa-shopping-cart"></i> Orders for This Date</h3>
+                            <span class="details-badge">0</span>
                         </div>
                         <div class="details-card-content">
-                            <div class="order-detail-item">
-                                <div class="order-detail-info">
-                                    <span class="order-detail-number">#ORD-001</span>
-                                    <span class="order-detail-type self-service">Self-service</span>
-                                </div>
-                                <div class="order-detail-status pending">Pending</div>
-                            </div>
-                            <div class="order-detail-item">
-                                <div class="order-detail-info">
-                                    <span class="order-detail-number">#ORD-002</span>
-                                    <span class="order-detail-type drop-off">Drop-off</span>
-                                </div>
-                                <div class="order-detail-status pick-up">Pick-up</div>
-                            </div>
-                            <div class="order-detail-item">
-                                <div class="order-detail-info">
-                                    <span class="order-detail-number">#ORD-003</span>
-                                    <span class="order-detail-type self-service">Self-service</span>
-                                </div>
-                                <div class="order-detail-status completed">Completed</div>
-                            </div>
-                            <div class="order-detail-item">
-                                <div class="order-detail-info">
-                                    <span class="order-detail-number">#ORD-004</span>
-                                    <span class="order-detail-type drop-off">Drop-off</span>
-                                </div>
-                                <div class="order-detail-status pending">Pending</div>
-                            </div>
-                            <div class="order-detail-item">
-                                <div class="order-detail-info">
-                                    <span class="order-detail-number">#ORD-005</span>
-                                    <span class="order-detail-type self-service">Self-service</span>
-                                </div>
-                                <div class="order-detail-status pick-up">Pick-up</div>
-                            </div>
+                            <!-- Orders will be dynamically loaded here -->
+                            <div style="text-align: center; padding: 20px; color: #6c757d;">Loading orders...</div>
                         </div>
                     </div>
 
                     <!-- PICKUPS FOR THE DAY -->
                     <div class="date-details-card">
                         <div class="details-card-header">
-                            <h3><i class="fas fa-truck"></i> Pickups Due Today</h3>
-                            <span class="details-badge">3</span>
+                            <h3><i class="fas fa-truck"></i> Pickups Due This Date</h3>
+                            <span class="details-badge">0</span>
                         </div>
                         <div class="details-card-content">
-                            <div class="pickup-detail-item">
-                                <div class="pickup-detail-info">
-                                    <span class="pickup-detail-number">#PICK-001</span>
-                                    <span class="pickup-detail-time">2:30 PM</span>
-                                </div>
-                                <div class="pickup-detail-status ready">Ready</div>
-                            </div>
-                            <div class="pickup-detail-item">
-                                <div class="pickup-detail-info">
-                                    <span class="pickup-detail-number">#PICK-002</span>
-                                    <span class="pickup-detail-time">4:15 PM</span>
-                                </div>
-                                <div class="pickup-detail-status ready">Ready</div>
-                            </div>
-                            <div class="pickup-detail-item">
-                                <div class="pickup-detail-info">
-                                    <span class="pickup-detail-number">#PICK-003</span>
-                                    <span class="pickup-detail-time">5:00 PM</span>
-                                </div>
-                                <div class="pickup-detail-status pending">Pending</div>
-                            </div>
+                            <!-- Pickups will be dynamically loaded here -->
+                            <div style="text-align: center; padding: 20px; color: #6c757d;">Loading pickups...</div>
                         </div>
                     </div>
                 </div>
@@ -791,10 +566,27 @@
         // CALENDAR
         let currentDate = new Date();
         let selectedDate = new Date();
+        let datesWithOrders = new Set();
+        let datesWithPickups = new Set();
     
         document.addEventListener('DOMContentLoaded', function() {
+            loadCalendarDates();
             renderCalendar();
         });
+        
+        // Load dates with orders and pickups from database
+        function loadCalendarDates() {
+            fetch('/api/calendar_dates')
+                .then(response => response.json())
+                .then(data => {
+                    datesWithOrders = new Set(data.dates_with_orders || []);
+                    datesWithPickups = new Set(data.dates_with_pickups || []);
+                    renderCalendar(); // Re-render to mark dates
+                })
+                .catch(error => {
+                    console.error('Error loading calendar dates:', error);
+                });
+        }
         
         function renderCalendar() {
             const year = currentDate.getFullYear();
@@ -831,6 +623,15 @@
                     dayElement.classList.add('other-month');
                 }
                 
+                // Mark dates with orders or pickups
+                const dateStr = formatDateForAPI(date);
+                if (datesWithOrders.has(dateStr)) {
+                    dayElement.classList.add('has-event');
+                }
+                if (datesWithPickups.has(dateStr)) {
+                    dayElement.classList.add('has-pickup');
+                }
+                
                 dayElement.addEventListener('click', function() {
                     if (!dayElement.classList.contains('other-month')) {
                         selectDate(date);
@@ -858,6 +659,7 @@
         }
         
         function isSelected(date) {
+            if (!selectedDate) return false;
             return date.getDate() === selectedDate.getDate() &&
                    date.getMonth() === selectedDate.getMonth() &&
                    date.getFullYear() === selectedDate.getFullYear();
@@ -871,11 +673,21 @@
         function previousMonth() {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
+            renderFullCalendar(); // Update full calendar if modal is open
         }
         
         function nextMonth() {
             currentDate.setMonth(currentDate.getMonth() + 1);
             renderCalendar();
+            renderFullCalendar(); // Update full calendar if modal is open
+        }
+        
+        // Format date as YYYY-MM-DD for API
+        function formatDateForAPI(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         
         function toggleSidebar() {
@@ -935,6 +747,15 @@
                 if (date.getMonth() !== month) {
                     dayElement.classList.add('other-month');
                 }
+                
+                // Mark dates with orders or pickups
+                const dateStr = formatDateForAPI(date);
+                if (datesWithOrders.has(dateStr)) {
+                    dayElement.classList.add('has-event');
+                }
+                if (datesWithPickups.has(dateStr)) {
+                    dayElement.classList.add('has-pickup');
+                }
 
                 dayElement.addEventListener('click', function() {
                     if (!dayElement.classList.contains('other-month')) {
@@ -952,20 +773,153 @@
         function openDateDetailsModal(date) {
             const modal = document.getElementById('dateDetailsModal');
             const selectedDateTitle = document.getElementById('selectedDateTitle');
-            selectedDateTitle.textContent = date.toLocaleDateString();
+            selectedDateTitle.textContent = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
             modal.style.display = 'block';
+            
+            // Load orders and pickups for this date
+            loadDateDetails(date);
+        }
+        
+        // Load orders and pickups for a specific date
+        function loadDateDetails(date) {
+            const dateStr = formatDateForAPI(date);
+            
+            // Load orders
+            fetch(`/api/orders_by_date?date=${dateStr}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayOrdersForDate(data.orders || []);
+                })
+                .catch(error => {
+                    console.error('Error loading orders:', error);
+                    displayOrdersForDate([]);
+                });
+            
+            // Load pickups
+            fetch(`/api/pickups_by_date?date=${dateStr}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayPickupsForDate(data.pickups || []);
+                })
+                .catch(error => {
+                    console.error('Error loading pickups:', error);
+                    displayPickupsForDate([]);
+                });
+        }
+        
+        // Display orders in the date details modal
+        function displayOrdersForDate(orders) {
+            const dateDetailsGrid = document.querySelector('#dateDetailsModal .date-details-grid');
+            if (!dateDetailsGrid) return;
+            
+            // Find the orders card (first card in the grid)
+            const ordersCard = dateDetailsGrid.querySelectorAll('.date-details-card')[0];
+            if (!ordersCard) return;
+            
+            const ordersList = ordersCard.querySelector('.details-card-content');
+            const ordersBadge = ordersCard.querySelector('.details-badge');
+            
+            if (ordersBadge) {
+                ordersBadge.textContent = orders.length;
+            }
+            
+            if (ordersList) {
+                ordersList.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    ordersList.innerHTML = '<div style="text-align: center; padding: 20px; color: #6c757d;">No orders for this date</div>';
+                } else {
+                    orders.forEach(order => {
+                        const orderItem = document.createElement('div');
+                        orderItem.className = 'order-detail-item';
+                        
+                        const orderStatus = (order.ORDER_STATUS || '').toLowerCase();
+                        const statusClass = orderStatus === 'pending' ? 'pending' : 
+                                          (orderStatus === 'pickup' || orderStatus === 'pick-up') ? 'pick-up' : 
+                                          'completed';
+                        const orderType = (order.ORDER_TYPE || '').toLowerCase();
+                        const typeClass = orderType === 'self-service' ? 'self-service' : 'drop-off';
+                        
+                        orderItem.innerHTML = `
+                            <div class="order-detail-info">
+                                <span class="order-detail-number">#ORD-${String(order.ORDER_ID).padStart(3, '0')}</span>
+                                <span class="order-detail-type ${typeClass}">${order.ORDER_TYPE || 'N/A'}</span>
+                            </div>
+                            <div class="order-detail-status ${statusClass}">${order.ORDER_STATUS || 'N/A'}</div>
+                        `;
+                        ordersList.appendChild(orderItem);
+                    });
+                }
+            }
+        }
+        
+        // Display pickups in the date details modal
+        function displayPickupsForDate(pickups) {
+            const dateDetailsGrid = document.querySelector('#dateDetailsModal .date-details-grid');
+            if (!dateDetailsGrid) return;
+            
+            // Find the pickups card (second card in the grid)
+            const pickupsCards = dateDetailsGrid.querySelectorAll('.date-details-card');
+            if (pickupsCards.length < 2) return;
+            
+            const pickupsCard = pickupsCards[1];
+            const pickupsList = pickupsCard.querySelector('.details-card-content');
+            const pickupsBadge = pickupsCard.querySelector('.details-badge');
+            
+            if (pickupsBadge) {
+                pickupsBadge.textContent = pickups.length;
+            }
+            
+            if (pickupsList) {
+                pickupsList.innerHTML = '';
+                
+                if (pickups.length === 0) {
+                    pickupsList.innerHTML = '<div style="text-align: center; padding: 20px; color: #6c757d;">No pickups scheduled for this date</div>';
+                } else {
+                    pickups.forEach((pickup, index) => {
+                        const pickupItem = document.createElement('div');
+                        pickupItem.className = 'pickup-detail-item';
+                        
+                        const orderStatus = (pickup.ORDER_STATUS || '').toLowerCase();
+                        const statusClass = orderStatus === 'pending' ? 'pending' : 'ready';
+                        
+                        pickupItem.innerHTML = `
+                            <div class="pickup-detail-info">
+                                <span class="pickup-detail-number">#PICK-${String(pickup.ORDER_ID).padStart(3, '0')}</span>
+                                <span class="pickup-detail-time">${pickup.PICKUP_TIME || 'N/A'}</span>
+                            </div>
+                            <div class="pickup-detail-status ${statusClass}">${pickup.ORDER_STATUS === 'Pending' ? 'Pending' : 'Ready'}</div>
+                        `;
+                        pickupsList.appendChild(pickupItem);
+                    });
+                }
+            }
         }
 
         function closeDateDetailsModal() {
             document.getElementById('dateDetailsModal').style.display = 'none';
+            // Reset selected date to null to remove highlight
+            selectedDate = null;
+            renderCalendar();
+            renderFullCalendar(); // Update full calendar if modal is open
         }
 
         function viewAllOrders() {
-            alert('Viewing all orders for ' + selectedDate.toLocaleDateString());
+            // Redirect to orders page with date filter
+            if (!selectedDate) return;
+            const dateStr = formatDateForAPI(selectedDate);
+            window.location.href = `/orders?start_date=${dateStr}&end_date=${dateStr}`;
         }
 
         function viewAllPickups() {
-            alert('Viewing all pickups for ' + selectedDate.toLocaleDateString());
+            // Redirect to orders page with pickup filter
+            if (!selectedDate) return;
+            const dateStr = formatDateForAPI(selectedDate);
+            window.location.href = `/orders?pickup_date=${dateStr}`;
         }
         
         // INVENTORY

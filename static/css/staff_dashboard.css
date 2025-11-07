@@ -558,13 +558,36 @@ main {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    bottom: 2px;
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    background: #dc3545;
+    width: 6px;
+    height: 6px;
+    background: #122D69;
     border-radius: 50%;
+}
+
+.calendar-day.has-pickup {
+    position: relative;
+}
+
+.calendar-day.has-pickup::before {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: #ffc107;
+    border-radius: 50%;
+}
+
+.calendar-day.has-event.has-pickup::after {
+    left: 40%;
+}
+
+.calendar-day.has-event.has-pickup::before {
+    right: 40%;
 }
 
 .calendar-modal {
@@ -585,7 +608,7 @@ main {
     padding: 0;
     border-radius: 15px;
     width: 90%;
-    max-width: 800px;
+    max-width: 600px;
     max-height: 90vh;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);

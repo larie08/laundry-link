@@ -744,19 +744,46 @@ def get_all_orders_with_priority():
     """Return all orders with priority info and customer name."""
     _require_db()
     orders = db.collection('ORDER').order_by('DATE_CREATED', direction=firestore.Query.DESCENDING).get()
-    out = []
+    
+    # COLLECT ALL UNIQUE ID FOR BATCHING
+    orderitem_ids = set()
+    customer_ids = set()
+    orders_list = []
+    
     for doc in orders:
         order = doc.to_dict()
-        # Get order item for priority
-        orderitem = None
+        orders_list.append(order)
         if order.get('ORDERITEM_ID') is not None:
-            orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', order['ORDERITEM_ID']).limit(1).get()
-            orderitem = orderitem_docs[0].to_dict() if orderitem_docs else None
-        # Get customer name
-        customer = None
+            orderitem_ids.add(order['ORDERITEM_ID'])
         if order.get('CUSTOMER_ID') is not None:
-            customer_docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', order['CUSTOMER_ID']).limit(1).get()
-            customer = customer_docs[0].to_dict() if customer_docs else None
+            customer_ids.add(order['CUSTOMER_ID'])
+    
+    # PER BATCH INSTEAD OF SINGLE QUERY 
+    orderitem_map = {}
+    if orderitem_ids:
+        orderitem_ids_list = list(orderitem_ids)
+        for i in range(0, len(orderitem_ids_list), 10):
+            batch_ids = orderitem_ids_list[i:i+10]
+            orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', 'in', batch_ids).get()
+            for doc in orderitem_docs:
+                orderitem = doc.to_dict()
+                orderitem_map[orderitem.get('ORDERITEM_ID')] = orderitem
+    
+    # PER BATCH INSTEAD OF SINGLE QUERY 
+    customer_map = {}
+    if customer_ids:
+        customer_ids_list = list(customer_ids)
+        for i in range(0, len(customer_ids_list), 10):
+            batch_ids = customer_ids_list[i:i+10]
+            customer_docs = db.collection('CUSTOMER').where('CUSTOMER_ID', 'in', batch_ids).get()
+            for doc in customer_docs:
+                customer = doc.to_dict()
+                customer_map[customer.get('CUSTOMER_ID')] = customer
+    
+    out = []
+    for order in orders_list:
+        orderitem = orderitem_map.get(order.get('ORDERITEM_ID'))
+        customer = customer_map.get(order.get('CUSTOMER_ID'))
         out.append({
             'ORDER_ID': order.get('ORDER_ID'),
             'CUSTOMER_ID': order.get('CUSTOMER_ID'),
@@ -766,8 +793,12 @@ def get_all_orders_with_priority():
             'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
             'ORDER_STATUS': order.get('ORDER_STATUS'),
             'DATE_CREATED': order.get('DATE_CREATED'),
+            'TOTAL_LOAD': order.get('TOTAL_LOAD'),
+            'TOTAL_PRICE': order.get('TOTAL_PRICE'),
+            'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
+            'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
         })
-    # Sort: priority first, then by date created descending
+
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
 

@@ -271,9 +271,36 @@
                         </tbody>
                     </table>
                     <div class="pagination">
-                        <button class="pagination-btn disabled">Prev</button>
-                        <span class="page-number">1</span>
-                        <button class="pagination-btn">Next</button>
+                        {% if total_pages > 1 %}
+                        <a href="{{ url_for('fabric_conditioner', page=1, q=request.args.get('q', '')) }}" 
+                           class="pagination-btn {% if current_page == 1 %}disabled{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                        <a href="{{ url_for('fabric_conditioner', page=current_page-1, q=request.args.get('q', '')) }}" 
+                           class="pagination-btn {% if current_page == 1 %}disabled{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                        
+                        {% set start = [current_page - 2, 1] | max %}
+                        {% set end = [start + 4, total_pages + 1] | min %}
+                        {% set start = [end - 5, 1] | max %}
+                        
+                        {% for p in range(start, end) %}
+                        <a href="{{ url_for('fabric_conditioner', page=p, q=request.args.get('q', '')) }}"
+                           class="page-number {% if p == current_page %}active{% endif %}">
+                            {{ p }}
+                        </a>
+                        {% endfor %}
+                        
+                        <a href="{{ url_for('fabric_conditioner', page=current_page+1, q=request.args.get('q', '')) }}"
+                           class="pagination-btn {% if current_page == total_pages %}disabled{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                        <a href="{{ url_for('fabric_conditioner', page=total_pages, q=request.args.get('q', '')) }}"
+                           class="pagination-btn {% if current_page == total_pages %}disabled{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
