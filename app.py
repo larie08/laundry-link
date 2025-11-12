@@ -618,11 +618,20 @@ def orders():
                          total_pages=total_pages,
                          total_orders=total_orders)
 
+# ORDER DETAILS - ORDER STATUS
 @app.route('/order_details/<int:order_id>')
 def order_details(order_id):
     order = dbhelper.get_order_by_id(order_id)
     if not order:
         return jsonify({'error': 'Order not found'}), 404
+
+    # Update order status to "Pick-up" after QR scan
+    if order.get('ORDER_STATUS', '').lower() != 'pick-up':
+        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), order.get('PAYMENT_STATUS'))
+        dbhelper.update_order_qr_code(order_id, order.get('QR_CODE'))
+        dbhelper.db.collection('ORDER').document(
+            dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
+        ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
 
     customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
     orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
@@ -1433,7 +1442,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.1.12')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '192.168.24.199')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
