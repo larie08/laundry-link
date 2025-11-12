@@ -114,22 +114,8 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>F001</td>
-                                <td>Tide Original Scent</td>
-                                <td>30.00</td>
-                                <td>200</td>
-                                <td><img src="../static/images/logo.jpg" alt="Tide" class="product-img"></td>
-                                <td>
-                                    <button class="action-btn pickup-btn" title="Complete Pickup" onclick="completePickup('F001')">
-                                        <img src="../static/images/delivery.png" alt="Complete Pick-up" class="delivery-icon" style="width: 20px; height: 20px;">
-                                    </button>
-                                    <button class="action-btn resend-btn" title="Resend Notification" onclick="resendMessage('F001')">
-                                        <img src="../static/images/expired.png" alt="Resend Message" class="expired-icon" style="width: 20px; height: 20px;">
-                                    </button>
-                                </td>
-                            </tr>
+                        <tbody id="pickupOrdersTableBody">
+                            <!-- Dynamic rows will be inserted here -->
                         </tbody>
                     </table>
                     <div class="pagination">
