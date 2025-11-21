@@ -12,8 +12,6 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from xlsxwriter.workbook import Workbook
-import qrcode
-import requests  # Use requests to forward to ESP32
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -51,25 +49,8 @@ def contact():
 
 
 
-@app.route('/weight_laundry', methods=['GET', 'POST'])
+@app.route('/weight_laundry', methods=['GET'])
 def weight_laundry():
-    global weight_page_active
-    if request.method == 'POST':
-        weight_page_active = False  # User leaving page
-        weight_str = request.form.get('weight', '')
-        total_load_str = request.form.get('total_load', '')
-        try:
-            weight = float(weight_str) if weight_str else 0.0
-        except ValueError:
-            weight = 0.0
-        try:
-            total_load = int(total_load_str) if total_load_str else 0
-        except ValueError:
-            total_load = 0
-        session['total_weight'] = weight
-        session['total_load'] = total_load
-        return redirect(url_for('other_services'))
-    weight_page_active = True  # User is on page
     return render_template('weight.html')
 
 @app.route('/other_services')
@@ -123,53 +104,47 @@ def submit_others():
             add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
 
     # Get the last customer (most recently added)
-    last_customer = get_latest_customer()  # Use helper instead of get_all_customers()
-    if not last_customer:
+    customers = get_all_customers()
+    if not customers:
         flash('No customer found. Please start from the beginning.')
         return redirect(url_for('contact'))
-
+    
+    last_customer = customers[-1]  # Get most recent customer
     customer_id = last_customer['CUSTOMER_ID']
-
-    # Get weight and load from session (move this up before using total_load)
-    total_weight = session.get('total_weight', 0.0)
-    total_load = session.get('total_load', 0)
-
+    
     # Calculate totals (you may need to adjust this based on your pricing logic)
     total_price = 0.0
-
-    # Load price (50 per load)
-    total_price += total_load * 50
-
-    # Detergent costs
+    
+    # Add detergent costs
     if not own_detergent:
         for det_id in detergent_ids:
             qty = int(request.form.get(f'detergent_qty_{det_id}', 1))
             price = float(request.form.get(f'detergent_price_{det_id}', 0))
             total_price += qty * price
-
-    # Fabcon costs
+    
+    # Add fabcon costs
     if not own_fabcon:
         for fab_id in fabcon_ids:
             qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
             price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
             total_price += qty * price
-
-    # Additional service costs
+    
+    # Add additional service costs
     if iron:
-        total_price += 50.00
-    if fold:
         total_price += 70.00
+    if fold:
+        total_price += 50.00
     if priority:
         total_price += 50.00
     
-    # Create the ORDER record with null user_id
+    # Create the ORDER record
     order_id = add_order(
         customer_id=customer_id,
         orderitem_id=orderitem_id,
-        user_id=None,
-        order_type=session.get('order_type'),
-        total_weight=total_weight,
-        total_load=total_load,
+        user_id=session.get('user_id', 1),  # Default to user 1 if no staff logged in
+        order_type = session.get('order_type'),
+        total_weight=0.0,  # You'll need to get this from weight page
+        total_load=0,      # You'll need to get this from weight page
         total_price=total_price,
         order_note=order_note,
         pickup_schedule=pickup_schedule
@@ -185,68 +160,12 @@ def submit_others():
 @app.route('/payments', methods=['GET', 'POST'])
 def payments():
     if request.method == 'POST':
-        # Handle payment submission
-        order_id = session.get('order_id')
-        payment_method = request.form.get('payment_method')
-        
-        # Update order payment status
-        update_order_payment(order_id, payment_method, 'PAID')
+        orderitem_id = session.get('orderitem_id')
+        print(f"orderitem_id to insert: {orderitem_id}")  # Debug print
+        add_order_with_orderitem_id(orderitem_id)
+        session.pop('orderitem_id', None)
         return redirect(url_for('home'))
-    
-    # Get latest customer
-    latest_customer = get_latest_customer()
-    if not latest_customer:
-        flash('No customer found. Please add customer details first.')
-        return redirect(url_for('contact'))
-    
-    # Get order details from session
-    order_id = session.get('order_id')
-    
-    # Get order data
-    order = get_order_by_id(order_id)
-    if not order:
-        flash('Order not found.')
-        return redirect(url_for('home'))
-        
-    orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
-    
-    # Calculate price per load (8kg = 1 load at ₱50)
-    load_price = order['TOTAL_LOAD'] * 50.00
-    
-    # Get detergents and fabric conditioners from junction tables
-    orderitem_detergents = []
-    if not orderitem['CUSTOMER_OWN_DETERGENT']:
-        orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
-    
-    orderitem_fabcons = []
-    if not orderitem['CUSTOMER_OWN_FABCON']:
-        orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
-    
-    # Format the current date
-    current_date = datetime.now().strftime('%B %d, %Y')
-    
-    # Generate QR code if not present
-    qr_code_path = order.get('QR_CODE')
-    if not qr_code_path:
-        qr_img = qrcode.make(str(order_id))
-        qr_filename = f"qr_order_{order_id}.png"
-        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
-        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
-        qr_img.save(qr_filepath)
-        # Save relative path for template
-        qr_code_path = f"qr/{qr_filename}"
-        # Update order in Firestore using helper
-        dbhelper.update_order_qr_code(order_id, qr_code_path)
-
-    return render_template('payments.html',
-                         order=order,
-                         customer=latest_customer,
-                         orderitem=orderitem,
-                         load_price=load_price,
-                         orderitem_detergents=orderitem_detergents,
-                         orderitem_fabcons=orderitem_fabcons,
-                         current_date=current_date,
-                         qr_code_path=qr_code_path)
+    return render_template('payments.html')
 
 
 
@@ -300,54 +219,12 @@ def dashboard():
     low_detergents = [d for d in detergents if d['QTY'] <= 10]
     low_fabcons = [f for f in fabric_conditioners if f['QTY'] <= 10]
 
-    # Get all orders with full details for dashboard
-    all_orders = dbhelper.get_all_orders_with_priority()
-    
-    # Format time for display - data already includes TOTAL_LOAD, TOTAL_PRICE, etc.
-    orders_with_details = []
-    for order in all_orders:
-        date_created = order.get('DATE_CREATED')
-        # Format time for display
-        if date_created and hasattr(date_created, 'strftime'):
-            order['TIME_FORMATTED'] = date_created.strftime('%I:%M %p')
-        else:
-            order['TIME_FORMATTED'] = 'N/A'
-        # Ensure defaults for missing values
-        order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
-        order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
-        orders_with_details.append(order)
-    
-    # Separate orders into priority orders (drop-off) and self-service orders
-    priority_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off']
-    self_service_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service']
-    
-    # Limit to 5 most recent for each section
-    priority_orders = priority_orders[:5]
-    self_service_orders = self_service_orders[:5]
-    
-    # Calculate statistics
-    total_orders = len(orders_with_details)
-    self_service_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service'])
-    drop_off_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off'])
-    
-    pending_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pending'])
-    pickup_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pickup'])
-    completed_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'completed'])
-
     # BASED ON ROLE
     template_name = 'admin_dashboard.html' if session['role'] == 'admin' else 'staff_dashboard.html'
 
     return render_template(template_name,
         low_detergents=low_detergents,
-        low_fabcons=low_fabcons,
-        priority_orders=priority_orders,
-        self_service_orders=self_service_orders,
-        total_orders=total_orders,
-        self_service_count=self_service_count,
-        drop_off_count=drop_off_count,
-        pending_count=pending_count,
-        pickup_count=pickup_count,
-        completed_count=completed_count
+        low_fabcons=low_fabcons
     )
 
 # ADMIN AND STAFF
@@ -392,22 +269,13 @@ def detergent_inventory():
     else:
         detergents = get_all_detergents()
     
-    # PAGINATION
-    page = request.args.get('page', 1, type=int)
-    per_page = 5
-    total_items = len(detergents)
-    total_pages = (total_items + per_page - 1) // per_page
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    current_items = detergents[start_idx:end_idx]
-    
     # LOW STOCK DETERGENTS
     low_stock_detergents = [d for d in detergents if d['QTY'] <= 10]
     
     # TOTAL DETERGENTS
+    total_items = len(detergents)
     low_stock_count = len(low_stock_detergents)
     out_of_stock_count = len([d for d in detergents if d['QTY'] == 0])
-    
     
     # TOTAL INVENTORY VALUE
     total_value = sum(d['DETERGENT_PRICE'] * d['QTY'] for d in detergents)
@@ -416,9 +284,7 @@ def detergent_inventory():
     template_name = 'admin_detergent_inventory.html' if session['role'] == 'admin' else 'staff_detergent_inventory.html'
     
     return render_template(template_name, 
-                         detergents=current_items,
-                         current_page=page,
-                         total_pages=total_pages,
+                         detergents=detergents,
                          low_stock_detergents=low_stock_detergents,
                          total_items=total_items,
                          low_stock_count=low_stock_count,
@@ -467,19 +333,11 @@ def fabric_conditioner():
     else:
         fabric_conditioners = get_all_fabric_conditioners()
     
-    # PAGINATION
-    page = request.args.get('page', 1, type=int)
-    per_page = 5
-    total_items = len(fabric_conditioners)
-    total_pages = (total_items + per_page - 1) // per_page
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    current_items = fabric_conditioners[start_idx:end_idx]
-    
     # Get total inventory value
     total_value = get_fabcon_total_value()['TotalValue']
     
     # Calculate additional statistics
+    total_items = len(fabric_conditioners)
     low_stock_count = len([f for f in fabric_conditioners if f['QTY'] <= 10])
     out_of_stock_count = len([f for f in fabric_conditioners if f['QTY'] == 0])
     
@@ -487,13 +345,11 @@ def fabric_conditioner():
     template_name = 'admin_fabric_conditioner.html' if session['role'] == 'admin' else 'staff_fabric_conditioner.html'
     
     return render_template(template_name,
-        fabric_conditioners=current_items,
+        fabric_conditioners=fabric_conditioners,
         total_items=total_items,
         low_stock_count=low_stock_count,
         out_of_stock_count=out_of_stock_count,
-        total_value=total_value,
-        current_page=page,
-        total_pages=total_pages
+        total_value=total_value
     )
 
 # ADMIN AND STAFF
@@ -512,46 +368,9 @@ def customers():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return redirect(url_for('admin_login'))
     
-    # Get customers with their orders
-    customers_data = get_customers_with_orders()
-    
-    # Get statistics
-    stats = get_customer_statistics()
-    
-    # Filter by search query if provided
-    search_query = request.args.get('q', '').strip().lower()
-    if search_query:
-        customers_data = [c for c in customers_data if 
-            search_query in str(c['CUSTOMER_ID']).lower() or
-            search_query in c['FULLNAME'].lower() or
-            (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'].lower())]
-    
-    # Filter by payment status if provided
-    payment_status = request.args.get('payment_status')
-    if payment_status:
-        customers_data = [c for c in customers_data if c['PAYMENT_STATUS'].lower() == payment_status.lower()]
-    
-    # PAGINATION
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of items per page
-    total_items = len(customers_data)
-    total_pages = (total_items + per_page - 1) // per_page  # Ceiling division
-    
-    # Ensure page is within valid range
-    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
-    
-    # Slice the data for current page
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    paginated_customers = customers_data[start_idx:end_idx]
-    
     # BASED ON ROLE
     template_name = 'admin_customers.html' if session['role'] == 'admin' else 'staff_customers.html'
-    return render_template(template_name, 
-                         customers=paginated_customers,
-                         stats=stats,
-                         current_page=page,
-                         total_pages=total_pages)
+    return render_template(template_name)
 
 # ADMIN AND STAFF
 @app.route('/orders')
@@ -559,156 +378,9 @@ def orders():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return redirect(url_for('admin_login'))
     
-    orders_data = dbhelper.get_all_orders_with_priority()
-
-    # Filtering
-    order_type = request.args.get('order_type', '').strip().lower()
-    order_status = request.args.get('order_status', '').strip().lower()
-    search_query = request.args.get('q', '').strip().lower()
-
-    filtered_orders = orders_data
-    if order_type:
-        filtered_orders = [o for o in filtered_orders if (o['ORDER_TYPE'] or '').lower() == order_type]
-    if order_status:
-        filtered_orders = [o for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == order_status]
-    if search_query:
-        filtered_orders = [
-            o for o in filtered_orders
-            if search_query in str(o['ORDER_ID']).lower()
-            or search_query in str(o['CUSTOMER_ID']).lower()
-            or search_query in (o['CUSTOMER_NAME'] or '').lower()
-        ]
-
-    # Compute stats for charts
-    priority_count = sum(1 for o in filtered_orders if o['PRIORITY'] == 'Priority')
-    normal_count = sum(1 for o in filtered_orders if o['PRIORITY'] == 'Normal')
-    pending_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'pending')
-    pickup_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'pickup')
-    completed_count = sum(1 for o in filtered_orders if (o['ORDER_STATUS'] or '').lower() == 'completed')
-    stats = {
-        'priority_count': priority_count,
-        'normal_count': normal_count,
-        'pending_count': pending_count,
-        'pickup_count': pickup_count,
-        'completed_count': completed_count
-    }
-
-    # PAGINATION
-    items_per_page = 10
-    page = request.args.get('page', 1, type=int)
-    total_orders = len(filtered_orders)
-    total_pages = (total_orders + items_per_page - 1) // items_per_page if total_orders > 0 else 1
-    
-    # Ensure page is within valid range
-    if page < 1:
-        page = 1
-    elif page > total_pages and total_pages > 0:
-        page = total_pages
-    
-    # Calculate start and end indices
-    start_idx = (page - 1) * items_per_page
-    end_idx = start_idx + items_per_page
-    paginated_orders = filtered_orders[start_idx:end_idx]
-
+    # BASED ON ROLE
     template_name = 'admin_order.html' if session['role'] == 'admin' else 'staff_order.html'
-    return render_template(template_name, 
-                         orders=paginated_orders, 
-                         stats=stats,
-                         current_page=page,
-                         total_pages=total_pages,
-                         total_orders=total_orders)
-
-# ORDER DETAILS - ORDER STATUS
-@app.route('/order_details/<int:order_id>')
-def order_details(order_id):
-    order = dbhelper.get_order_by_id(order_id)
-    if not order:
-        return jsonify({'error': 'Order not found'}), 404
-
-    # Update order status to "Pick-up" after QR scan
-    if order.get('ORDER_STATUS', '').lower() != 'pick-up':
-        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), order.get('PAYMENT_STATUS'))
-        dbhelper.update_order_qr_code(order_id, order.get('QR_CODE'))
-        dbhelper.db.collection('ORDER').document(
-            dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
-        ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
-
-    customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
-    orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
-
-    detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
-    fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
-
-    # Calculate total price breakdown
-    total_price = 0.0
-    breakdown = {}
-
-    # Priority
-    if orderitem and orderitem.get('PRIORITIZE_ORDER'):
-        breakdown['priority'] = 50.0
-        total_price += 50.0
-    else:
-        breakdown['priority'] = 0.0
-
-    # Ironing
-    if orderitem and orderitem.get('IRON'):
-        breakdown['ironing'] = 50.0
-        total_price += 50.0
-    else:
-        breakdown['ironing'] = 0.0
-
-    # Folding
-    if orderitem and orderitem.get('FOLD_CLOTHES'):
-        breakdown['folding'] = 70.0
-        total_price += 70.0
-    else:
-        breakdown['folding'] = 0.0
-
-    # Total Load (₱50 per load)
-    load_price = 0.0
-    if order.get('TOTAL_LOAD'):
-        load_price = float(order['TOTAL_LOAD']) * 50.0
-        breakdown['load'] = load_price
-        total_price += load_price
-    else:
-        breakdown['load'] = 0.0
-
-    # Detergents
-    det_total = 0.0
-    for det in detergents:
-        det_total += float(det.get('total_price', 0))
-    breakdown['detergents'] = det_total
-    total_price += det_total
-
-    # Fabcons
-    fab_total = 0.0
-    for fab in fabcons:
-        fab_total += float(fab.get('total_price', 0))
-    breakdown['fabcons'] = fab_total
-    total_price += fab_total
-
-    # Compose response
-    return jsonify({
-        'ORDER_ID': order.get('ORDER_ID'),
-        'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
-        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',  # <-- Add this line
-        'ORDER_TYPE': order.get('ORDER_TYPE'),
-        'ORDER_STATUS': order.get('ORDER_STATUS'),
-        'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
-        'PAYMENT_METHOD': order.get('PAYMENT_METHOD'),
-        'DATE_CREATED': order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else '',
-        'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
-        'TOTAL_LOAD': order.get('TOTAL_LOAD'),
-        'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
-        'ORDER_NOTE': order.get('ORDER_NOTE'),
-        'PRIORITY': orderitem.get('PRIORITIZE_ORDER') if orderitem else False,
-        'IRON': orderitem.get('IRON') if orderitem else False,
-        'FOLD': orderitem.get('FOLD_CLOTHES') if orderitem else False,
-        'DETERGENTS': detergents,
-        'FABCONS': fabcons,
-        'TOTAL_PRICE': round(total_price, 2),
-        'BREAKDOWN': breakdown
-    })
+    return render_template(template_name)
 
 #LOGOUT
 @app.route('/logout')
@@ -1399,230 +1071,5 @@ app.add_url_rule(
     methods=['GET']
 )
 
-# Store latest weight in a global variable
-latest_weight = 0.0
-
-@app.route('/api/weight', methods=['POST'])
-def api_weight():
-    global latest_weight
-    data = request.get_json()
-    try:
-        # Weight is now sent in kilograms from ESP32
-        latest_weight = float(data.get('weight', 0.0))
-    except Exception:
-        latest_weight = 0.0
-    return jsonify({"status": "ok"})
-
-@app.route('/get_latest_weight')
-def get_latest_weight():
-    global latest_weight
-    return jsonify({"weight": latest_weight})
-
-# Track if weight page is active
-weight_page_active = False
-
-@app.route('/weight_page_active', methods=['GET', 'POST'])
-def weight_page_active_api():
-    global weight_page_active
-    if request.method == 'POST':
-        data = request.get_json()
-        weight_page_active = bool(data.get('active', False))
-        return jsonify({"active": weight_page_active})
-    else:
-        return jsonify({"active": weight_page_active})
-
-@app.route('/api/send_sms', methods=['POST'])
-def api_send_sms():
-    data = request.get_json()
-    phone = data.get('phone')
-    message = data.get('message')
-    print("Forwarding SMS to ESP32:", phone, message)  # Debug print
-    if not phone or not message:
-        # FIX: Use correct dictionary syntax
-        return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
-    try:
-        # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.24.199')  # <-- Update default IP here
-        esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
-        print("ESP32 URL:", esp32_url)  # Debug print
-        resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
-        print("ESP32 response:", resp.text)  # Debug print
-        if resp.status_code == 200:
-            return jsonify({'status': 'success'})
-        else:
-            return jsonify({'status': 'error', 'msg': 'ESP32 GSM error'}), 500
-    except Exception as e:
-        print("Error forwarding SMS to ESP32:", e)
-        return jsonify({'status': 'error', 'msg': str(e)}), 500
-
-# =================================================================================================================================
-# THIS API HERE IS FOR THE STAFF AND ADMIN DASHBOARS, SPECIFICALLY FOR THE CALENDAR AND DATE DETAILS MODAL
-# THE BLUE DOT ON DATES WITH ORDER
-# YELLOW DOT ON DATES WITH PICKUPS
-# API endpoint to get orders for a specific date
-@app.route('/api/orders_by_date', methods=['GET'])
-def api_orders_by_date():
-    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    date_str = request.args.get('date')
-    if not date_str:
-        return jsonify({'error': 'Date parameter required'}), 400
-    
-    try:
-        # Parse date (format: YYYY-MM-DD)
-        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        start_datetime = datetime.combine(target_date, datetime.min.time())
-        end_datetime = datetime.combine(target_date, datetime.max.time())
-        
-        # Get all orders
-        all_orders = dbhelper.get_all_orders_with_priority()
-        
-        # Filter orders for the target date
-        orders_for_date = []
-        for order in all_orders:
-            date_created = order.get('DATE_CREATED')
-            if date_created:
-                # Handle both datetime and Firestore timestamp
-                if hasattr(date_created, 'date'):
-                    order_date = date_created.date()
-                elif isinstance(date_created, datetime):
-                    order_date = date_created.date()
-                else:
-                    continue
-                
-                if start_datetime.date() <= order_date <= end_datetime.date():
-                    # Format time for display
-                    if hasattr(date_created, 'strftime'):
-                        order['TIME_FORMATTED'] = date_created.strftime('%I:%M %p')
-                    else:
-                        order['TIME_FORMATTED'] = 'N/A'
-                    # Ensure defaults for missing values
-                    order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
-                    order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
-                    orders_for_date.append(order)
-        
-        return jsonify({'orders': orders_for_date})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API endpoint to get pickups for a specific date
-@app.route('/api/pickups_by_date', methods=['GET'])
-def api_pickups_by_date():
-    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    date_str = request.args.get('date')
-    if not date_str:
-        return jsonify({'error': 'Date parameter required'}), 400
-    
-    try:
-        # Parse date (format: YYYY-MM-DD)
-        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        
-        # Get all orders
-        all_orders = dbhelper.get_all_orders_with_priority()
-        
-        # Filter orders with pickup schedule for the target date
-        pickups_for_date = []
-        for order in all_orders:
-            pickup_schedule = order.get('PICKUP_SCHEDULE')
-            if pickup_schedule:
-                # Parse pickup schedule (format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD)
-                try:
-                    if isinstance(pickup_schedule, str):
-                        if ' ' in pickup_schedule:
-                            pickup_datetime = datetime.strptime(pickup_schedule.split()[0], '%Y-%m-%d')
-                        else:
-                            pickup_datetime = datetime.strptime(pickup_schedule, '%Y-%m-%d')
-                    else:
-                        pickup_datetime = pickup_schedule
-                    
-                    if hasattr(pickup_datetime, 'date'):
-                        pickup_date = pickup_datetime.date()
-                    else:
-                        pickup_date = pickup_datetime.date()
-                    
-                    if pickup_date == target_date:
-                        # Ensure defaults for missing values
-                        order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
-                        order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
-                        # Format pickup time
-                        if isinstance(pickup_schedule, str) and ' ' in pickup_schedule:
-                            time_part = pickup_schedule.split()[1]
-                            if ':' in time_part:
-                                hour, minute = time_part.split(':')[:2]
-                                try:
-                                    pickup_time = datetime.strptime(f"{hour}:{minute}", '%H:%M').strftime('%I:%M %p')
-                                except:
-                                    pickup_time = time_part
-                            else:
-                                pickup_time = time_part
-                        else:
-                            pickup_time = 'N/A'
-                        order['PICKUP_TIME'] = pickup_time
-                        order['ORDER_STATUS'] = order.get('ORDER_STATUS', 'Pending')
-                        pickups_for_date.append(order)
-                except Exception as e:
-                    continue
-        
-        return jsonify({'pickups': pickups_for_date})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API endpoint to get dates with orders (for calendar marking)
-@app.route('/api/calendar_dates', methods=['GET'])
-def api_calendar_dates():
-    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    try:
-        # Get all orders
-        all_orders = dbhelper.get_all_orders_with_priority()
-        
-        # Collect dates with orders
-        dates_with_orders = set()
-        dates_with_pickups = set()
-        
-        for order in all_orders:
-            # Check DATE_CREATED
-            date_created = order.get('DATE_CREATED')
-            if date_created:
-                if hasattr(date_created, 'date'):
-                    order_date = date_created.date()
-                elif isinstance(date_created, datetime):
-                    order_date = date_created.date()
-                else:
-                    continue
-                dates_with_orders.add(order_date.strftime('%Y-%m-%d'))
-            
-            # Check PICKUP_SCHEDULE
-            pickup_schedule = order.get('PICKUP_SCHEDULE')
-            if pickup_schedule:
-                try:
-                    if isinstance(pickup_schedule, str):
-                        if ' ' in pickup_schedule:
-                            pickup_datetime = datetime.strptime(pickup_schedule.split()[0], '%Y-%m-%d')
-                        else:
-                            pickup_datetime = datetime.strptime(pickup_schedule, '%Y-%m-%d')
-                    else:
-                        pickup_datetime = pickup_schedule
-                    
-                    if hasattr(pickup_datetime, 'date'):
-                        pickup_date = pickup_datetime.date()
-                    else:
-                        pickup_date = pickup_datetime.date()
-                    dates_with_pickups.add(pickup_date.strftime('%Y-%m-%d'))
-                except:
-                    pass
-        
-        return jsonify({
-            'dates_with_orders': list(dates_with_orders),
-            'dates_with_pickups': list(dates_with_pickups)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-# =================================================================================================================================
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

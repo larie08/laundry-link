@@ -23,6 +23,16 @@ body {
     z-index: 1;
 }
 
+.w3-sidebar .w3-button:hover {
+    background-color: #122D69 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button:hover a {
+    color: #ffffff;
+}
+
 .main-title {
     padding: 16px 24px;
     font-weight: bold;
@@ -66,14 +76,35 @@ a{
     text-decoration: none;
 }
 
-.w3-sidebar .w3-button:hover {
+/* DISABLED HOVER EFFECTS */
+/* .w3-sidebar *:hover {
+    background-color: transparent !important;
+    color: inherit !important;
+} */
+
+/* .w3-sidebar .w3-button:hover,
+.w3-sidebar .w3-button:focus,
+.w3-sidebar .w3-button:active,
+.w3-sidebar li:hover,
+.w3-sidebar li:focus,
+.w3-sidebar li:active,
+.w3-sidebar a:hover,
+.w3-sidebar a:focus,
+.w3-sidebar a:active {
+    background-color: transparent !important;
+    color: #122D69 !important;
+    text-decoration: none !important;
+} */
+
+/* ACTIVE STATE */
+.w3-sidebar .w3-button.active {
     background-color: #122D69 !important;
     border-radius: 8px;
     margin: 0 10px;
 }
 
-.w3-sidebar .w3-button:hover a {
-    color: #ffffff;
+.w3-sidebar .w3-button.active a {
+    color: #ffffff !important;
 }
 
 main {
@@ -527,13 +558,36 @@ main {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    bottom: 2px;
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    background: #dc3545;
+    width: 6px;
+    height: 6px;
+    background: #122D69;
     border-radius: 50%;
+}
+
+.calendar-day.has-pickup {
+    position: relative;
+}
+
+.calendar-day.has-pickup::before {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    background: #ffc107;
+    border-radius: 50%;
+}
+
+.calendar-day.has-event.has-pickup::after {
+    left: 40%;
+}
+
+.calendar-day.has-event.has-pickup::before {
+    right: 40%;
 }
 
 .calendar-modal {
@@ -554,7 +608,7 @@ main {
     padding: 0;
     border-radius: 15px;
     width: 90%;
-    max-width: 800px;
+    max-width: 600px;
     max-height: 90vh;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);

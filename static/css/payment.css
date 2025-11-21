@@ -365,12 +365,12 @@ input[type="number"] {
 .payment-section {
   margin-top: 15px;
   padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 .payment-section h3 {
   color: rgba(18,45,105,1);
   margin-bottom: 10px;
+  padding-top: 5px;
   font-family: Poppins;
   font-size: 0.6em;
 }
@@ -668,6 +668,76 @@ input[type="number"] {
     margin: 10% auto;
     width: 90%;
     border-radius: 8px;
-    position: relative;
-    text-align: center;
+}
+
+/* Add styles for order details section */
+.order-details {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-family: Poppins;
+    font-size: 0.9em;
+}
+
+.order-details p {
+    margin: 5px 0;
+}
+
+.order-details strong {
+    color: #122D69;
+}
+
+.order-section {
+    margin: 15px 0;
+    padding: 0 20px;
+}
+
+.section-title {
+    color: rgba(18,45,105,1);
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.section-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin: 2px 0 !important;
+    font-size: 0.9em;
+    min-height: 18px;
+    line-height: 1.2;
+}
+
+.section-header {
+    font-weight: 600;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.compact-order-section {
+    margin: 6px 0 !important;
+    padding: 0 10px !important;
+}
+
+.total-section {
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.total-section hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 10px 0;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1em;
+    color: rgba(18,45,105,1);
 }

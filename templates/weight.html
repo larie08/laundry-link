@@ -9,6 +9,12 @@
         <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
         <link href="{{ url_for('static', filename='css/weight.css') }}" rel="stylesheet" />
         <title>Laundrylink - Weight Laundry</title>
+        <style>
+            .stable-weight {
+                background-color: #e8f5e9 !important;  /* Light green background */
+                font-weight: bold;
+            }
+        </style>
     </head>
     <body>
         <div class="v93_70">
@@ -36,23 +42,63 @@
             <div class="content-container">
                 <div class="v93_144">
                     <div class="v95_13"></div>
-                    <div class="weight-info">
-                    <input type="text" id="weight_label_input" class="v95_24" name="weight_label" value="8 kg = 1 load" title="weight" placeholder="e.g. 8 kg = 1 load">
-                    <input type="number" id="price_input" class="v95_36" name="price" step="0.01" placeholder="Enter price" title="price">
-                </div>
-
-                    
-                    <!-- Navigation buttons inside container -->
-                    <div class="button-container">
-                        <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
-                            <span class="v103_10">Previous</span>
-                        </a>
-                        <a href="{{ url_for('other_services') }}" class="v103_7" style="text-decoration: none;">
-                            <span class="v103_8">Next</span>
-                        </a>
-                    </div>
+                    <!-- Weight input form -->
+                    <form method="POST" action="{{ url_for('weight_laundry') }}" id="weightForm">
+                        <div class="weight-info">
+                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" placeholder="Waiting for weight (kg)..." required readonly>
+                            <input type="text" id="total_load" class="v95_36" name="total_load" placeholder="Total load (auto)" readonly>
+                        </div>
+                        <div class="button-container">
+                            <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
+                                <span class="v103_10">Previous</span>
+                            </a>
+                            <button type="submit" class="v103_7" style="text-decoration: none;">
+                                <span class="v103_8">Next</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+        <script>
+            // Poll the backend for latest weight every second
+            function pollWeight() {
+                fetch('/get_latest_weight')
+                    .then(response => response.json())
+                    .then(data => {
+                        const weight = parseFloat(data.weight) || 0;
+                        const weightInput = document.getElementById('weight_input');
+                        
+                        // Format weight with 2 decimal places if > 0
+                        weightInput.value = weight > 0 ? weight.toFixed(2) : '';
+                        
+                        // Calculate total load (1 load = 8kg)
+                        const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
+                        document.getElementById('total_load').value = totalLoad;
+                        
+                        // Highlight stable weight with different style
+                        weightInput.classList.toggle('stable-weight', data.is_stable);
+                    });
+            }
+            setInterval(pollWeight, 1000);
+            pollWeight();
+
+            // Heartbeat to tell backend page is active
+            function setWeightPageActive(active) {
+                fetch('/weight_page_active', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({active: active})
+                });
+            }
+            setWeightPageActive(true);
+            var heartbeat = setInterval(() => setWeightPageActive(true), 2000);
+
+            // On page unload, set active to false
+            window.addEventListener('beforeunload', function() {
+                setWeightPageActive(false);
+                clearInterval(heartbeat);
+            });
+        </script>
     </body>
 </html>

@@ -63,20 +63,20 @@
                         </a>
                     </li>
 
-                    <li class="w3-padding w3-bar-item w3-button">
+                    <li class="w3-padding w3-bar-item w3-button active">
                         <a href="{{ url_for('orders') }}">
                             <span>Orders</span>
                         </a>
                     </li>
                 </ul>
-                <!-- LOGOUT -->
+                <!-- LOGOUT
                 <ul class="w3-margin-left w3-margin-top">
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('logout') }}">
                             <span>Logout</span>
                         </a>
                     </li>
-                </ul>
+                </ul> -->
                 <!-- REPORTS -->
                 <div class="section-title w3-padding w3-text-gray">Reports</div>
                 <ul class="w3-margin-left">
@@ -120,13 +120,13 @@
 
 <!-- CHARTS -->
 <div class="charts-section">
-    <!-- Bar Chart: Pending vs Normal Orders -->
+    <!-- Bar Chart: Priority vs Normal Orders -->
     <div class="chart-container">
         <div class="chart-header">
-            <h3><i class="fas fa-chart-bar"></i> Pending vs Normal Orders</h3>
+            <h3><i class="fas fa-chart-bar"></i> Priority vs Normal Orders</h3>
         </div>
         <div class="chart-content">
-            <canvas id="orderTypeChart" width="400" height="200"></canvas>
+            <canvas id="priorityTypeChart" width="400" height="200"></canvas>
         </div>
     </div>
     <!-- Donut Chart: Order Status Distribution -->
@@ -194,42 +194,85 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Priority Orders First -->
-                            <tr class="priority-order">
-                                <td>ORD-002</td>
-                                <td>1001</td>
-                                <td><span class="badge-table badge-self-table">Self-service</span></td>
-                                <td><span class="badge-table badge-priority-table">Priority</span></td>
-                                <td><span class="badge-table badge-unpaid-table">Unpaid</span></td>
-                                <td><span class="badge-table badge-pending-table">Pending</span></td>
-                                <td>07/11/2025</td>
+                            {% for order in orders %}
+                            <tr {% if order.PRIORITY == 'Priority' %}class="priority-order"{% endif %}>
+                                <td>{{ order.ORDER_ID }}</td>
+                                <td>{{ order.CUSTOMER_ID }}</td>
                                 <td>
-                                    <button class="view-detail-btn" onclick="openOrderDetailsModal()">
+                                    <span class="badge-table badge-self-table">{{ order.ORDER_TYPE|capitalize }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge-table {% if order.PRIORITY == 'Priority' %}badge-priority-table{% else %}badge-normal-table{% endif %}">
+                                        {{ order.PRIORITY }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-table {% if order.PAYMENT_STATUS|lower == 'paid' %}badge-paid-table{% else %}badge-unpaid-table{% endif %}">
+                                        {{ order.PAYMENT_STATUS|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-table 
+                                        {% if order.ORDER_STATUS|lower == 'pending' %}badge-pending-table
+                                        {% elif order.ORDER_STATUS|lower == 'completed' %}badge-completed-table
+                                        {% elif order.ORDER_STATUS|lower == 'pickup' %}badge-pickup-table
+                                        {% endif %}">
+                                        {{ order.ORDER_STATUS|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ order.DATE_CREATED.strftime('%m/%d/%Y') if order.DATE_CREATED else '' }}
+                                </td>
+                                <td>
+                                    <button class="view-detail-btn" onclick="openOrderDetailsModal({{ order.ORDER_ID }})">
                                         <i class="fas fa-info-circle"></i> View Detail
                                     </button>
                                 </td>
                             </tr>
-                            <!-- Normal Orders Below -->
+                            {% else %}
                             <tr>
-                                <td>ORD-001</td>
-                                <td>1000</td>
-                                <td><span class="badge-table badge-self-table">Self-service</span></td>
-                                <td><span class="badge-table badge-normal-table">Normal</span></td>
-                                <td><span class="badge-table badge-unpaid-table">Unpaid</span></td>
-                                <td><span class="badge-table badge-pending-table">Pending</span></td>
-                                <td>07/11/2025</td>
-                                <td>
-                                    <button class="view-detail-btn" onclick="openOrderDetailsModal()">
-                                        <i class="fas fa-info-circle"></i> View Detail
-                                    </button>
-                                </td>
+                                <td colspan="8" style="text-align:center;">No orders found.</td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                     <div class="pagination">
-                        <button class="pagination-btn disabled">Prev</button>
-                        <span class="page-number">1</span>
-                        <button class="pagination-btn">Next</button>
+                        {% if current_page > 1 %}
+                            <a href="{{ url_for('orders', page=current_page-1, order_type=request.args.get('order_type', ''), order_status=request.args.get('order_status', ''), q=request.args.get('q', '')) }}" class="pagination-nav-btn">
+                                <i class="fas fa-chevron-left"></i> Prev
+                            </a>
+                        {% else %}
+                            <button class="pagination-nav-btn disabled" disabled>
+                                <i class="fas fa-chevron-left"></i> Prev
+                            </button>
+                        {% endif %}
+                        
+                        <div class="pagination-numbers">
+                            {% if total_pages > 0 %}
+                                {% set group_size = 5 %}
+                                {% set current_group = ((current_page - 1) // group_size) + 1 %}
+                                {% set start_page = (current_group - 1) * group_size + 1 %}
+                                {% set end_page = [start_page + group_size - 1, total_pages] | min %}
+                                
+                                {% for page_num in range(start_page, end_page + 1) %}
+                                    {% if page_num == current_page %}
+                                        <span class="page-btn active">{{ page_num }}</span>
+                                    {% else %}
+                                        <a href="{{ url_for('orders', page=page_num, order_type=request.args.get('order_type', ''), order_status=request.args.get('order_status', ''), q=request.args.get('q', '')) }}" class="page-btn">{{ page_num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        {% if current_page < total_pages %}
+                            <a href="{{ url_for('orders', page=current_page+1, order_type=request.args.get('order_type', ''), order_status=request.args.get('order_status', ''), q=request.args.get('q', '')) }}" class="pagination-nav-btn">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% else %}
+                            <button class="pagination-nav-btn disabled" disabled>
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -255,62 +298,79 @@
             <div><strong>Payment:</strong></div><div><span class="badge badge-unpaid">Unpaid</span></div>
             <div><strong>Date Created:</strong></div><div>2025-07-11</div>
             <div><strong>Pickup Schedule:</strong></div><div>2025-07-12 10:00 AM</div>
-            <div><strong>Total Load:</strong></div><div>2 Loads</div>
             <div><strong>Total Weight:</strong></div><div>9.5 kg</div>
             <div><strong>Order Notes:</strong></div><div>Customer prefers Tide only.</div>
         </div>
         <hr>
-        <!-- Receipt Section -->
-        <div class="receipt-section">
-            <div class="receipt-row">
-                <span>Priority</span>
-                <span class="receipt-value">₱50</span>
-            </div>
-            <div class="receipt-row">
-                <span>Total Load</span>
-                <span class="receipt-value">2 Loads</span>
-            </div>
-            <div class="receipt-row receipt-subrow">
-                <span style="padding-left:24px;">Price</span>
-                <span class="receipt-value">₱20</span>
-            </div>
-            <div class="receipt-row">
-                <span>Ironing</span>
-                <span class="receipt-value">₱50</span>
-            </div>
-            <div class="receipt-row">
-                <span>Folding</span>
-                <span class="receipt-value">₱70</span>
-            </div>
-            <div class="receipt-row">
-                <span>Detergent</span>
-                <span class="receipt-value">Tide Original Scent (₱18)</span>
-            </div>
-            <div class="receipt-row receipt-subrow">
-                <span style="padding-left:24px;">Qty</span>
-                <span class="receipt-value">5</span>
-            </div>
-            <div class="receipt-row receipt-subrow">
-                <span style="padding-left:24px;">Price</span>
-                <span class="receipt-value">₱90</span>
-            </div>
-            <div class="receipt-row">
-                <span>FabCon</span>
-                <span class="receipt-value">Own</span>
-            </div>
-            <div class="receipt-row total-row">
-                <span>Total Price</span>
-                <span class="receipt-value price">₱280.00</span>
-            </div>
-        </div>
+        <!-- Receipt Section (leave empty for JS to fill) -->
+        <div class="receipt-section"></div>
         <div class="modal-actions">
             <button class="modal-btn paid-btn">Mark as Paid</button>
         </div>
     </div>
 </div>
     <script>
-function openOrderDetailsModal() {
-    document.getElementById('orderDetailsModal').style.display = 'block';
+function openOrderDetailsModal(orderId) {
+    fetch(`/order_details/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            // Fill modal fields
+            document.querySelector('#orderDetailsModal .order-info-grid').innerHTML = `
+                <div><strong>Order ID:</strong></div><div>${data.ORDER_ID || ''}</div>
+                <div><strong>Customer:</strong></div><div>${data.CUSTOMER_NAME || ''}</div>
+                <div><strong>Order Type:</strong></div><div><span class="badge badge-self">${data.ORDER_TYPE || ''}</span></div>
+                <div><strong>Status:</strong></div><div><span class="badge badge-pending">${data.ORDER_STATUS || ''}</span></div>
+                <div><strong>Payment:</strong></div><div><span class="badge badge-unpaid">${data.PAYMENT_STATUS || ''}</span></div>
+                <div><strong>Payment Method:</strong></div><div>${data.PAYMENT_METHOD || ''}</div>
+                <div><strong>Date Created:</strong></div><div>${data.DATE_CREATED || ''}</div>
+                <div><strong>Pickup Schedule:</strong></div><div>${data.PICKUP_SCHEDULE || ''}</div>
+                <div><strong>Total Weight:</strong></div><div>${data.TOTAL_WEIGHT || ''} kg</div>
+                <div><strong>Order Notes:</strong></div><div>${data.ORDER_NOTE || ''}</div>
+            `;
+            // Receipt Section
+            let receiptHtml = '';
+            // Show total load and price
+            if (data.TOTAL_LOAD && data.BREAKDOWN && typeof data.BREAKDOWN.load !== 'undefined') {
+                receiptHtml += `<div class="receipt-row"><span>Total Load</span><span class="receipt-value">${data.TOTAL_LOAD} Loads</span></div>`;
+                receiptHtml += `<div class="receipt-row receipt-subrow"><span style="padding-left:24px;">Price</span><span class="receipt-value">₱${data.BREAKDOWN.load}</span></div>`;
+            }
+            if (data.PRIORITY) {
+                receiptHtml += `<div class="receipt-row"><span>Priority</span><span class="receipt-value">₱50</span></div>`;
+            }
+            if (data.IRON) {
+                receiptHtml += `<div class="receipt-row"><span>Ironing</span><span class="receipt-value">₱50</span></div>`;
+            }
+            if (data.FOLD) {
+                receiptHtml += `<div class="receipt-row"><span>Folding</span><span class="receipt-value">₱70</span></div>`;
+            }
+            if (data.DETERGENTS && data.DETERGENTS.length > 0) {
+                data.DETERGENTS.forEach(det => {
+                    receiptHtml += `<div class="receipt-row"><span>Detergent</span><span class="receipt-value">${det.DETERGENT_NAME} (₱${det.UNIT_PRICE})</span></div>`;
+                    receiptHtml += `<div class="receipt-row receipt-subrow"><span style="padding-left:24px;">Qty</span><span class="receipt-value">${det.QUANTITY}</span></div>`;
+                    receiptHtml += `<div class="receipt-row receipt-subrow"><span style="padding-left:24px;">Price</span><span class="receipt-value">₱${det.total_price}</span></div>`;
+                });
+            } else {
+                receiptHtml += `<div class="receipt-row"><span>Detergent</span><span class="receipt-value">Own</span></div>`;
+            }
+            if (data.FABCONS && data.FABCONS.length > 0) {
+                data.FABCONS.forEach(fab => {
+                    receiptHtml += `<div class="receipt-row"><span>FabCon</span><span class="receipt-value">${fab.FABCON_NAME} (₱${fab.UNIT_PRICE})</span></div>`;
+                    receiptHtml += `<div class="receipt-row receipt-subrow"><span style="padding-left:24px;">Qty</span><span class="receipt-value">${fab.QUANTITY}</span></div>`;
+                    receiptHtml += `<div class="receipt-row receipt-subrow"><span style="padding-left:24px;">Price</span><span class="receipt-value">₱${fab.total_price}</span></div>`;
+                });
+            } else {
+                receiptHtml += `<div class="receipt-row"><span>FabCon</span><span class="receipt-value">Own</span></div>`;
+            }
+            // Total Price
+            receiptHtml += `<div class="receipt-row total-row"><span>Total Price</span><span class="receipt-value price">₱${data.TOTAL_PRICE || ''}</span></div>`;
+            document.querySelector('#orderDetailsModal .receipt-section').innerHTML = receiptHtml;
+
+            document.getElementById('orderDetailsModal').style.display = 'block';
+        });
 }
 function closeOrderDetailsModal() {
     document.getElementById('orderDetailsModal').style.display = 'none';
@@ -323,23 +383,71 @@ window.onclick = function(event) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // DONUT CHART: Order Status Distribution (Pending, Pickup, Completed)
+    // Priority vs Normal Orders Bar Chart
+    const priorityTypeCtx = document.getElementById('priorityTypeChart').getContext('2d');
+    new Chart(priorityTypeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Priority', 'Normal'],
+            datasets: [{
+                label: 'Order Count',
+                data: [
+                    {{ stats.priority_count }},
+                    {{ stats.normal_count }}
+                ],
+                backgroundColor: [
+                    '#f1c40f', // Priority
+                    '#233872'  // Normal
+                ],
+                borderColor: [
+                    '#f1c40f',
+                    '#233872'
+                ],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    ticks: { font: { family: 'Poppins', size: 12 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Poppins', size: 12 } }
+                }
+            }
+        }
+    });
+
+    // Order Status Distribution Donut Chart
     const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
-    const orderStatusChart = new Chart(orderStatusCtx, {
+    new Chart(orderStatusCtx, {
         type: 'doughnut',
         data: {
             labels: ['Pending', 'Pickup', 'Completed'],
             datasets: [{
-                data: [5, 3, 12], // Example data
+                data: [
+                    {{ stats.pending_count }},
+                    {{ stats.pickup_count }},
+                    {{ stats.completed_count }}
+                ],
                 backgroundColor: [
-                    '#A5D6A7', // Light green background for Pending
-                    '#FFAB91', // Light red/salmon background for Pickup
-                    '#81C784'  // Light green background for Completed
+                    '#A5D6A7', // Pending
+                    '#FFAB91', // Pickup
+                    '#81C784'  // Completed
                 ],
                 borderColor: [
-                    '#2E7D32', // Dark green border
-                    '#D84315', // Dark red border
-                    '#388E3C'  // Dark green border
+                    '#2E7D32', // Pending
+                    '#D84315', // Pickup
+                    '#388E3C'  // Completed
                 ],
                 borderWidth: 2,
                 cutout: '60%'
@@ -355,77 +463,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         padding: 15,
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        font: {
-                            family: 'Poppins',
-                            size: 12,
-                            weight: '500'
-                        },
+                        font: { family: 'Poppins', size: 12, weight: '500' },
                         color: '#000000'
                     }
                 }
             },
-            elements: {
-                arc: {
-                    borderWidth: 2
-                }
-            }
-        }
-    });
-
-    // BAR CHART: Pending vs Normal Orders
-    const orderTypeCtx = document.getElementById('orderTypeChart').getContext('2d');
-    const orderTypeChart = new Chart(orderTypeCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Pending', 'Normal'],
-            datasets: [{
-                label: 'Order Count',
-                data: [7, 13], // Example data
-                backgroundColor: [
-                    '#f1c40f', // Pending
-                    '#233872'  // Normal
-                ],
-                borderColor: [
-                    '#f1c40f',
-                    '#233872'
-                ],
-                borderWidth: 2,
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    },
-                    ticks: {
-                        font: {
-                            family: 'Poppins',
-                            size: 12
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        font: {
-                            family: 'Poppins',
-                            size: 12
-                        }
-                    }
-                }
-            }
+            elements: { arc: { borderWidth: 2 } }
         }
     });
 });

@@ -15,7 +15,6 @@ body {
     min-height: 100vh;
 }
 
-/* SIDEBAR */
 .w3-sidebar {
     background-color: #ffffff;
     color: #122D69;
@@ -24,7 +23,16 @@ body {
     z-index: 1;
 }
 
-/* MAIN TITLE */
+.w3-sidebar .w3-button:hover {
+    background-color: #122D69 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button:hover a {
+    color: #ffffff;
+}
+
 .main-title {
     padding: 16px 24px;
     font-weight: bold;
@@ -68,14 +76,35 @@ a{
     text-decoration: none;
 }
 
-.w3-sidebar .w3-button:hover {
+/* DISABLED HOVER EFFECTS */
+/* .w3-sidebar *:hover {
+    background-color: transparent !important;
+    color: inherit !important;
+} */
+
+/* .w3-sidebar .w3-button:hover,
+.w3-sidebar .w3-button:focus,
+.w3-sidebar .w3-button:active,
+.w3-sidebar li:hover,
+.w3-sidebar li:focus,
+.w3-sidebar li:active,
+.w3-sidebar a:hover,
+.w3-sidebar a:focus,
+.w3-sidebar a:active {
+    background-color: transparent !important;
+    color: #122D69 !important;
+    text-decoration: none !important;
+} */
+
+/* ACTIVE STATE */
+.w3-sidebar .w3-button.active {
     background-color: #122D69 !important;
     border-radius: 8px;
     margin: 0 10px;
 }
 
-.w3-sidebar .w3-button:hover a {
-    color: #ffffff;
+.w3-sidebar .w3-button.active a {
+    color: #ffffff !important;
 }
 
 /* MAIN CONTENT */

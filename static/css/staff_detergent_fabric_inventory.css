@@ -23,6 +23,16 @@ body {
     z-index: 1;
 }
 
+.w3-sidebar .w3-button:hover {
+    background-color: #122D69 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button:hover a {
+    color: #ffffff;
+}
+
 .main-title {
     padding: 16px 24px;
     font-weight: bold;
@@ -66,14 +76,35 @@ a{
     text-decoration: none;
 }
 
-.w3-sidebar .w3-button:hover {
+/* DISABLED HOVER EFFECTS */
+/* .w3-sidebar *:hover {
+    background-color: transparent !important;
+    color: inherit !important;
+} */
+
+/* .w3-sidebar .w3-button:hover,
+.w3-sidebar .w3-button:focus,
+.w3-sidebar .w3-button:active,
+.w3-sidebar li:hover,
+.w3-sidebar li:focus,
+.w3-sidebar li:active,
+.w3-sidebar a:hover,
+.w3-sidebar a:focus,
+.w3-sidebar a:active {
+    background-color: transparent !important;
+    color: #122D69 !important;
+    text-decoration: none !important;
+} */
+
+/* ACTIVE STATE */
+.w3-sidebar .w3-button.active {
     background-color: #122D69 !important;
     border-radius: 8px;
     margin: 0 10px;
 }
 
-.w3-sidebar .w3-button:hover a {
-    color: #ffffff;
+.w3-sidebar .w3-button.active a {
+    color: #ffffff !important;
 }
 
 main {
@@ -241,7 +272,10 @@ main {
     gap: 8px;
 }
 
-.pagination-btn {
+.pagination-btn, .page-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: #233872;
     color: white;
     border: none;
@@ -249,25 +283,30 @@ main {
     padding: 8px 16px;
     font-size: 1rem;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    text-decoration: none;
 }
 
-.pagination-btn:hover {
+.pagination-btn:hover:not(.disabled), .page-number:hover:not(.active) {
     background: #1a2a5a;
+    transform: translateY(-1px);
 }
 
 .pagination-btn.disabled {
     background: #bfc8da;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .page-number {
-    background: #233872;
-    color: white;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 1rem;
     font-weight: 600;
+}
+
+.page-number.active {
+    background: #1a2a5a;
+    cursor: default;
+    pointer-events: none;
 }
 
 /* Modal Styles */

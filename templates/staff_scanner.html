@@ -35,7 +35,6 @@
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('dashboard') }}">
-                            <i class="fas fa-home"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
@@ -52,7 +51,7 @@
                         </a>
                     </li>
 
-                    <li class="w3-padding w3-bar-item w3-button">
+                    <li class="w3-padding w3-bar-item w3-button active">
                         <a href="{{ url_for('scanner') }}">
                             <span>Scanner</span>
                         </a>
@@ -115,22 +114,8 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>F001</td>
-                                <td>Tide Original Scent</td>
-                                <td>30.00</td>
-                                <td>200</td>
-                                <td><img src="../static/images/logo.jpg" alt="Tide" class="product-img"></td>
-                                <td>
-                                    <button class="action-btn pickup-btn" onclick="completePickup('F001')">
-                                        <img src="../static/images/delivery.png" alt="Complete Pick-up" class="delivery-icon" style="width: 20px; height: 20px;">
-                                    </button>
-                                    <button class="action-btn resend-btn" onclick="resendMessage('F001')">
-                                        <img src="../static/images/expired.png" alt="Resend Message" class="expired-icon" style="width: 20px; height: 20px;">
-                                    </button>
-                                </td>
-                            </tr>
+                        <tbody id="pickupOrdersTableBody">
+                            <!-- Dynamic rows will be inserted here -->
                         </tbody>
                     </table>
                     <div class="pagination">
@@ -290,43 +275,26 @@
 
         function scanQRCode() {
             if (!scanning) return;
-            
             const video = document.getElementById('scanner-video');
             const canvas = document.getElementById('scanner-canvas');
             const context = canvas.getContext('2d');
-            
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
-            
-            // CONTINUOUS SCANNING
             scanInterval = setInterval(() => {
                 if (!scanning) return;
-                
                 try {
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    // jsQR
                     const code = jsQR(imageData.data, imageData.width, imageData.height, {
                         inversionAttempts: "dontInvert",
                     });
-                    
                     if (code) {
-                        console.log("QR Code detected:", code.data);
-                        
+                        let orderId = code.data;
                         try {
                             const qrData = JSON.parse(code.data);
-                            displayScannedData(qrData);
-                        } catch (e) {
-                            displayScannedData({
-                                rawData: code.data,
-                                customerId: 'Unknown',
-                                name: 'Unknown',
-                                orderId: 'Unknown',
-                                phone: 'Unknown'
-                            });
-                        }
-                        
+                            orderId = qrData.order_id || qrData.ORDER_ID || code.data;
+                        } catch (e) {}
+                        fetchOrderDetailsAndNotify(orderId);
                         stopScanner();
                         showSuccessMessage();
                     }
@@ -336,29 +304,82 @@
             }, 100);
         }
 
-        function displayScannedData(data) {
+        function fetchOrderDetailsAndNotify(orderId) {
+            fetch(`/order_details/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayScannedOrderDetails(data);
+                    let phone = data.PHONE_NUMBER;
+                    if (phone) {
+                        sendSMSNotification(phone, data.ORDER_ID, data.CUSTOMER_NAME);
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('scannedData').innerHTML = `<p style="color:red;">Order not found or error occurred.</p>`;
+                });
+        }
+
+        function displayScannedOrderDetails(data) {
             const resultDiv = document.getElementById('scannedData');
-            
-            if (data.rawData) {
-                resultDiv.innerHTML = `
-                    <div class="scanned-item">
-                        <strong>Raw Data:</strong> ${data.rawData}<br>
-                        <strong>Customer ID:</strong> ${data.customerId}<br>
-                        <strong>Name:</strong> ${data.name}<br>
-                        <strong>Order ID:</strong> ${data.orderId}<br>
-                        <strong>Phone:</strong> ${data.phone}
-                    </div>
-                `;
-            } else {
-                resultDiv.innerHTML = `
-                    <div class="scanned-item">
-                        <strong>Customer ID:</strong> ${data.customerId || 'N/A'}<br>
-                        <strong>Name:</strong> ${data.name || 'N/A'}<br>
-                        <strong>Order ID:</strong> ${data.orderId || 'N/A'}<br>
-                        <strong>Phone:</strong> ${data.phone || 'N/A'}
-                    </div>
-                `;
+            if (data.error) {
+                resultDiv.innerHTML = `<p style="color:red;">${data.error}</p>`;
+                return;
             }
+            resultDiv.innerHTML = `
+                <div class="scanned-item">
+                    <strong>Order ID:</strong> ${data.ORDER_ID || ''}<br>
+                    <strong>Customer Name:</strong> ${data.CUSTOMER_NAME || ''}<br>
+                    <strong>Phone Number:</strong> ${data.PHONE_NUMBER || ''}<br>
+                    <strong>Order Status:</strong> ${data.ORDER_STATUS || ''}<br>
+                    <strong>Payment Status:</strong> ${data.PAYMENT_STATUS || ''}<br>
+                    <strong>Pickup Schedule:</strong> ${data.PICKUP_SCHEDULE || ''}<br>
+                    <strong>Total Price:</strong> ₱${data.TOTAL_PRICE || ''}<br>
+                </div>
+            `;
+        }
+
+        function sendSMSNotification(phone, orderId, customerName) {
+            if (!phone) return;
+            fetch('/api/send_sms', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    phone: phone,
+                    message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showSMSNotificationSuccess();
+                }
+            });
+        }
+
+        function showSMSNotificationSuccess() {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = '<i class="fas fa-sms"></i> SMS notification sent to customer!';
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 60px;
+                right: 20px;
+                background: #007bff;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1001;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(successDiv);
+                }, 300);
+            }, 3000);
         }
 
         // SUCCESS MESSAGE
