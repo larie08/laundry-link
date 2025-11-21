@@ -38,109 +38,198 @@
             <span class="v100_213">OTHER</span>
             <span class="v100_214">PAYMENT</span>
             
-            <div class="receipt-box">
-                <p class="date">July 20, 2025</p>
+            <div class="receipt-box" style="font-family: 'Poppins', sans-serif;">
+                <div id="receipt-print-area">
+                    <p class="date">{{ current_date }}</p>
+                    <p><strong>Order Number:</strong> {{ order.ORDER_ID }}</p>
+                    <p><strong>Customer:</strong> {{ customer.FULLNAME }}</p>
+                    <p><strong>Contact Number:</strong> {{ customer.PHONE_NUMBER }}</p>
+                    <h3 style="font-family: 'Poppins', sans-serif;">Order Breakdown</h3>
 
-                <p><strong>Order Number:</strong> 012345</p>
-                <p><strong>Customer:</strong> Cedric Cornelio</p>
-                <p><strong>Contact Number:</strong> 09123456789</p>
-                <h3>Order Breakdown</h2>
-                <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                    <th>Load</th> 
-                    <th>Qty</th>
-                    <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                    <td>1 Load</td>
-                    <td></td>
-                    <td>Php 50.00</td>
-                    </tr>
-                    <tr>
-                    <td style="font-weight: bold;">Additional Services</td>
-                    <td></td>
-                    <td></td>
-                    </tr>
-                    <tr>
-                    <td>Iron</td>
-                    <td></td>
-                    <td>Php 45.00</td>
-                    </tr>
-                    <tr>
-                    <td>Fold</td>
-                    <td></td>
-                    <td>Php 30.00</td>
-                    </tr>
-                    <tr>
-                    <td style="font-weight: bold;">Add Ons</td>
-                    <td></td>
-                    <td></td>
-                    </tr>
-                    <tr>
-                    <td>Downy Premium Perfume</td>
-                    <td>3</td>
-                    <td>Php 60.00</td>
-                    </tr>
-                </tbody>
-                </table>
+                    {% set load_amt = order.TOTAL_LOAD * 50 %}
+                    {% set iron_amt = 50 if orderitem.IRON else 0 %}
+                    {% set fold_amt = 70 if orderitem.FOLD_CLOTHES else 0 %}
+                    {% set priority_amt = 50 if orderitem.PRIORITIZE_ORDER else 0 %}
+                    {% set det_amt = 0 %}
+                    {% set fabcon_amt = 0 %}
+                    {% if not orderitem.CUSTOMER_OWN_DETERGENT %}
+                        {% for det in orderitem_detergents %}
+                            {% set det_amt = det_amt + det.total_price %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if not orderitem.CUSTOMER_OWN_FABCON %}
+                        {% for fab in orderitem_fabcons %}
+                            {% set fabcon_amt = fabcon_amt + fab.total_price %}
+                        {% endfor %}
+                    {% endif %}
+                    {% set total = load_amt + iron_amt + fold_amt + priority_amt + det_amt + fabcon_amt %}
 
-                <h2 class="total"><hr>
-                <span class="total-label">Grand Total</span>
-                <span class="total-amount">Php 185.00</span>
-                </h2>
+                    <!-- Load Section -->
+                    <div class="order-section compact-order-section">
+                        <div class="section-item section-header">
+                            <span>Load</span>
+                            <span>Qty</span>
+                            <span>Amount</span>
+                        </div>
+                        <div class="section-item">
+                            <span>{{ order.TOTAL_LOAD }} Load</span>
+                            <span>{{ order.TOTAL_LOAD }}</span>
+                            <span>₱{{ "%.2f"|format(load_amt) }}</span>
+                        </div>
+                    </div>
 
-                <div class="payment-section">
-                <h3>Mode of Payment</h3>
-                <form method="POST" action="{{ url_for('payments') }}">
-                    <div class="payment-methods">
-                        <label class="payment-method" data-method="cash">
-                            <input type="radio" name="payment_mode" value="cash" class="payment-radio">
-                            <!-- Change img to button for cash -->
-                            <button type="submit" style="background:none;border:none;padding:0;">
-                                <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
-                            </button>
-                        </label>
+                    <!-- Additional Services Section -->
+                    <div class="order-section compact-order-section">
+                        <div class="section-title" style="margin-top:6px;">Additional Services</div>
+                        {% if orderitem.IRON %}
+                        <div class="section-item">
+                            <span>Iron</span>
+                            <span></span>
+                            <span>₱50.00</span>
+                        </div>
+                        {% endif %}
+                        {% if orderitem.FOLD_CLOTHES %}
+                        <div class="section-item">
+                            <span>Fold</span>
+                            <span></span>
+                            <span>₱70.00</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add Ons Section -->
+                    <div class="order-section compact-order-section">
+                        <div class="section-title" style="margin-top:6px;">Add Ons</div>
+                        {% if orderitem.CUSTOMER_OWN_DETERGENT %}
+                        <div class="section-item">
+                            <span>Own Detergent</span>
+                            <span>-</span>
+                            <span>₱0.00</span>
+                        </div>
+                        {% else %}
+                            {% for det in orderitem_detergents %}
+                            <div class="section-item">
+                                <span>{{ det.DETERGENT_NAME }}</span>
+                                <span>{{ det.QUANTITY }}</span>
+                                <span>₱{{ "%.2f"|format(det.total_price) }}</span>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if orderitem.CUSTOMER_OWN_FABCON %}
+                        <div class="section-item">
+                            <span>Own Fabric Conditioner</span>
+                            <span>-</span>
+                            <span>₱0.00</span>
+                        </div>
+                        {% else %}
+                            {% for fab in orderitem_fabcons %}
+                            <div class="section-item">
+                                <span>{{ fab.FABCON_NAME }}</span>
+                                <span>{{ fab.QUANTITY }}</span>
+                                <span>₱{{ "%.2f"|format(fab.total_price) }}</span>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Priority Service if selected -->
+                    {% if orderitem.PRIORITIZE_ORDER %}
+                    <div class="order-section compact-order-section">
+                        <div class="section-item">
+                            <span>Priority Service</span>
+                            <span></span>
+                            <span>₱50.00</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Total Section -->
+                    <div class="total-section" style="margin-top:18px;">
+                        <hr>
+                        <div class="total-row" style="font-weight:700; font-size:1.1em;">
+                            <span style="color:#122D69;">Grand Total</span>
+                            <span style="color:#122D69;">₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Add Order Details Section -->
+                    <div class="order-details">
+                        {% if order.PICKUP_SCHEDULE %}
+                        <p><strong>Pickup Schedule:</strong> {{ order.PICKUP_SCHEDULE.strftime('%B %d, %Y %I:%M %p') }}</p>
+                        {% endif %}
                         
-                        <label class="payment-method" data-method="gcash">
-                            <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
-                            <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
-                        </label>
-
-                        <label class="payment-method" data-method="maya">
-                            <input type="radio" name="payment_mode" value="maya" class="payment-radio">
-                            <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
-                        </label>
+                        {% if order.ORDER_NOTE %}
+                        <p><strong>Note:</strong> {{ order.ORDER_NOTE }}</p>
+                        {% endif %}
                     </div>
-                    <input type="hidden" id="selected_payment_method" name="payment_method" value="cash">
-                </form>
+
+                    <div class="payment-section">
+                    <h3>Mode of Payment</h3>
+                    <form method="POST" action="{{ url_for('payments') }}">
+                        <div class="payment-methods">
+                            <label class="payment-method" data-method="cash">
+                                <input type="radio" name="payment_mode" value="cash" class="payment-radio">
+                                <!-- Change img to button for cash -->
+                                <button type="submit" style="background:none;border:none;padding:0;">
+                                    <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
+                                </button>
+                            </label>
+                            
+                            <label class="payment-method" data-method="gcash">
+                                <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
+                                <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
+                            </label>
+
+                            <label class="payment-method" data-method="maya">
+                                <input type="radio" name="payment_mode" value="maya" class="payment-radio">
+                                <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
+                            </label>
+                        </div>
+                        <input type="hidden" id="selected_payment_method" name="payment_method" value="cash">
+                    </form>
+                    </div>
                 </div>
 
-                <!-- GCash QR Modal -->
-                <div id="gcashModal" class="qr-modal">
-                    <div class="modal-content">
-                        <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
-                        <h2>GCash Payment</h2>
-                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
-                        <div class="qr-container">
-                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code">
-                        </div>
-                        <p class="qr-instructions">Scan QR code using GCash app to pay</p>
-                    </div>
+                <!-- Display QR Code for Order -->
+                {% if qr_code_path %}
+                <div class="order-qr-section" style="margin-top:20px;">
+                    <h4>Order QR Code</h4>
+                    <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:140px;height:140px;cursor:pointer;" onclick="openOrderQRModal()">
+                    <br>
+                    <button type="button" onclick="openOrderQRModal()" style="margin-top:8px;">View QR Code</button>
                 </div>
+                {% endif %}
+                <!-- PRINT BUTTONS -->
+                    <div style="text-align:center; margin-top:20px;">
 
-                <!-- Maya QR Modal -->
-                <div id="mayaModal" class="qr-modal">
+                        <!-- Print Order Details Only -->
+                        <button 
+                            type="button" 
+                            onclick="printReceiptOnly()" 
+                            style="padding:10px 18px; background:#122D69; color:white; border:none; border-radius:6px; cursor:pointer;">
+                            Print Order Receipt
+                        </button>
+
+                        <!-- Print QR Code Only -->
+                        <button 
+                            type="button" 
+                            onclick="printQRCodeOnly()" 
+                            style="padding:10px 18px; background:#4CAF50; color:white; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">
+                            Print QR Code
+                        </button>
+
+                    </div>
+                <!-- Order QR Modal -->
+                <div id="orderQRModal" class="qr-modal">
                     <div class="modal-content">
-                        <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
-                        <h2>Maya Payment</h2>
-                        <p class="modal-amount">Amount to Pay: Php 185.00</p>
+                        <span class="close-modal" onclick="closeOrderQRModal()">&times;</span>
+                        <h2>Order QR Code</h2>
+                        {% if qr_code_path %}
                         <div class="qr-container">
-                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code">
+                            <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:220px;height:220px;">
                         </div>
-                        <p class="qr-instructions">Scan QR code using Maya app to pay</p>
+                        {% endif %}
+                        <p class="qr-instructions">Scan this QR code for order details.</p>
                     </div>
                 </div>
             </div>
@@ -201,6 +290,36 @@
 
             function closeCashModal() {
                 document.getElementById('cashModal').style.display = 'none';
+            }
+
+            // Order QR Modal Functions
+            function openOrderQRModal() {
+                document.getElementById('orderQRModal').style.display = 'block';
+            }
+            function closeOrderQRModal() {
+                document.getElementById('orderQRModal').style.display = 'none';
+            }
+
+            // Print Functions
+            function printReceiptOnly() {
+                // Get the receipt content
+                let printContents = document.querySelector('.receipt-box').innerHTML;
+
+                let original = document.body.innerHTML;
+                document.body.innerHTML = printContents;
+                window.print();
+                document.body.innerHTML = original;
+                location.reload();
+            }
+
+            function printQRCodeOnly() {
+                let printContents = document.getElementById('qr-print-area').innerHTML;
+
+                let original = document.body.innerHTML;
+                document.body.innerHTML = printContents;
+                window.print();
+                document.body.innerHTML = original;
+                location.reload();
             }
         </script>
 </html>
