@@ -331,77 +331,24 @@ def payments():
         # Update order in Firestore using helper
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
-    return render_template('payments.html',
-                         order=order,
-                         customer=latest_customer,
-                         orderitem=orderitem,
-                         load_price=load_price,
-                         orderitem_detergents=orderitem_detergents,
-                         orderitem_fabcons=orderitem_fabcons,
-                         current_date=current_date,
-                         qr_code_path=qr_code_path)
-
-@app.route('/payments', methods=['GET', 'POST'])
-def payments():
-    if request.method == 'POST':
-        # Handle payment submission
-        order_id = session.get('order_id')
-        payment_method = request.form.get('payment_method')
-        
-        if payment_method == 'cash':
-            # For cash, mark as paid immediately and redirect to home
-            update_order_payment(order_id, payment_method, 'PAID')
-            return redirect(url_for('home'))
-        else:
-            # For GCash/Maya, update payment method but keep status as Unpaid
-            # Return JSON response so frontend can show QR code
-            update_order_payment(order_id, payment_method, 'Unpaid')
-            return jsonify({'success': True, 'payment_method': payment_method})
-    
-    # Get latest customer
-    latest_customer = get_latest_customer()
-    if not latest_customer:
-        flash('No customer found. Please add customer details first.')
-        return redirect(url_for('contact'))
-    
-    # Get order details from session
-    order_id = session.get('order_id')
-    
-    # Get order data
-    order = get_order_by_id(order_id)
-    if not order:
-        flash('Order not found.')
-        return redirect(url_for('home'))
-        
-    orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
-    
-    # Calculate price per load (8kg = 1 load at ₱50)
-    load_price = order['TOTAL_LOAD'] * 50.00
-    
-    # Get detergents and fabric conditioners from junction tables
-    orderitem_detergents = []
-    if not orderitem['CUSTOMER_OWN_DETERGENT']:
-        orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
-    
-    orderitem_fabcons = []
-    if not orderitem['CUSTOMER_OWN_FABCON']:
-        orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
-    
-    # Format the current date
-    current_date = datetime.now().strftime('%B %d, %Y')
-    
-    # Generate QR code if not present
-    qr_code_path = order.get('QR_CODE')
-    if not qr_code_path:
-        qr_img = qrcode.make(str(order_id))
-        qr_filename = f"qr_order_{order_id}.png"
-        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
-        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
-        qr_img.save(qr_filepath)
-        # Save relative path for template
-        qr_code_path = f"qr/{qr_filename}"
-        # Update order in Firestore using helper
-        dbhelper.update_order_qr_code(order_id, qr_code_path)
+    # --- FIX: Format pickup schedule for template ---
+    pickup_schedule_formatted = None
+    pickup_schedule = order.get('PICKUP_SCHEDULE')
+    if pickup_schedule:
+        try:
+            # Try parsing as 'YYYY-MM-DD HH:MM:SS'
+            if isinstance(pickup_schedule, str):
+                try:
+                    pickup_dt = datetime.strptime(pickup_schedule, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    # Try parsing as 'YYYY-MM-DD'
+                    pickup_dt = datetime.strptime(pickup_schedule, '%Y-%m-%d')
+                pickup_schedule_formatted = pickup_dt.strftime('%B %d, %Y %I:%M %p')
+            elif hasattr(pickup_schedule, 'strftime'):
+                pickup_schedule_formatted = pickup_schedule.strftime('%B %d, %Y %I:%M %p')
+        except Exception:
+            pickup_schedule_formatted = str(pickup_schedule)
+    # -----------------------------------------------
 
     return render_template('payments.html',
                          order=order,
@@ -411,9 +358,10 @@ def payments():
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
                          current_date=current_date,
-                         qr_code_path=qr_code_path)
+                         qr_code_path=qr_code_path,
+                         pickup_schedule_formatted=pickup_schedule_formatted)
 
-@app.route('/save_order_note', methods=['POST'])
+@app.route('/save_order_note', methods=['POST'], endpoint='save_order_note')
 def save_order_note():
     """Save order note to database."""
     order_id = session.get('order_id')
@@ -687,9 +635,7 @@ def scanner():
     # Get all orders with ORDER_STATUS "Pick-up"
     orders = dbhelper.get_all_orders_with_priority()
     pickup_orders = [o for o in orders if (o.get('ORDER_STATUS', '').lower() == 'pick-up')]
-    # Fetch PHONE_NUMBER from ORDER table (if present)
-    for o in pickup_orders:
-        o['PHONE_NUMBER'] = o.get('PHONE_NUMBER', '')  # Already included if get_all_orders_with_priority is updated
+    
     # BASED ON ROLE
     template_name = 'admin_scanner.html' if session['role'] == 'admin' else 'staff_scanner.html'
     return render_template(template_name, pickup_orders=pickup_orders)
@@ -914,8 +860,63 @@ def admin_order_report():
     if 'user_id' not in session or session['role'] != 'admin':
         return redirect(url_for('admin_login'))
     
-    return render_template('admin_order_report.html')
+    # Query parameters
+    search_query = request.args.get('q', '').strip().lower()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 10
 
+    # Get all orders
+    all_orders = dbhelper.get_all_orders_with_priority()
+
+    # Filter orders by search and date range (dates compared as YYYY-MM-DD strings)
+    filtered_orders = []
+    for order in all_orders:
+        include = True
+        if search_query:
+            order_id_str = str(order.get('ORDER_ID', '')).lower()
+            customer_name = str(order.get('CUSTOMER_NAME', '')).lower()
+            if (search_query not in order_id_str) and (search_query not in customer_name):
+                include = False
+        if include and start_date:
+            order_date_str = str(order.get('DATE_CREATED', ''))[:10]
+            if not order_date_str or order_date_str < start_date:
+                include = False
+        if include and end_date:
+            order_date_str = str(order.get('DATE_CREATED', ''))[:10]
+            if not order_date_str or order_date_str > end_date:
+                include = False
+        if include:
+            filtered_orders.append(order)
+
+    # Statistics
+    total_orders = len(filtered_orders)
+    total_revenue = 0.0
+    for o in filtered_orders:
+        try:
+            total_revenue += float(o.get('TOTAL_PRICE', 0) or 0)
+        except Exception:
+            pass
+
+    pending_orders = [o for o in filtered_orders if (o.get('ORDER_STATUS') or '').lower() == 'pending']
+    completed_orders = [o for o in filtered_orders if (o.get('ORDER_STATUS') or '').lower() == 'completed']
+
+    # Pagination
+    total_pages = (total_orders + items_per_page - 1) // items_per_page if total_orders > 0 else 1
+    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_orders = filtered_orders[start_idx:end_idx]
+
+    return render_template('admin_order_report.html',
+                           paginated_orders=paginated_orders,
+                           total_orders=total_orders,
+                           total_revenue=round(total_revenue, 2),
+                           pending_count=len(pending_orders),
+                           completed_count=len(completed_orders),
+                           page=page,
+                           total_pages=total_pages)
 # INVENTORY REPORT
 @app.route('/inventory_report')
 def inventory_report():
@@ -991,12 +992,45 @@ def inventory_report():
     if inv_type == None:
         fabric_conditioners = all_fabric_conditioners.copy()
     
+    # PAGINATION LOGIC
+    items_per_page = 10
+    page = request.args.get('page', 1, type=int)
+    if inv_type == 'detergent' or inv_type is None:
+        total_items = len(detergents)
+        total_pages = (total_items + items_per_page - 1) // items_per_page if total_items > 0 else 1
+        if page < 1:
+            page = 1
+        elif page > total_pages and total_pages > 0:
+            page = total_pages
+        start_idx = (page - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        paginated_detergents = detergents[start_idx:end_idx]
+        paginated_fabcons = []
+    elif inv_type == 'fabcon':
+        total_items = len(fabric_conditioners)
+        total_pages = (total_items + items_per_page - 1) // items_per_page if total_items > 0 else 1
+        if page < 1:
+            page = 1
+        elif page > total_pages and total_pages > 0:
+            page = total_pages
+        start_idx = (page - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        paginated_fabcons = fabric_conditioners[start_idx:end_idx]
+        paginated_detergents = []
+    else:
+        paginated_detergents = detergents
+        paginated_fabcons = fabric_conditioners
+        total_pages = 1
+        page = 1
+
     return render_template(
         'admin_inventory_report.html',
         all_detergents=all_detergents,
         all_fabric_conditioners=all_fabric_conditioners,
-        detergents=detergents,
-        fabric_conditioners=fabric_conditioners
+        detergents=paginated_detergents,
+        fabric_conditioners=paginated_fabcons,
+        current_page=page,
+        total_pages=total_pages
     )
 
 @app.route('/download_order_report/<format>')

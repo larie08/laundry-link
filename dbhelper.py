@@ -836,6 +836,7 @@ def get_all_orders_with_priority():
             'ORDER_ID': order.get('ORDER_ID'),
             'CUSTOMER_ID': order.get('CUSTOMER_ID'),
             'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+            'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
             'ORDER_TYPE': order.get('ORDER_TYPE'),
             'PRIORITY': 'Priority' if orderitem and orderitem.get('PRIORITIZE_ORDER') else 'Normal',
             'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
