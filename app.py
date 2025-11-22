@@ -76,7 +76,8 @@ def weight_laundry():
 def other_services():
     detergents = get_all_detergents()
     fabric_conditioners = get_all_fabric_conditioners()
-    return render_template('others.html', detergents=detergents, fabric_conditioners=fabric_conditioners)
+    order_type = session.get('order_type', 'Drop-off')
+    return render_template('others.html', detergents=detergents, fabric_conditioners=fabric_conditioners, order_type=order_type)
 
 @app.route('/submit_others', methods=['POST'])
 def submit_others():
@@ -93,6 +94,11 @@ def submit_others():
     order_note = request.form.get('order_note', '').strip()
     pickup_date = request.form.get('pickup_date', '').strip()
     pickup_time = request.form.get('pickup_time', '').strip()
+    
+    # Get payment method from form
+    payment_method = request.form.get('payment_method', '').strip()
+    if not payment_method:
+        payment_method = None
     
     # Combine pickup date and time into SQL datetime format
     pickup_schedule = None
@@ -172,13 +178,15 @@ def submit_others():
         total_load=total_load,
         total_price=total_price,
         order_note=order_note,
-        pickup_schedule=pickup_schedule
+        pickup_schedule=pickup_schedule,
+        payment_method=payment_method
     )
     
     # Store in session for payments page
     session['order_id'] = order_id
     session['customer_id'] = customer_id
     session['total_price'] = total_price
+    session['payment_method'] = payment_method
 
     return redirect(url_for('payments'))
 
@@ -189,9 +197,15 @@ def payments():
         order_id = session.get('order_id')
         payment_method = request.form.get('payment_method')
         
-        # Update order payment status
-        update_order_payment(order_id, payment_method, 'PAID')
-        return redirect(url_for('home'))
+        if payment_method == 'cash':
+            # For cash, mark as paid immediately and redirect to home
+            update_order_payment(order_id, payment_method, 'PAID')
+            return redirect(url_for('home'))
+        else:
+            # For GCash/Maya, update payment method but keep status as Unpaid
+            # Return JSON response so frontend can show QR code
+            update_order_payment(order_id, payment_method, 'Unpaid')
+            return jsonify({'success': True, 'payment_method': payment_method})
     
     # Get latest customer
     latest_customer = get_latest_customer()
@@ -247,6 +261,23 @@ def payments():
                          orderitem_fabcons=orderitem_fabcons,
                          current_date=current_date,
                          qr_code_path=qr_code_path)
+
+@app.route('/save_order_note', methods=['POST'])
+def save_order_note():
+    """Save order note to database."""
+    order_id = session.get('order_id')
+    if not order_id:
+        return jsonify({'success': False, 'message': 'No order found'}), 400
+    
+    order_note = request.form.get('order_note', '').strip()
+    
+    # Update order note in database
+    success = dbhelper.update_order_note(order_id, order_note)
+    
+    if success:
+        return jsonify({'success': True, 'message': 'Note saved successfully'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to save note'}), 500
 
 
 

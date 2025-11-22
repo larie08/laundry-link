@@ -151,52 +151,63 @@
                     </div>
                 </div>
 
-                <!-- Add Order Details Section -->
-                <div class="order-details">
-                    {% if order.PICKUP_SCHEDULE %}
-                    <p><strong>Pickup Schedule:</strong> {{ order.PICKUP_SCHEDULE.strftime('%B %d, %Y %I:%M %p') }}</p>
-                    {% endif %}
-                    
-                    {% if order.ORDER_NOTE %}
-                    <p><strong>Note:</strong> {{ order.ORDER_NOTE }}</p>
-                    {% endif %}
+                <!-- Order Note Section -->
+                <div class="note-section">
+                    <h3>Add Note</h3>
+                    <form id="noteForm" method="POST" action="{{ url_for('save_order_note') }}">
+                        <textarea 
+                            id="orderNote" 
+                            name="order_note" 
+                            class="note-textarea" 
+                            placeholder="Enter any special instructions or notes for your order..."
+                            rows="3">{{ order.ORDER_NOTE if order.ORDER_NOTE else '' }}</textarea>
+                        <button type="submit" class="note-submit-btn">Save Note</button>
+                    </form>
+                    <div id="noteMessage" class="note-message"></div>
                 </div>
 
-                <div class="payment-section">
-                <h3>Mode of Payment</h3>
-                <form method="POST" action="{{ url_for('payments') }}">
-                    <div class="payment-methods">
-                        <label class="payment-method" data-method="cash">
-                            <input type="radio" name="payment_mode" value="cash" class="payment-radio">
-                            <!-- Change img to button for cash -->
-                            <button type="submit" style="background:none;border:none;padding:0;">
-                                <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
-                            </button>
-                        </label>
-                        
-                        <label class="payment-method" data-method="gcash">
-                            <input type="radio" name="payment_mode" value="gcash" class="payment-radio">
-                            <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash" onclick="openQRModal('gcash')">
-                        </label>
+                <!-- Confirm Order Button -->
+                <div class="confirm-section">
+                    <button type="button" class="confirm-order-btn" onclick="openPaymentModal()">Confirm Order</button>
+                </div>
 
-                        <label class="payment-method" data-method="maya">
-                            <input type="radio" name="payment_mode" value="maya" class="payment-radio">
-                            <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya" onclick="openQRModal('maya')">
-                        </label>
+                <!-- Payment Method Selection Modal -->
+                <div id="paymentModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closePaymentModal()">&times;</span>
+                        <h2>Select Payment Method</h2>
+                        <div class="payment-methods-container">
+                            <label class="payment-method-option" data-method="cash">
+                                <input type="radio" name="payment_method_radio" value="cash" class="payment-radio-input">
+                                <div class="payment-option-content">
+                                    <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
+                                    <span>Cash</span>
+                                </div>
+                            </label>
+                            
+                            <label class="payment-method-option" data-method="gcash">
+                                <input type="radio" name="payment_method_radio" value="gcash" class="payment-radio-input">
+                                <div class="payment-option-content">
+                                    <img src="{{ url_for('static', filename='images/gcash.png') }}" alt="GCash">
+                                    <span>GCash</span>
+                                </div>
+                            </label>
+
+                            <label class="payment-method-option" data-method="maya">
+                                <input type="radio" name="payment_method_radio" value="maya" class="payment-radio-input">
+                                <div class="payment-option-content">
+                                    <img src="{{ url_for('static', filename='images/maya.png') }}" alt="Maya">
+                                    <span>Maya</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="modal-buttons">
+                            <button type="button" class="submit" onclick="confirmPaymentMethod()">Confirm</button>
+                            <button type="button" class="cancel" onclick="closePaymentModal()">Cancel</button>
+                        </div>
                     </div>
-                    <input type="hidden" id="selected_payment_method" name="payment_method" value="cash">
-                </form>
                 </div>
 
-                <!-- Display QR Code for Order -->
-                {% if qr_code_path %}
-                <div class="order-qr-section" style="margin-top:20px;">
-                    <h4>Order QR Code</h4>
-                    <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:140px;height:140px;cursor:pointer;" onclick="openOrderQRModal()">
-                    <br>
-                    <button type="button" onclick="openOrderQRModal()" style="margin-top:8px;">View QR Code</button>
-                </div>
-                {% endif %}
 
                 <!-- Order QR Modal -->
                 <div id="orderQRModal" class="qr-modal">
@@ -211,6 +222,32 @@
                         <p class="qr-instructions">Scan this QR code for order details.</p>
                     </div>
                 </div>
+
+                <!-- GCash QR Modal -->
+                <div id="gcashModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
+                        <h2>GCash Payment</h2>
+                        <div class="modal-amount">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code" style="width:220px;height:220px;">
+                        </div>
+                        <p class="qr-instructions">Scan this QR code to pay via GCash.</p>
+                    </div>
+                </div>
+
+                <!-- Maya QR Modal -->
+                <div id="mayaModal" class="qr-modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
+                        <h2>Maya Payment</h2>
+                        <div class="modal-amount">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
+                        <div class="qr-container">
+                            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code" style="width:220px;height:220px;">
+                        </div>
+                        <p class="qr-instructions">Scan this QR code to pay via Maya.</p>
+                    </div>
+                </div>
             </div>
         </div>
         </body>
@@ -223,30 +260,11 @@
                 document.getElementById('scheduleModal').style.display = 'none';
             }
 
-            // Payment method selection
-            document.querySelectorAll('.payment-method').forEach(method => {
-                const radio = method.querySelector('.payment-radio');
-                
-                method.addEventListener('click', function() {
-                    // Remove active class from all methods
-                    document.querySelectorAll('.payment-method').forEach(m => {
-                        m.classList.remove('active');
-                    });
-                    
-                    // Add active class to selected method
-                    this.classList.add('active');
-                    
-                    // Check the radio button
-                    radio.checked = true;
-                    
-                    // Update hidden input with selected method
-                    document.getElementById('selected_payment_method').value = this.dataset.method;
-                });
-            });
-
             // QR Modal Functions
             function openQRModal(type) {
-                event.stopPropagation(); // Prevent label click event
+                if (event && event.stopPropagation) {
+                    event.stopPropagation(); // Prevent label click event
+                }
                 document.getElementById(type + 'Modal').style.display = 'block';
             }
 
@@ -254,8 +272,102 @@
                 document.getElementById(type + 'Modal').style.display = 'none';
             }
 
+            // Payment Method Modal Functions
+            function openPaymentModal() {
+                document.getElementById('paymentModal').style.display = 'block';
+            }
+            
+            function closePaymentModal() {
+                document.getElementById('paymentModal').style.display = 'none';
+            }
+            
+            function confirmPaymentMethod() {
+                const selectedRadio = document.querySelector('input[name="payment_method_radio"]:checked');
+                if (!selectedRadio) {
+                    alert('Please select a payment method');
+                    return;
+                }
+                
+                const paymentMethod = selectedRadio.value;
+                
+                // Close payment modal
+                closePaymentModal();
+                
+                // If cash, submit form and redirect to home
+                if (paymentMethod === 'cash') {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url_for("payments") }}';
+                    
+                    const paymentInput = document.createElement('input');
+                    paymentInput.type = 'hidden';
+                    paymentInput.name = 'payment_method';
+                    paymentInput.value = paymentMethod;
+                    form.appendChild(paymentInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    // For GCash/Maya, save payment method and show QR code
+                    savePaymentMethodAndShowQR(paymentMethod);
+                }
+            }
+            
+            function savePaymentMethodAndShowQR(paymentMethod) {
+                // Save payment method via AJAX
+                const formData = new FormData();
+                formData.append('payment_method', paymentMethod);
+                
+                fetch('{{ url_for("payments") }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // If redirected, follow the redirect
+                        window.location.href = response.url;
+                    } else {
+                        // Parse JSON response
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        // Show QR code modal
+                        openQRModal(paymentMethod);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+            
+            // Payment method selection styling
+            document.querySelectorAll('.payment-method-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove active class from all options
+                    document.querySelectorAll('.payment-method-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add active class to selected option
+                    this.classList.add('selected');
+                    
+                    // Check the radio button
+                    const radio = this.querySelector('.payment-radio-input');
+                    if (radio) {
+                        radio.checked = true;
+                    }
+                });
+            });
+            
             // Close modal when clicking outside
             window.onclick = function(event) {
+                const paymentModal = document.getElementById('paymentModal');
+                if (event.target === paymentModal) {
+                    closePaymentModal();
+                }
                 if (event.target.classList.contains('qr-modal')) {
                     event.target.style.display = 'none';
                 }
@@ -278,5 +390,73 @@
             function closeOrderQRModal() {
                 document.getElementById('orderQRModal').style.display = 'none';
             }
+
+            // Handle note form submission
+            document.getElementById('noteForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const submitBtn = this.querySelector('.note-submit-btn');
+                const messageDiv = document.getElementById('noteMessage');
+                
+                // Disable button and show loading state
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+                messageDiv.textContent = '';
+                messageDiv.className = 'note-message';
+                
+                fetch('{{ url_for("save_order_note") }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        messageDiv.textContent = data.message;
+                        messageDiv.className = 'note-message success';
+                        // Update the displayed note in order details
+                        const orderDetails = document.querySelector('.order-details');
+                        const noteValue = formData.get('order_note').trim();
+                        if (orderDetails) {
+                            // Check if note paragraph already exists
+                            let noteParagraph = Array.from(orderDetails.querySelectorAll('p')).find(p => 
+                                p.querySelector('strong') && p.querySelector('strong').textContent.includes('Note:')
+                            );
+                            
+                            if (noteParagraph) {
+                                // Update existing note
+                                if (noteValue) {
+                                    noteParagraph.innerHTML = '<strong>Note:</strong> ' + noteValue;
+                                } else {
+                                    noteParagraph.remove();
+                                }
+                            } else if (noteValue) {
+                                // Create new note paragraph
+                                const newNoteP = document.createElement('p');
+                                newNoteP.innerHTML = '<strong>Note:</strong> ' + noteValue;
+                                orderDetails.appendChild(newNoteP);
+                            }
+                        }
+                    } else {
+                        messageDiv.textContent = data.message || 'Failed to save note';
+                        messageDiv.className = 'note-message error';
+                    }
+                })
+                .catch(error => {
+                    messageDiv.textContent = 'An error occurred. Please try again.';
+                    messageDiv.className = 'note-message error';
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Note';
+                    
+                    // Clear message after 3 seconds
+                    setTimeout(() => {
+                        messageDiv.textContent = '';
+                        messageDiv.className = 'note-message';
+                    }, 3000);
+                });
+            });
         </script>
 </html>

@@ -11,7 +11,7 @@ body {
   justify-content: center;
   align-items: center;
   background: rgba(255,255,255,1);
-  overflow: hidden;
+  overflow: auto;
 }
 .v100_93 {
   width: 500px;
@@ -204,7 +204,6 @@ body {
   position: absolute;
   top: 100px;
   left: 50px;
-  border: 1px solid rgba(0,0,0,1);
   box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   padding: 40px 20px 20px 20px;
@@ -234,18 +233,16 @@ body {
   opacity: 1;
   text-align: left;
 }
+/* OPTIONS Section - Row 1: Detergent & Fabcon */
 .v100_133 {
-  width: 184px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
   top: 209px;
   left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -260,18 +257,17 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+
+/* OPTIONS Section - Row 2: Own Detergent */
 .v100_140 {
-  width: 184px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 264px;
+  top: 279px;
   left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -286,18 +282,17 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+
+/* OPTIONS Section - Row 1: Fabcon */
 .v100_138 {
-  width: 171px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
   top: 209px;
-  left: 272px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  left: 268px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -312,15 +307,19 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+
+/* OPTIONS Section - Row 2: Own Fabcon */
 .v100_151 {
-  width: 171px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 264px;
-  left: 272px;
+  top: 279px;
+  left: 268px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
@@ -333,18 +332,17 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+
+/* OTHER Section - Iron */
 .v100_163 {
-  width: 184px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
   top: 386px;
   left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -359,18 +357,16 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+/* OTHER Section - Fold */
 .v100_165 {
-  width: 171px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
   top: 386px;
-  left: 272px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  left: 268px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -385,18 +381,17 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+
+/* Priority Order */
 .v244_284 {
-  width: 184px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 440px;
-  left: 76px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  top: 455px;
+  left: 78px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -411,44 +406,19 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
-.v244_285 {
-  width: 171px;
-  height: 43px;
-  background: rgba(255,255,255,1);
-  opacity: 1;
-  position: absolute;
-  top: 440px;
-  left: 270px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.v244_285.selected {
-  background: rgba(13, 71, 161, 0.1);
-  border: 1px solid #0d47a1;
-}
+
+/* Removed .v244_285 - not used */
+
+/* Schedule Pickup */
 .v245_297 {
-  width: 184px;
-  height: 43px;
+  width: 160px;
+  height: 50px;
   background: rgba(255,255,255,1);
   opacity: 1;
   position: absolute;
-  top: 495px;
-  left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  top: 455px;
+  left: 268px;
+  border-radius: 8px;
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   cursor: pointer;
@@ -463,12 +433,13 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
+/* Button and Icon Positions - OPTIONS Section */
 button.v100_145 {
-  width: 85px;
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 217px;
-  left: 140px;
+  top: 222px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -477,7 +448,11 @@ button.v100_145 {
   background: none;
   border: none;
   cursor: pointer;
-  pointer-events: none;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v100_158 {
   width: 32px;
@@ -488,10 +463,10 @@ button.v100_145 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 270px;
-  left: 94px;
+  top: 288px;
+  left: 88px;
   overflow: hidden;
-  pointer-events: none;
+  z-index: 1;
 }
 .v100_159 {
   width: 32px;
@@ -502,17 +477,17 @@ button.v100_145 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 215px;
-  left: 290px;
+  top: 218px;
+  left: 278px;
   overflow: hidden;
-  pointer-events: none;
+  z-index: 1;
 }
 button.v100_149 {
-  width: 109px;
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 276px;
-  left: 136px;
+  top: 292px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -521,14 +496,18 @@ button.v100_149 {
   background: none;
   border: none;
   cursor: pointer;
-  pointer-events: none;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 button.v100_154 {
-  width: 109px;
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 276px;
-  left: 330px;
+  top: 292px;
+  left: 318px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -537,7 +516,11 @@ button.v100_154 {
   background: none;
   border: none;
   cursor: pointer;
-  pointer-events: none;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v100_160 {
   width: 32px;
@@ -548,17 +531,17 @@ button.v100_154 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 269px;
-  left: 290px;
+  top: 288px;
+  left: 278px;
   overflow: hidden;
-  pointer-events: none;
+  z-index: 1;
 }
 button.v100_147 {
-  width: 85px;
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 217px;
-  left: 330px;
+  top: 222px;
+  left: 318px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -567,7 +550,11 @@ button.v100_147 {
   background: none;
   border: none;
   cursor: pointer;
-  pointer-events: none;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v91_256 {
   width: 50px;
@@ -587,51 +574,45 @@ button.v100_147 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 215px;
-  left: 94px;
+  top: 218px;
+  left: 88px;
   overflow: hidden;
+  z-index: 1;
 }
-.v100_163 {
-  width: 184px;
-  height: 43px;
-  background: rgba(255,255,255,1);
+/* OTHER Section - Icons and Buttons */
+.v100_176 {
+  width: 32px;
+  height: 32px;
+  background: url("../images/v100_176.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 386px;
-  left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
+  top: 395px;
+  left: 88px;
   overflow: hidden;
+  z-index: 1;
 }
-.v100_165 {
-  width: 171px;
-  height: 43px;
-  background: rgba(255,255,255,1);
-  opacity: 1;
-  position: absolute;
-  top: 386px;
-  left: 272px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-}
-.v100_267 {
-  width: 85px;
+button.v100_167 {
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 410px;
-  left: 341px;
+  top: 399px;
+  left: 128px;
   font-family: Poppins;
-  font-weight: Regular;
-  font-size: 9px;
+  font-weight: Bold;
+  font-size: 11px;
   opacity: 1;
   text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v100_177 {
   width: 32px;
@@ -642,16 +623,17 @@ button.v100_147 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 390px;
-  left: 290px;
+  top: 395px;
+  left: 278px;
   overflow: hidden;
+  z-index: 1;
 }
-button.v100_167 {
-  width: 85px;
+button.v100_173 {
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 393px;
-  left: 140px;
+  top: 399px;
+  left: 318px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -660,13 +642,18 @@ button.v100_167 {
   background: none;
   border: none;
   cursor: pointer;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v100_265 {
   width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
   top: 410px;
-  left: 140px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Regular;
   font-size: 9px;
@@ -678,7 +665,7 @@ button.v100_167 {
   color: rgba(18,45,105,1);
   position: absolute;
   top: 233px;
-  left: 140px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Regular;
   font-size: 9px;
@@ -690,77 +677,32 @@ button.v100_167 {
   color: rgba(18,45,105,1);
   position: absolute;
   top: 233px;
-  left: 330px;
+  left: 318px;
   font-family: Poppins;
   font-weight: Regular;
   font-size: 9px;
   opacity: 1;
   text-align: left;
 }
-button.v100_173 {
+.v100_267 {
   width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 393px;
-  left: 341px;
+  top: 410px;
+  left: 318px;
   font-family: Poppins;
-  font-weight: Bold;
-  font-size: 11px;
+  font-weight: Regular;
+  font-size: 9px;
   opacity: 1;
   text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
 }
-.v100_176 {
-  width: 32px;
-  height: 32px;
-  background: url("../images/v100_176.png");
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  opacity: 1;
-  position: absolute;
-  top: 390px;
-  left: 94px;
-  overflow: hidden;
-}
-.v244_284 {
-  width: 184px;
-  height: 43px;
-  background: rgba(255,255,255,1);
-  opacity: 1;
-  position: absolute;
-  top: 440px;
-  left: 76px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-}
-.v244_285 {
-  width: 171px;
-  height: 43px;
-  background: rgba(255,255,255,1);
-  opacity: 1;
-  position: absolute;
-  top: 440px;
-  left: 270px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-}
+/* Removed duplicate .v244_284 and .v244_297 definitions - using uniform ones above */
 button.v244_288 {
   width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 447px;
-  left: 136px;
+  top: 468px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -769,13 +711,18 @@ button.v244_288 {
   background: none;
   border: none;
   cursor: pointer;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
 .v244_289 {
   width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 464px;
-  left: 136px;
+  top: 479px;
+  left: 128px;
   font-family: Poppins;
   font-weight: Regular;
   font-size: 9px;
@@ -791,25 +738,12 @@ button.v244_288 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 446px;
-  left: 92px;
+  top: 464px;
+  left: 88px;
   overflow: hidden;
+  z-index: 1;
 }
-.v245_297 {
-  width: 184px;
-  height: 43px;
-  background: rgba(255,255,255,1);
-  opacity: 1;
-  position: absolute;
-  top: 495px;
-  left: 78px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-}
+/* Removed duplicate .v245_297 definition - using uniform one above */
 .v245_304 {
   width: 32px;
   height: 32px;
@@ -819,16 +753,17 @@ button.v244_288 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 500px;
-  left: 97px;
+  top: 464px;
+  left: 278px;
   overflow: hidden;
+  z-index: 1;
 }
 button.v245_298 {
-  width: 164px;
+  width: 120px;
   color: rgba(18,45,105,1);
   position: absolute;
-  top: 506px;
-  left: 136px;
+  top: 468px;
+  left: 318px;
   font-family: Poppins;
   font-weight: Bold;
   font-size: 11px;
@@ -837,8 +772,13 @@ button.v245_298 {
   background: none;
   border: none;
   cursor: pointer;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
 }
-button.v244_290 {
+/* button.v244_290 {
   width: 85px;
   color: rgba(18,45,105,1);
   position: absolute;
@@ -852,8 +792,8 @@ button.v244_290 {
   background: none;
   border: none;
   cursor: pointer;
-}
-.v245_296 {
+} */
+/* .v245_296 {
   width: 32px;
   height: 32px;
   background: url("../images/v245_296.png");
@@ -865,14 +805,14 @@ button.v244_290 {
   top: 446px;
   left: 298px;
   overflow: hidden;
-}
+} */
 
 /* Button container*/
 .button-container {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
+  bottom: 40px;
+  left: 90px;
+  right: 90px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -885,19 +825,18 @@ button.v244_290 {
   background: rgba(255,193,7,1);
   padding: 13px 37px;
   opacity: 1;
-  position: absolute;
-  top: 575px;
-  left: 73px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
+  border: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  cursor: pointer;
 }
 
 /* Next button*/
@@ -905,21 +844,20 @@ button.v244_290 {
   width: 116px;
   height: 42px;
   background: rgba(255,193,7,1);
-  padding: 14px 37px;
+  padding: 13px 37px;
   opacity: 1;
-  position: absolute;
-  top: 575px;
-  left: 322px;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
+  border: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  cursor: pointer;
 }
 
 button.v100_97, .v100_99 {
@@ -932,6 +870,7 @@ button.v100_97, .v100_99 {
   background: none;
   border: none;
   cursor: pointer;
+  text-decoration: none;
 }
 
 /*Detergent Modal*/
@@ -1190,7 +1129,7 @@ input[type="time"] {
 }
 /*Pickup Schedule Modal*/
 
-/* Add Note Modal Specific Styles */
+/* Add Note Modal Specific Styles
 .note-modal {
   width: 350px;
   padding: 30px 35px;
@@ -1227,7 +1166,7 @@ input[type="time"] {
 
 .note-text-area textarea::placeholder {
   color: #999;
-}
+} */
 
 /* Fabcon Modal - gi reuse ang detergent modal styles */
 #fabconModal .modal-content {
@@ -1362,6 +1301,7 @@ input[type="time"] {
   border-radius: 5px;
 }
 
+/* button.v244_290:hover, */
 button.v100_145:hover,
 button.v100_147:hover,
 button.v100_149:hover,
@@ -1369,8 +1309,7 @@ button.v100_154:hover,
 button.v100_167:hover,
 button.v100_173:hover,
 button.v244_288:hover,
-button.v245_298:hover,
-button.v244_290:hover {
+button.v245_298:hover {
   opacity: 100;
   transition: opacity 0.2s;
 }

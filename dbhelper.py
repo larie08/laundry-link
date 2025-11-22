@@ -619,6 +619,20 @@ def update_order_qr_code(order_id, qr_code_path):
     })
     return True
 
+def update_order_note(order_id, order_note):
+    """Update ORDER_NOTE field for an order."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    # If order_note is empty, set to None
+    note_value = order_note.strip() if order_note and order_note.strip() else None
+    db.collection('ORDER').document(docs[0].id).update({
+        'ORDER_NOTE': note_value,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
 def get_customers_with_orders() -> list:
     """Get all customers with their latest order details."""
     _require_db()
