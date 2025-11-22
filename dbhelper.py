@@ -143,6 +143,10 @@ def getallprocess(sql: str, params: tuple = ()) -> list:
         out: List[Dict[str, Any]] = []
         for doc in orders:
             d = doc.to_dict()
+            # Update status to "Pick-up" if currently "Pending"
+            if d.get('ORDER_STATUS', '').lower() == 'pending':
+                db.collection('ORDER').document(doc.id).update({'ORDER_STATUS': 'Pick-up'})
+                d['ORDER_STATUS'] = 'Pick-up'
             out.append({'ORDER_ID': d.get('ORDER_ID'), 'ORDER_STATUS': d.get('ORDER_STATUS'), 'PAYMENT_STATUS': d.get('PAYMENT_STATUS')})
         return out
     if 'SELECT COUNT(*) AS TOTAL_ORDERS' in text and 'FROM [ORDER]' in text and 'WHERE CUSTOMER_ID' in text:
@@ -797,6 +801,7 @@ def get_all_orders_with_priority():
             'TOTAL_PRICE': order.get('TOTAL_PRICE'),
             'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
             'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
+            'PHONE_NUMBER': order.get('PHONE_NUMBER', customer.get('PHONE_NUMBER') if customer else ''),
         })
 
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
