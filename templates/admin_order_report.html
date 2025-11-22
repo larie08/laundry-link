@@ -120,22 +120,22 @@
                     <div class="stat-card stat-card-layout">
                         <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
                         <div class="stat-card-title">Total Orders</div>
-                        <div class="stat-card-number">{{ orders|length if orders else 0 }}</div>
+                        <div class="stat-card-number">{{ total_orders if total_orders is not none else 0 }}</div>
                     </div>
                     <div class="stat-card stat-card-layout">
                         <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
                         <div class="stat-card-title">Total Revenue</div>
-                        <div class="stat-card-number">₱{{ total_revenue if total_revenue else 0 }}</div>
+                        <div class="stat-card-number">₱{{ total_revenue if total_revenue is not none else 0 }}</div>
                     </div>
                     <div class="stat-card stat-card-layout">
                         <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
                         <div class="stat-card-title">Pending Orders</div>
-                        <div class="stat-card-number">{{ pending_orders|length if pending_orders else 0 }}</div>
+                        <div class="stat-card-number">{{ pending_count if pending_count is not none else 0 }}</div>
                     </div>
                     <div class="stat-card stat-card-layout">
                         <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
                         <div class="stat-card-title">Completed Orders</div>
-                        <div class="stat-card-number">{{ completed_orders|length if completed_orders else 0 }}</div>
+                        <div class="stat-card-number">{{ completed_count if completed_count is not none else 0 }}</div>
                     </div>
                 </div>
 
@@ -186,8 +186,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% if orders %}
-                                {% for order in orders %}
+                            {% if paginated_orders %}
+                                {% for order in paginated_orders %}
                                 <tr>
                                     <td>{{ order.ORDER_ID }}</td>
                                     <td>{{ order.CUSTOMER_ID }}</td>

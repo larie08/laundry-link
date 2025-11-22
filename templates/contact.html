@@ -42,7 +42,7 @@
 
                 <span class="v128_64">Contact Number</span>
                 <div class="v128_69">
-                    <input class="v128_70" id="contactInput" type="tel" name="contact" value="+63 " placeholder="(+63) 912 345 6789" maxlength="14" required />
+                    <input class="v128_70" id="contactInput" type="tel" name="contact" value="+63" placeholder="(+63) 912 345 6789" maxlength="13" required />
                 </div>
                 
                 <!-- Button container -->
@@ -86,26 +86,26 @@
                 }
             });
             
-            // Format contact number input to only allow numbers after +63 
+            // Format contact number input to only allow numbers after +63
             const contactInput = document.getElementById('contactInput');
             contactInput.addEventListener('input', function(e) {
                 let value = this.value;
                 const cursorPosition = this.selectionStart;
                 
-                // Ensure it always starts with +63 
-                if (!value.startsWith('+63 ')) {
+                // Ensure it always starts with +63
+                if (!value.startsWith('+63')) {
                     // Extract only numbers from the input
                     const numbers = value.replace(/[^0-9]/g, '');
                     // Limit to 10 digits
                     const limitedNumbers = numbers.substring(0, 10);
-                    this.value = '+63 ' + limitedNumbers;
+                    this.value = '+63' + limitedNumbers;
                     
-                    // Restore cursor position (adjust for the +63  prefix)
+                    // Restore cursor position (adjust for the +63 prefix)
                     const newPosition = Math.min(cursorPosition, this.value.length);
                     this.setSelectionRange(newPosition, newPosition);
                 } else {
-                    // Keep +63  and only allow numbers after it
-                    const prefix = '+63 ';
+                    // Keep +63 and only allow numbers after it
+                    const prefix = '+63';
                     const afterPrefix = value.substring(prefix.length);
                     const numbers = afterPrefix.replace(/[^0-9]/g, '');
                     // Limit to 10 digits
@@ -123,14 +123,14 @@
                 const value = this.value;
                 const cursorPosition = this.selectionStart;
                 
-                // If backspace/delete would remove part of +63 , prevent it
-                if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 4) {
+                // If backspace/delete would remove part of +63, prevent it
+                if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 3) {
                     e.preventDefault();
-                    // If there are digits after +63 , remove the last digit
-                    if (value.length > 4) {
-                        const numbers = value.substring(4).replace(/[^0-9]/g, '');
-                        this.value = '+63 ' + numbers.slice(0, -1);
-                        this.setSelectionRange(4, 4);
+                    // If there are digits after +63, remove the last digit
+                    if (value.length > 3) {
+                        const numbers = value.substring(3).replace(/[^0-9]/g, '');
+                        this.value = '+63' + numbers.slice(0, -1);
+                        this.setSelectionRange(3, 3);
                     }
                 }
             });
@@ -139,10 +139,10 @@
             document.getElementById('contactForm').addEventListener('submit', function(e) {
                 const nameInput = document.getElementById('nameInput').value.trim();
                 const contactValue = contactInput.value.trim();
-                // Extract digits after +63  (should be 10 digits)
-                const digitsAfterCode = contactValue.substring(4).replace(/[^0-9]/g, '');
+                // Extract digits after +63 (should be 10 digits)
+                const digitsAfterCode = contactValue.substring(3).replace(/[^0-9]/g, '');
                 
-                if (!nameInput && (!contactValue || contactValue === '+63 ' || digitsAfterCode.length !== 10)) {
+                if (!nameInput && (!contactValue || contactValue === '+63' || digitsAfterCode.length !== 10)) {
                     e.preventDefault();
                     showErrorModal('Please fill in all required fields before proceeding.');
                     return false;
@@ -150,7 +150,7 @@
                     e.preventDefault();
                     showErrorModal('Please enter your name.');
                     return false;
-                } else if (!contactValue || contactValue === '+63 ' || digitsAfterCode.length !== 10) {
+                } else if (!contactValue || contactValue === '+63' || digitsAfterCode.length !== 10) {
                     e.preventDefault();
                     showErrorModal('Please enter a valid 10-digit contact number.');
                     return false;
