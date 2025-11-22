@@ -690,6 +690,36 @@ def get_customers_with_orders() -> list:
         
     return customers
 
+def get_all_customers_with_order_stats():
+    """Return all customers with their latest order and order count (batch, fast)."""
+    _require_db()
+    customers = []
+    customer_docs = db.collection('CUSTOMER').order_by('CUSTOMER_ID').get()
+    orders = db.collection('ORDER').get()
+    orders_by_customer = {}
+    for doc in orders:
+        order = doc.to_dict()
+        cid = order.get('CUSTOMER_ID')
+        if cid not in orders_by_customer:
+            orders_by_customer[cid] = []
+        orders_by_customer[cid].append(order)
+    for customer_doc in customer_docs:
+        customer = customer_doc.to_dict()
+        cid = customer['CUSTOMER_ID']
+        cust_orders = orders_by_customer.get(cid, [])
+        customer['total_orders'] = len(cust_orders)
+        if cust_orders:
+            latest_order = max(cust_orders, key=lambda x: x.get('DATE_CREATED', datetime.min))
+            customer['ORDER_ID'] = latest_order.get('ORDER_ID', 'N/A')
+            customer['ORDER_STATUS'] = latest_order.get('ORDER_STATUS', 'N/A')
+            customer['PAYMENT_STATUS'] = latest_order.get('PAYMENT_STATUS', 'N/A')
+        else:
+            customer['ORDER_ID'] = 'N/A'
+            customer['ORDER_STATUS'] = 'N/A'
+            customer['PAYMENT_STATUS'] = 'N/A'
+        customers.append(customer)
+    return customers
+
 def get_customer_statistics():
     """Get customer and order statistics."""
     _require_db()
@@ -815,7 +845,6 @@ def get_all_orders_with_priority():
             'TOTAL_PRICE': order.get('TOTAL_PRICE'),
             'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
             'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
-            'PHONE_NUMBER': order.get('PHONE_NUMBER', customer.get('PHONE_NUMBER') if customer else ''),
         })
 
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)

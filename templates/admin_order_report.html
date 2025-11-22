@@ -166,9 +166,9 @@
                     <div class="table-header-layout">
                         <h3>Orders</h3>
                         <div class="download-btns download-btns-layout">
-                            <a href="" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                            <a href="" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                            <a href="" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <a href="{{ url_for('download_order_report', format='excel') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="{{ url_for('download_order_report', format='csv') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="{{ url_for('download_order_report', format='pdf') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
                         </div>
                     </div>
                     <table class="inventory-table">
@@ -176,6 +176,7 @@
                             <tr>
                                 <th>Order ID</th>
                                 <th>Customer ID</th>
+                                <th>Customer Name</th>
                                 <th>Order Type</th>
                                 <th>Priority</th>
                                 <th>Payment</th>
@@ -190,21 +191,34 @@
                                 <tr>
                                     <td>{{ order.ORDER_ID }}</td>
                                     <td>{{ order.CUSTOMER_ID }}</td>
+                                    <td>{{ order.CUSTOMER_NAME }}</td>
                                     <td>{{ order.ORDER_TYPE }}</td>
                                     <td>{{ order.PRIORITY }}</td>
                                     <td>{{ order.PAYMENT_STATUS }}</td>
                                     <td>
-                                        <span class="status-badge {{ order.STATUS.lower() }}">
-                                            {{ order.STATUS }}
+                                        <span class="status-badge {{ order.ORDER_STATUS.lower() }}">
+                                            {{ order.ORDER_STATUS }}
                                         </span>
                                     </td>
-                                    <td>{{ order.DATE_CREATED }}</td>
-                                    <td>{{ order.DATE_UPDATED }}</td>
+                                    <td>
+                                        {% if order.DATE_CREATED %}
+                                            {{ order.DATE_CREATED|datetimeformat }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if order.DATE_UPDATED %}
+                                            {{ order.DATE_UPDATED|datetimeformat }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="8" style="text-align: center; padding: 20px;">No orders found</td>
+                                    <td colspan="9" style="text-align: center; padding: 20px;">No orders found</td>
                                 </tr>
                             {% endif %}
                         </tbody>
@@ -212,9 +226,39 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="pagination-btn disabled">Prev</button>
-                    <span class="page-number">1</span>
-                    <button class="pagination-btn">Next</button>
+                    {% if page > 1 %}
+                        <a href="{{ url_for('admin_order_report', page=page-1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    {% else %}
+                        <button class="pagination-nav-btn disabled" disabled>
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </button>
+                    {% endif %}
+                    <div class="pagination-numbers">
+                        {% if total_pages > 0 %}
+                            {% set group_size = 5 %}
+                            {% set current_group = ((page - 1) // group_size) + 1 %}
+                            {% set start_page = (current_group - 1) * group_size + 1 %}
+                            {% set end_page = [start_page + group_size - 1, total_pages] | min %}
+                            {% for page_num in range(start_page, end_page + 1) %}
+                                {% if page_num == page %}
+                                    <span class="page-btn active">{{ page_num }}</span>
+                                {% else %}
+                                    <a href="{{ url_for('admin_order_report', page=page_num, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="page-btn">{{ page_num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('admin_order_report', page=page+1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% else %}
+                        <button class="pagination-nav-btn disabled" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </main>
