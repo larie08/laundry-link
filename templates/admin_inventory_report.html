@@ -214,8 +214,20 @@
                                 <td>₱{{ "%.2f"|format(item.DETERGENT_PRICE|float) }}</td>
                                 <td>{{ item.QTY }}</td>
                                 <td>₱{{ "%.2f"|format((item.DETERGENT_PRICE|float * item.QTY)) }}</td>
-                                <td>{{ item.DATE_CREATED }}</td>
-                                <td>{{ item.DATE_UPDATED }}</td>
+                                <td>
+                                    {% if item.DATE_CREATED %}
+                                        {{ item.DATE_CREATED|datetimeformat }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.DATE_UPDATED %}
+                                        {{ item.DATE_UPDATED|datetimeformat }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -252,8 +264,20 @@
                                 <td>₱{{ "%.2f"|format(item.FABCON_PRICE|float) }}</td>
                                 <td>{{ item.QTY }}</td>
                                 <td>₱{{ "%.2f"|format((item.FABCON_PRICE|float * item.QTY)) }}</td>
-                                <td>{{ item.DATE_CREATED }}</td>
-                                <td>{{ item.DATE_UPDATED }}</td>
+                                <td>
+                                    {% if item.DATE_CREATED %}
+                                        {{ item.DATE_CREATED.strftime('%B %d, %Y, %I:%M %p') if item.DATE_CREATED.__class__.__name__ == 'datetime' else item.DATE_CREATED }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.DATE_UPDATED %}
+                                        {{ item.DATE_UPDATED.strftime('%B %d, %Y, %I:%M %p') if item.DATE_UPDATED.__class__.__name__ == 'datetime' else item.DATE_UPDATED }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -261,9 +285,50 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="pagination-btn disabled">Prev</button>
-                    <span class="page-number">1</span>
-                    <button class="pagination-btn">Next</button>
+                    {% set page_window = 2 %}
+                    <div class="pagination">
+                        {% if current_page > 1 %}
+                            <a href="{{ url_for('inventory_report', page=current_page-1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
+                                <i class="fas fa-chevron-left"></i> Prev
+                            </a>
+                        {% else %}
+                            <span class="pagination-nav-btn disabled"><i class="fas fa-chevron-left"></i> Prev</span>
+                        {% endif %}
+
+                        <div class="pagination-numbers">
+                            {% if total_pages > 1 %}
+                                {% if current_page > page_window + 1 %}
+                                    <a href="{{ url_for('inventory_report', page=1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="page-btn">1</a>
+                                    {% if current_page > page_window + 2 %}
+                                        <span class="pagination-dots">...</span>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% for page_num in range(max(1, current_page - page_window), min(total_pages + 1, current_page + page_window + 1)) %}
+                                    {% if page_num == current_page %}
+                                        <span class="page-btn active">{{ page_num }}</span>
+                                    {% else %}
+                                        <a href="{{ url_for('inventory_report', page=page_num, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="page-btn">{{ page_num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if current_page < total_pages - page_window %}
+                                    {% if current_page < total_pages - page_window - 1 %}
+                                        <span class="pagination-dots">...</span>
+                                    {% endif %}
+                                    <a href="{{ url_for('inventory_report', page=total_pages, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="page-btn">{{ total_pages }}</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        {% if current_page < total_pages %}
+                            <a href="{{ url_for('inventory_report', page=current_page+1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% else %}
+                            <span class="pagination-nav-btn disabled">Next <i class="fas fa-chevron-right"></i></span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </main>
@@ -357,15 +422,15 @@
                 const searchQuery = urlParams.get('q') || '';
                 
                 // Redirect with date filter parameters
-                let url = `{{ url_for('inventory_report') }}?type=${currentType}`;
+                let url = {{ url_for('inventory_report') }}?type=${currentType};
                 if (searchQuery) {
-                    url += `&q=${searchQuery}`;
+                    url += &q=${searchQuery};
                 }
                 if (startDate) {
-                    url += `&start_date=${startDate}`;
+                    url += &start_date=${startDate};
                 }
                 if (endDate) {
-                    url += `&end_date=${endDate}`;
+                    url += &end_date=${endDate};
                 }
                 window.location.href = url;
             });
@@ -379,9 +444,9 @@
                 const currentType = urlParams.get('type') || 'detergent';
                 const searchQuery = urlParams.get('q') || '';
                 
-                let url = `{{ url_for('inventory_report') }}?type=${currentType}`;
+                let url = {{ url_for('inventory_report') }}?type=${currentType};
                 if (searchQuery) {
-                    url += `&q=${searchQuery}`;
+                    url += &q=${searchQuery};
                 }
                 window.location.href = url;
             });

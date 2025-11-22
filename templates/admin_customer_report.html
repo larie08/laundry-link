@@ -182,6 +182,7 @@
                                 <th>Name</th>
                                 <th>Phone Number</th>
                                 <th>Date Created</th>
+                                <th>Date Updated</th>
                                 <th>Order ID</th>
                                 <th>Order Status</th>
                                 <th>Payment Status</th>
@@ -193,7 +194,20 @@
                                 <td>{{ customer.CUSTOMER_ID }}</td>
                                 <td>{{ customer.FULLNAME }}</td>
                                 <td>{{ customer.PHONE_NUMBER }}</td>
-                                <td>{{ customer.DATE_CREATED }}</td>
+                                <td>
+                                    {% if customer.DATE_CREATED %}
+                                        {{ customer.DATE_CREATED|datetimeformat }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if customer.DATE_UPDATED %}
+                                        {{ customer.DATE_UPDATED|datetimeformat }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
                                 <td>{{ customer.ORDER_ID }}</td>
                                 <td>{{ customer.ORDER_STATUS }}</td>
                                 <td>
@@ -212,9 +226,39 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="pagination-btn disabled">Prev</button>
-                    <span class="page-number">1</span>
-                    <button class="pagination-btn">Next</button>
+                    {% if current_page > 1 %}
+                        <a href="{{ url_for('customer_report', page=current_page-1, q=request.args.get('q', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="pagination-nav-btn">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
+                    {% else %}
+                        <button class="pagination-nav-btn disabled" disabled>
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </button>
+                    {% endif %}
+                    <div class="pagination-numbers">
+                        {% if total_pages > 0 %}
+                            {% set group_size = 5 %}
+                            {% set current_group = ((current_page - 1) // group_size) + 1 %}
+                            {% set start_page = (current_group - 1) * group_size + 1 %}
+                            {% set end_page = [start_page + group_size - 1, total_pages] | min %}
+                            {% for page_num in range(start_page, end_page + 1) %}
+                                {% if page_num == current_page %}
+                                    <span class="page-btn active">{{ page_num }}</span>
+                                {% else %}
+                                    <a href="{{ url_for('customer_report', page=page_num, q=request.args.get('q', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="page-btn">{{ page_num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% if current_page < total_pages %}
+                        <a href="{{ url_for('customer_report', page=current_page+1, q=request.args.get('q', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="pagination-nav-btn">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% else %}
+                        <button class="pagination-nav-btn disabled" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </main>
@@ -241,17 +285,17 @@
                 const endDate = endDateInput.value;
                 const searchQuery = urlParams.get('q') || '';
                 
-                let url = `{{ url_for('customer_report') }}`;
+                let url = {{ url_for('customer_report') }};
                 let params = [];
                 
                 if (searchQuery) {
-                    params.push(`q=${searchQuery}`);
+                    params.push(q=${searchQuery});
                 }
                 if (startDate) {
-                    params.push(`date_from=${startDate}`);
+                    params.push(date_from=${startDate});
                 }
                 if (endDate) {
-                    params.push(`date_to=${endDate}`);
+                    params.push(date_to=${endDate});
                 }
                 
                 if (params.length > 0) {
@@ -268,9 +312,9 @@
                 
                 const searchQuery = urlParams.get('q') || '';
                 
-                let url = `{{ url_for('customer_report') }}`;
+                let url = {{ url_for('customer_report') }};
                 if (searchQuery) {
-                    url += `?q=${searchQuery}`;
+                    url += ?q=${searchQuery};
                 }
                 window.location.href = url;
             });

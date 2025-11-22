@@ -1,3 +1,5 @@
+import pandas as pd
+import io
 from flask import Flask, render_template, request, redirect, url_for, session, flash, get_flashed_messages, send_file, jsonify, Response
 import os
 from werkzeug.utils import secure_filename
@@ -18,6 +20,22 @@ import requests  # Use requests to forward to ESP32
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.secret_key = 'laundrylink'
+
+# Jinja2 filter for formatting datetime
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%B %d, %Y, %I:%M %p'):
+    import datetime
+    # Firestore timestamps may be strings or datetime objects
+    if isinstance(value, str):
+        try:
+            # Try parsing ISO format
+            dt = datetime.datetime.fromisoformat(value)
+            return dt.strftime(format)
+        except Exception:
+            return value
+    elif hasattr(value, 'strftime'):
+        return value.strftime(format)
+    return value
 
 # CUSTOMER ROUTES
 @app.route('/')
@@ -94,11 +112,6 @@ def submit_others():
     order_note = request.form.get('order_note', '').strip()
     pickup_date = request.form.get('pickup_date', '').strip()
     pickup_time = request.form.get('pickup_time', '').strip()
-    
-    # Get payment method from form
-    payment_method = request.form.get('payment_method', '').strip()
-    if not payment_method:
-        payment_method = None
     
     # Combine pickup date and time into SQL datetime format
     pickup_schedule = None
@@ -178,17 +191,155 @@ def submit_others():
         total_load=total_load,
         total_price=total_price,
         order_note=order_note,
-        pickup_schedule=pickup_schedule,
-        payment_method=payment_method
+        pickup_schedule=pickup_schedule
     )
     
     # Store in session for payments page
     session['order_id'] = order_id
     session['customer_id'] = customer_id
     session['total_price'] = total_price
-    session['payment_method'] = payment_method
 
     return redirect(url_for('payments'))
+
+@app.route('/payments', methods=['GET', 'POST'])
+def payments():
+    if request.method == 'POST':
+        # Handle payment submission
+        order_id = session.get('order_id')
+        payment_method = request.form.get('payment_method')
+        
+        # Update order payment status
+        update_order_payment(order_id, payment_method, 'PAID')
+
+        # Receipt printing for cash payments
+        if payment_method and payment_method.lower() == 'cash':
+            try:
+                from escpos.printer import Usb
+                p = Usb(0x0483, 0x5743, encoding='GB18030')
+
+                order = get_order_by_id(order_id)
+                customer = get_latest_customer()
+                orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
+                orderitem_detergents = []
+                if not orderitem['CUSTOMER_OWN_DETERGENT']:
+                    orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
+                orderitem_fabcons = []
+                if not orderitem['CUSTOMER_OWN_FABCON']:
+                    orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
+
+                lines = []
+                lines.append("Laundry Link Receipt\n")
+                lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
+                lines.append(f"Customer: {customer.get('FULLNAME')}\n")
+                lines.append(f"Phone: {customer.get('PHONE_NUMBER')}\n")
+                lines.append(f"Order Type: {order.get('ORDER_TYPE')}\n")
+                lines.append(f"Status: {order.get('ORDER_STATUS')}\n")
+                lines.append(f"Payment: {order.get('PAYMENT_STATUS')}\n")
+                lines.append(f"Payment Method: {order.get('PAYMENT_METHOD')}\n")
+                lines.append(f"Date Created: {order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else ''}\n")
+                lines.append(f"Pickup Schedule: {order.get('PICKUP_SCHEDULE')}\n")
+                lines.append(f"Total Weight: {order.get('TOTAL_WEIGHT')} kg\n")
+                lines.append(f"Order Notes: {order.get('ORDER_NOTE')}\n")
+                lines.append("-" * 32 + "\n")
+                # Load
+                if order.get('TOTAL_LOAD'):
+                    lines.append(f"Total Load: {order.get('TOTAL_LOAD')} Loads\n")
+                    lines.append(f"Load Price: ₱{order.get('TOTAL_LOAD') * 50:.2f}\n")
+                # Priority
+                if orderitem.get('PRIORITIZE_ORDER'):
+                    lines.append("Priority: ₱50.00\n")
+                # Iron
+                if orderitem.get('IRON'):
+                    lines.append("Ironing: ₱50.00\n")
+                # Fold
+                if orderitem.get('FOLD_CLOTHES'):
+                    lines.append("Folding: ₱70.00\n")
+                # Detergents
+                if orderitem_detergents:
+                    for det in orderitem_detergents:
+                        lines.append(f"Detergent: {det['DETERGENT_NAME']} (₱{det['UNIT_PRICE']}) x{det['QUANTITY']} = ₱{det['total_price']}\n")
+                else:
+                    lines.append("Detergent: Own\n")
+                # Fabcons
+                if orderitem_fabcons:
+                    for fab in orderitem_fabcons:
+                        lines.append(f"FabCon: {fab['FABCON_NAME']} (₱{fab['UNIT_PRICE']}) x{fab['QUANTITY']} = ₱{fab['total_price']}\n")
+                else:
+                    lines.append("FabCon: Own\n")
+                lines.append("-" * 32 + "\n")
+                lines.append(f"Total Price: ₱{order.get('TOTAL_PRICE'):.2f}\n")
+                lines.append("\nThank you!\n")
+
+                receipt_text = "".join(lines)
+                p.text(receipt_text)
+
+                # Print QR code if available
+                qr_code_path = order.get('QR_CODE')
+                if qr_code_path:
+                    qr_full_path = os.path.join(app.static_folder, qr_code_path)
+                    if os.path.exists(qr_full_path):
+                        p.image(qr_full_path)
+                        p.text("\n")  # Space after QR
+
+                p.cut()
+            except Exception as e:
+                print("Printer error:", e)
+        return redirect(url_for('home'))
+    
+    # Get latest customer
+    latest_customer = get_latest_customer()
+    if not latest_customer:
+        flash('No customer found. Please add customer details first.')
+        return redirect(url_for('contact'))
+    
+    # Get order details from session
+    order_id = session.get('order_id')
+    
+    # Get order data
+    order = get_order_by_id(order_id)
+    if not order:
+        flash('Order not found.')
+        return redirect(url_for('home'))
+        
+    orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
+    
+    # Calculate price per load (8kg = 1 load at ₱50)
+    load_price = order['TOTAL_LOAD'] * 50.00
+    
+    # Get detergents and fabric conditioners from junction tables
+    orderitem_detergents = []
+    if not orderitem['CUSTOMER_OWN_DETERGENT']:
+        orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
+    
+    orderitem_fabcons = []
+    if not orderitem['CUSTOMER_OWN_FABCON']:
+        orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
+    
+    # Format the current date
+    current_date = datetime.now().strftime('%B %d, %Y')
+    
+    # Generate QR code if not present
+    qr_code_path = order.get('QR_CODE')
+    if not qr_code_path:
+        qr_img = qrcode.make(str(order_id))
+        qr_filename = f"qr_order_{order_id}.png"
+        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
+        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
+        qr_img.save(qr_filepath)
+        # Save relative path for template
+        qr_code_path = f"qr/{qr_filename}"
+        # Update order in Firestore using helper
+        dbhelper.update_order_qr_code(order_id, qr_code_path)
+
+    return render_template('payments.html',
+                         order=order,
+                         customer=latest_customer,
+                         orderitem=orderitem,
+                         load_price=load_price,
+                         orderitem_detergents=orderitem_detergents,
+                         orderitem_fabcons=orderitem_fabcons,
+                         current_date=current_date,
+                         qr_code_path=qr_code_path)
 
 @app.route('/payments', methods=['GET', 'POST'])
 def payments():
@@ -848,7 +999,149 @@ def inventory_report():
         fabric_conditioners=fabric_conditioners
     )
 
-# For inventory report downloads
+@app.route('/download_order_report/<format>')
+def download_order_report(format):
+    # Get filters from query params
+    search_query = request.args.get('q', '').strip().lower()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+
+    # Get all orders
+    orders = dbhelper.get_all_orders_with_priority()
+
+    # Filter orders
+    filtered_orders = []
+    for order in orders:
+        match = True
+        if search_query:
+            order_id_str = str(order.get('ORDER_ID', ''))
+            customer_name = str(order.get('CUSTOMER_NAME', '')).lower()
+            if search_query not in order_id_str and search_query not in customer_name:
+                match = False
+        if start_date:
+            order_date = str(order.get('DATE_CREATED', ''))[:10]
+            if order_date < start_date:
+                match = False
+        if end_date:
+            order_date = str(order.get('DATE_CREATED', ''))[:10]
+            if order_date > end_date:
+                match = False
+        if match:
+            filtered_orders.append(order)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(filtered_orders)
+    # Remove columns not needed (e.g., images, etc.)
+    for col in ['IMAGE_FILENAME', 'QR_CODE']:
+        if col in df.columns:
+            df = df.drop(columns=[col])
+
+    # Make datetimes Excel-safe
+    def make_excel_safe(df):
+        for col in df.columns:
+            if df[col].dtype == 'datetime64[ns]' or df[col].dtype == 'datetime64[ns, UTC]':
+                df[col] = df[col].dt.tz_localize(None)
+            elif df[col].apply(lambda x: hasattr(x, 'tzinfo')).any():
+                df[col] = df[col].apply(lambda x: x.replace(tzinfo=None) if hasattr(x, 'tzinfo') and x.tzinfo else x)
+            if df[col].apply(lambda x: isinstance(x, (datetime, pd.Timestamp))).any():
+                df[col] = df[col].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if isinstance(x, (datetime, pd.Timestamp)) else x)
+        return df
+
+    filename = 'order_report'
+    sheet_name = 'Orders'
+    if format == 'excel':
+        output = io.BytesIO()
+        df = make_excel_safe(df)
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
+    elif format == 'csv':
+        output = io.StringIO()
+        df = make_excel_safe(df)
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}.csv"})
+    elif format == 'pdf':
+        # Styled PDF export (same as inventory/customer report)
+        from fpdf import FPDF
+        pdf = FPDF(orientation='L', unit='mm', format='legal')  # <-- use legal size for long bondpaper
+        pdf.set_auto_page_break(auto=True, margin=15)
+        def add_title_bar(title):
+            pdf.set_fill_color(18, 45, 105)  # #122D69
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('Arial', 'B', 16)
+            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
+            pdf.ln(2)
+        def add_table(df):
+            if df.empty:
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_font('Arial', '', 10)
+                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                return
+            # Decrease header font size here
+            pdf.set_font('Arial', 'B', 7)  # <-- changed from 8 to 7
+            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
+            pdf.set_text_color(35, 56, 114)    # #233872
+            available_width = pdf.w - 2 * pdf.l_margin
+            columns = list(df.columns)
+            # Assign custom widths: wider for name/value, narrower for ID/dates
+            col_widths = []
+            for col in columns:
+                if 'NAME' in col or 'Value' in col:
+                    col_widths.append(available_width * 0.18)
+                elif 'ID' in col:
+                    col_widths.append(available_width * 0.10)
+                elif 'DATE' in col:
+                    col_widths.append(available_width * 0.18)
+                else:
+                    col_widths.append(available_width * 0.12)
+            total_width = sum(col_widths)
+            if total_width > available_width:
+                col_widths = [w * available_width / total_width for w in col_widths]
+            # Header
+            for i, col in enumerate(columns):
+                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+            pdf.ln()
+            # Table rows
+            pdf.set_font('Arial', '', 9)
+            for row_idx, row in df.iterrows():
+                if row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
+                else:
+                    pdf.set_fill_color(255, 255, 255)  # white
+                pdf.set_text_color(0, 0, 0)
+                for i, item in enumerate(row):
+                    pdf.cell(col_widths[i], 7, str(item), border=1, align='C', fill=True)
+                pdf.ln()
+        pdf.add_page()
+        add_title_bar('Order Report')
+        # Optionally show date range if filtered
+        if start_date or end_date:
+            pdf.set_font('Arial', '', 10)
+            pdf.set_text_color(0, 0, 0)
+            date_range = "Date Range: "
+            if start_date:
+                date_range += f"From {start_date} "
+            if end_date:
+                date_range += f"To {end_date}"
+            pdf.cell(0, 7, date_range, ln=True, align='L')
+            pdf.ln(2)
+        # Prepare DataFrame for table
+        df = df.copy()
+        # Optionally reorder columns for better layout
+        preferred_cols = [
+            'ORDER_ID', 'CUSTOMER_ID', 'CUSTOMER_NAME', 'ORDER_TYPE', 'PRIORITY',
+            'PAYMENT_STATUS', 'ORDER_STATUS', 'DATE_CREATED', 'DATE_UPDATED', 'TOTAL_LOAD', 'TOTAL_PRICE', 'PICKUP_SCHEDULE'
+        ]
+        df = df[[col for col in preferred_cols if col in df.columns] + [col for col in df.columns if col not in preferred_cols]]
+        add_table(df)
+        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+    else:
+        return "Invalid format", 400
+     
 @app.route('/download_inventory_report/<format>')
 def download_inventory_report(format):
     # Check if user is admin
@@ -916,25 +1209,25 @@ def download_inventory_report(format):
         
         # Filter data by date
         if inv_type == 'detergent':
-            filtered_data = []
+            filtered_detergents = []
             for item in data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
                     item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
-                    filtered_data.append(item)
-            data = filtered_data
+                    filtered_detergents.append(item)
+            data = filtered_detergents
         elif inv_type == 'fabcon':
-            filtered_data = []
+            filtered_fabcons = []
             for item in data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
                     item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
-                    filtered_data.append(item)
-            data = filtered_data
+                    filtered_fabcons.append(item)
+            data = filtered_fabcons
         else:
             # Filter detergent data
             filtered_det_data = []
@@ -973,17 +1266,32 @@ def download_inventory_report(format):
 
     if format == 'excel':
         output = io.BytesIO()
+        def make_excel_safe(df):
+            for col in df.columns:
+                if df[col].dtype == 'datetime64[ns]' or df[col].dtype == 'datetime64[ns, UTC]':
+                    df[col] = df[col].dt.tz_localize(None)
+                # Also handle Python datetime objects
+                elif df[col].apply(lambda x: hasattr(x, 'tzinfo')).any():
+                    df[col] = df[col].apply(lambda x: x.replace(tzinfo=None) if hasattr(x, 'tzinfo') and x.tzinfo else x)
+                # Convert all datetimes to string for Excel
+                if df[col].apply(lambda x: isinstance(x, (datetime, pd.Timestamp))).any():
+                    df[col] = df[col].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if isinstance(x, (datetime, pd.Timestamp)) else x)
+            return df
+
         if inv_type in ['detergent', 'fabcon']:
+            df = make_excel_safe(df)
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
         else:
+            det_df = make_excel_safe(det_df)
+            fabcon_df = make_excel_safe(fabcon_df)
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 det_df.to_excel(writer, sheet_name='Detergents', index=False)
                 fabcon_df.to_excel(writer, sheet_name='Fabric Conditioners', index=False)
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     elif format == 'pdf':
-        pdf = FPDF(orientation='L', unit='mm', format='A4')
+        pdf = FPDF(orientation='L', unit='mm', format='legal')
         pdf.set_auto_page_break(auto=True, margin=15)
         def add_title_bar(title):
             pdf.set_fill_color(18, 45, 105)  # #122D69
@@ -991,7 +1299,6 @@ def download_inventory_report(format):
             pdf.set_font('Arial', 'B', 16)
             pdf.cell(0, 14, title, ln=True, align='C', fill=True)
             pdf.ln(2)
-
         def add_table(df):
             if df.empty:
                 pdf.set_text_color(200, 0, 0)
@@ -1026,7 +1333,7 @@ def download_inventory_report(format):
             pdf.ln()
             # Table rows
             pdf.set_font('Arial', '', 9)
-            for row_idx, (_, row) in enumerate(df.iterrows()):
+            for row_idx, row in df.iterrows():
                 if row_idx % 2 == 0:
                     pdf.set_fill_color(248, 250, 252)  # #f8fafc
                 else:
@@ -1073,8 +1380,6 @@ def download_inventory_report(format):
             return send_file(zip_buffer, download_name=f"{filename}.zip", as_attachment=True, mimetype='application/zip')
     else:
         return "Invalid format", 400
-     
-
 
 @app.route('/customer_report')
 def customer_report():
@@ -1093,35 +1398,13 @@ def customer_report():
                                 type=customer_type, q=search_query, 
                                 date_from=date_from, date_to=date_to))
     
-    # Get all customers
-    customers = dbhelper.get_all_customers()
+    # Get all customers with stats (batch)
+    customers = dbhelper.get_all_customers_with_order_stats()
     
     if search_query:
         customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
                      search_query in str(c['CUSTOMER_ID']) or 
                      (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
-    
-    # Get customer order data
-    for customer in customers:
-        sql = """
-            SELECT TOP 1 ORDER_ID, ORDER_STATUS, PAYMENT_STATUS
-            FROM [ORDER] 
-            WHERE CUSTOMER_ID = ?
-            ORDER BY DATE_CREATED DESC
-        """
-        result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
-        if result:
-            customer['ORDER_ID'] = result[0]['ORDER_ID']
-            customer['ORDER_STATUS'] = result[0]['ORDER_STATUS']
-            customer['PAYMENT_STATUS'] = result[0]['PAYMENT_STATUS']
-        else:
-            customer['ORDER_ID'] = 'N/A'
-            customer['ORDER_STATUS'] = 'N/A'
-            customer['PAYMENT_STATUS'] = 'N/A'
-        
-        sql = "SELECT COUNT(*) as total_orders FROM [ORDER] WHERE CUSTOMER_ID = ?"
-        count_result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
-        customer['total_orders'] = count_result[0]['total_orders'] if count_result else 0
     
     # Apply date filtering
     if date_from or date_to:
@@ -1140,22 +1423,40 @@ def customer_report():
             if include:
                 filtered_customers.append(customer)
         customers = filtered_customers
-    
     total_customers = len(customers)
-    
     thirty_days_ago = datetime.now() - timedelta(days=30)
-    new_customers_list = [c for c in customers if c['DATE_CREATED'] and c['DATE_CREATED'] >= thirty_days_ago]
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    new_customers_list = [
+        c for c in customers
+        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
+    ]
     new_customers = len(new_customers_list)
-    
     total_orders = sum(c.get('total_orders', 0) for c in customers)
     avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
     
+    # PAGINATION LOGIC
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    total_items = len(customers)
+    total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
+    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_customers = customers[start_idx:end_idx]
+
     return render_template('admin_customer_report.html', 
-                          customers=customers,
+                          customers=paginated_customers,
                           total_customers=total_customers,
                           new_customers_count=new_customers,
                           total_orders=total_orders,
-                          avg_orders_per_customer=avg_orders)
+                          avg_orders_per_customer=avg_orders,
+                          current_page=page,
+                          total_pages=total_pages)
 
 @app.route('/download_customer_report/<format>')
 def download_customer_report(format):
@@ -1168,36 +1469,14 @@ def download_customer_report(format):
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     
-    # Get all customers
-    customers = dbhelper.get_all_customers()
+    # Get all customers with stats (batch)
+    customers = dbhelper.get_all_customers_with_order_stats()
     
     # Apply search filter
     if search_query:
         customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
                      search_query in str(c['CUSTOMER_ID']) or 
                      (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
-    
-    # Get customer order data
-    for customer in customers:
-        sql = """
-            SELECT TOP 1 ORDER_ID, ORDER_STATUS, PAYMENT_STATUS
-            FROM [ORDER] 
-            WHERE CUSTOMER_ID = ?
-            ORDER BY DATE_CREATED ASC
-        """
-        result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
-        if result:
-            customer['ORDER_ID'] = result[0]['ORDER_ID']
-            customer['ORDER_STATUS'] = result[0]['ORDER_STATUS']
-            customer['PAYMENT_STATUS'] = result[0]['PAYMENT_STATUS']
-        else:
-            customer['ORDER_ID'] = 'N/A'
-            customer['ORDER_STATUS'] = 'N/A'
-            customer['PAYMENT_STATUS'] = 'N/A'
-        
-        sql = "SELECT COUNT(*) as total_orders FROM [ORDER] WHERE CUSTOMER_ID = ?"
-        count_result = dbhelper.getallprocess(sql, (customer['CUSTOMER_ID'],))
-        customer['total_orders'] = count_result[0]['total_orders'] if count_result else 0
     
     # Apply date filtering
     if date_from or date_to:
@@ -1216,10 +1495,17 @@ def download_customer_report(format):
             if include:
                 filtered_customers.append(customer)
         customers = filtered_customers
-    
     thirty_days_ago = datetime.now() - timedelta(days=30)
-    new_customers_list = [c for c in customers if c['DATE_CREATED'] and c['DATE_CREATED'] >= thirty_days_ago]
-    
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    new_customers_list = [
+        c for c in customers
+        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
+    ]
     if customer_type == 'new':
         customers_to_display = new_customers_list
         filename = 'new_customer_report'
@@ -1277,7 +1563,7 @@ def download_customer_report(format):
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     
     elif format == 'pdf':
-        pdf = FPDF(orientation='L', unit='mm', format='A4')
+        pdf = FPDF(orientation='L', unit='mm', format='legal')
         pdf.set_auto_page_break(auto=True, margin=15)
         
         def add_title_bar(title):
