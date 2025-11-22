@@ -533,9 +533,16 @@ def scanner():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return redirect(url_for('admin_login'))
     
+    # Get all orders with ORDER_STATUS "Pick-up"
+    orders = dbhelper.get_all_orders_with_priority()
+    pickup_orders = [o for o in orders if (o.get('ORDER_STATUS', '').lower() == 'pick-up')]
+    # Fetch PHONE_NUMBER from ORDER table (if present)
+    for o in pickup_orders:
+        o['PHONE_NUMBER'] = o.get('PHONE_NUMBER', '')  # Already included if get_all_orders_with_priority is updated
     # BASED ON ROLE
     template_name = 'admin_scanner.html' if session['role'] == 'admin' else 'staff_scanner.html'
-    return render_template(template_name)
+    return render_template(template_name, pickup_orders=pickup_orders)
+
 
 # ADMIN AND STAFF
 @app.route('/customers')
@@ -656,13 +663,11 @@ def order_details(order_id):
     if not order:
         return jsonify({'error': 'Order not found'}), 404
 
-    # Update order status to "Pick-up" after QR scan
-    if order.get('ORDER_STATUS', '').lower() != 'pick-up':
-        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), order.get('PAYMENT_STATUS'))
-        dbhelper.update_order_qr_code(order_id, order.get('QR_CODE'))
-        dbhelper.db.collection('ORDER').document(
-            dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
-        ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
+    # Always update order status to "Pick-up" after QR scan
+    dbhelper.db.collection('ORDER').document(
+        dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
+    ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
+    order['ORDER_STATUS'] = 'Pick-up'
 
     customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
     orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
@@ -722,7 +727,7 @@ def order_details(order_id):
     return jsonify({
         'ORDER_ID': order.get('ORDER_ID'),
         'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
-        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',  # <-- Add this line
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
         'ORDER_TYPE': order.get('ORDER_TYPE'),
         'ORDER_STATUS': order.get('ORDER_STATUS'),
         'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
@@ -1473,7 +1478,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.24.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '192.168.109.199')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
@@ -1655,5 +1660,40 @@ def api_calendar_dates():
         return jsonify({'error': str(e)}), 500
 # =================================================================================================================================
 
+
+@app.route('/api/pickup_orders')
+def api_pickup_orders():
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    orders = dbhelper.get_all_orders_with_priority()
+    pickup_orders = [
+        o for o in orders
+        if (o.get('ORDER_STATUS', '').lower() == 'pick-up')
+    ]
+    # Attach customer phone number and QR code if available
+    for o in pickup_orders:
+        customer = dbhelper.get_customer_by_id(o['CUSTOMER_ID']) if o.get('CUSTOMER_ID') else None
+        o['PHONE_NUMBER'] = customer.get('PHONE_NUMBER') if customer else ''
+        o['QR_CODE'] = o.get('QR_CODE', '')
+    return jsonify({'orders': pickup_orders})
+
+@app.route('/api/complete_pickup/<int:order_id>', methods=['POST'])
+def api_complete_pickup(order_id):
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'status': 'error', 'msg': 'Unauthorized'}), 401
+    # Update order status to Completed
+    docs = dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return jsonify({'status': 'error', 'msg': 'Order not found'}), 404
+    dbhelper.db.collection('ORDER').document(docs[0].id).update({
+        'ORDER_STATUS': 'Completed',
+        'DATE_UPDATED': datetime.now()
+    })
+    return jsonify({'status': 'success'})
+
+
+
+
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
