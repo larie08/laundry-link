@@ -34,15 +34,15 @@
             <span class="v128_62">How do we contact you?</span>
             
             <!-- Form -->
-            <form action="{{ url_for('contact') }}" method="POST">
+            <form action="{{ url_for('contact') }}" method="POST" id="contactForm">
                 <span class="v128_63">Name</span>
                 <div class="v128_66">
-                    <input class="v128_67" type="text" name="name" placeholder="Enter your full name" required />
+                    <input class="v128_67" id="nameInput" type="text" name="name" placeholder="Enter your full name" required />
                 </div>
 
                 <span class="v128_64">Contact Number</span>
                 <div class="v128_69">
-                    <input class="v128_70" type="tel" name="contact" placeholder="(+63) 912 345 6789" required />
+                    <input class="v128_70" id="contactInput" type="tel" name="contact" value="+63 " placeholder="(+63) 912 345 6789" maxlength="14" required />
                 </div>
                 
                 <!-- Button container -->
@@ -56,5 +56,106 @@
                 </div>
             </form>
         </div>
+        
+        <!-- Error Modal -->
+        <div id="errorModal" class="error-modal">
+            <div class="error-content">
+                <div class="error-icon"></div>
+                <div class="error-title"><b>Missing Information</b></div>
+                <div class="error-message" id="errorMessage">Please fill in all required fields before proceeding.</div>
+                <button class="error-button" onclick="closeErrorModal()">Got it</button>
+            </div>
+        </div>
+        
+        <script>
+            // Show error modal with custom message
+            function showErrorModal(message) {
+                document.getElementById('errorMessage').textContent = message;
+                document.getElementById('errorModal').classList.add('show');
+            }
+            
+            // Close error modal
+            function closeErrorModal() {
+                document.getElementById('errorModal').classList.remove('show');
+            }
+            
+            // Close modal when clicking outside
+            document.getElementById('errorModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeErrorModal();
+                }
+            });
+            
+            // Format contact number input to only allow numbers after +63 
+            const contactInput = document.getElementById('contactInput');
+            contactInput.addEventListener('input', function(e) {
+                let value = this.value;
+                const cursorPosition = this.selectionStart;
+                
+                // Ensure it always starts with +63 
+                if (!value.startsWith('+63 ')) {
+                    // Extract only numbers from the input
+                    const numbers = value.replace(/[^0-9]/g, '');
+                    // Limit to 10 digits
+                    const limitedNumbers = numbers.substring(0, 10);
+                    this.value = '+63 ' + limitedNumbers;
+                    
+                    // Restore cursor position (adjust for the +63  prefix)
+                    const newPosition = Math.min(cursorPosition, this.value.length);
+                    this.setSelectionRange(newPosition, newPosition);
+                } else {
+                    // Keep +63  and only allow numbers after it
+                    const prefix = '+63 ';
+                    const afterPrefix = value.substring(prefix.length);
+                    const numbers = afterPrefix.replace(/[^0-9]/g, '');
+                    // Limit to 10 digits
+                    const limitedNumbers = numbers.substring(0, 10);
+                    this.value = prefix + limitedNumbers;
+                    
+                    // Restore cursor position
+                    const newPosition = Math.min(cursorPosition, this.value.length);
+                    this.setSelectionRange(newPosition, newPosition);
+                }
+            });
+            
+            // Handle backspace/delete to prevent issues
+            contactInput.addEventListener('keydown', function(e) {
+                const value = this.value;
+                const cursorPosition = this.selectionStart;
+                
+                // If backspace/delete would remove part of +63 , prevent it
+                if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 4) {
+                    e.preventDefault();
+                    // If there are digits after +63 , remove the last digit
+                    if (value.length > 4) {
+                        const numbers = value.substring(4).replace(/[^0-9]/g, '');
+                        this.value = '+63 ' + numbers.slice(0, -1);
+                        this.setSelectionRange(4, 4);
+                    }
+                }
+            });
+            
+            // Form validation before submit
+            document.getElementById('contactForm').addEventListener('submit', function(e) {
+                const nameInput = document.getElementById('nameInput').value.trim();
+                const contactValue = contactInput.value.trim();
+                // Extract digits after +63  (should be 10 digits)
+                const digitsAfterCode = contactValue.substring(4).replace(/[^0-9]/g, '');
+                
+                if (!nameInput && (!contactValue || contactValue === '+63 ' || digitsAfterCode.length !== 10)) {
+                    e.preventDefault();
+                    showErrorModal('Please fill in all required fields before proceeding.');
+                    return false;
+                } else if (!nameInput) {
+                    e.preventDefault();
+                    showErrorModal('Please enter your name.');
+                    return false;
+                } else if (!contactValue || contactValue === '+63 ' || digitsAfterCode.length !== 10) {
+                    e.preventDefault();
+                    showErrorModal('Please enter a valid 10-digit contact number.');
+                    return false;
+                }
+            });
+        </script>
     </body>
 </html>
