@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <title>Admin Scanner</title>
+    <title>Scanner</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -69,33 +69,6 @@
                         </a>
                     </li>
                 </ul>
-                <!-- REPORTS -->
-                <div class="section-title w3-padding w3-text-gray">Reports</div>
-                <ul class="w3-margin-left">
-                    <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_order_report')}}">
-                            <span>Order Reports</span>
-                        </a>
-                    </li>
-
-                    <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('inventory_report') }}">
-                            <span>Inventory Reports</span>
-                        </a>
-                    </li>
-                    
-                    <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('income_statement') }}">
-                            <span>Income Statement</span>
-                        </a>
-                    </li>
-                    
-                    <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('customer_report') }}">
-                            <span>Customer Reports</span>
-                        </a>
-                    </li>
-                </ul>
                 <!-- LOGOUT -->
                 <ul class="w3-margin-left w3-margin-top">
                     <li class="w3-padding w3-bar-item w3-button">
@@ -137,26 +110,22 @@
                                 <th>Name</th>
                                 <th>Order ID</th>
                                 <th>Phone Number</th>
-                                <th>QR Image</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="pickupOrdersTableBody">
+                            {% for order in pickup_orders %}
                             <tr>
-                                <td>F001</td>
-                                <td>Tide Original Scent</td>
-                                <td>30.00</td>
-                                <td>200</td>
-                                <td><img src="../static/images/logo.jpg" alt="Tide" class="product-img"></td>
+                                <td>{{ order.CUSTOMER_ID }}</td>
+                                <td>{{ order.CUSTOMER_NAME }}</td>
+                                <td>{{ order.ORDER_ID }}</td>
+                                <td>{{ order.PHONE_NUMBER }}</td>
                                 <td>
-                                    <button class="action-btn pickup-btn" title="Complete Pickup" onclick="completePickup('F001')">
-                                        <img src="../static/images/delivery.png" alt="Complete Pick-up" class="delivery-icon" style="width: 20px; height: 20px;">
-                                    </button>
-                                    <button class="action-btn resend-btn" title="Resend Message" onclick="resendMessage('F001')">
-                                        <img src="../static/images/expired.png" alt="Resend Message" class="expired-icon" style="width: 20px; height: 20px;">
-                                    </button>
+                                    <button class="pickup-btn" onclick="completePickup('{{ order.ORDER_ID }}', '{{ order.CUSTOMER_ID }}', '{{ order.CUSTOMER_NAME }}', '{{ order.PHONE_NUMBER }}')">Pick-up</button>
+                                    <button class="resend-btn" onclick="resendMessage('{{ order.PHONE_NUMBER }}', '{{ order.CUSTOMER_NAME }}', '{{ order.ORDER_ID }}')">Resend Message</button>
                                 </td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                     <div class="pagination">
@@ -330,15 +299,11 @@
                         inversionAttempts: "dontInvert",
                     });
                     if (code) {
-                        // Assume QR code contains order_id as plain text or JSON
                         let orderId = code.data;
                         try {
-                            // If QR is JSON, extract order_id
                             const qrData = JSON.parse(code.data);
                             orderId = qrData.order_id || qrData.ORDER_ID || code.data;
-                        } catch (e) {
-                            // If not JSON, use as is
-                        }
+                        } catch (e) {}
                         fetchOrderDetailsAndNotify(orderId);
                         stopScanner();
                         showSuccessMessage();
@@ -350,12 +315,10 @@
         }
 
         function fetchOrderDetailsAndNotify(orderId) {
-            // Fetch order details from backend
             fetch(`/order_details/${orderId}`)
                 .then(response => response.json())
                 .then(data => {
                     displayScannedOrderDetails(data);
-                    // Use PHONE_NUMBER from backend
                     let phone = data.PHONE_NUMBER;
                     if (phone) {
                         sendSMSNotification(phone, data.ORDER_ID, data.CUSTOMER_NAME);
@@ -385,20 +348,24 @@
             `;
         }
 
-        function sendSMSNotification(phone, orderId, customerName) {
+        function sendSMSNotification(phone, orderId, customerName, pickedUp = false) {
             if (!phone) return;
-            // Call backend API to send SMS
+            let message;
+            if (pickedUp) {
+                message = `Hi ${customerName || ''}, your laundry (Order #${orderId}) has been picked up. Thank you for using Laundrylink!`;
+            } else {
+                message = `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`;
+            }
             fetch('/api/send_sms', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     phone: phone,
-                    message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
+                    message: message
                 })
             })
             .then(res => res.json())
             .then(data => {
-                // Optionally show a message
                 if (data.status === 'success') {
                     showSMSNotificationSuccess();
                 }
@@ -408,25 +375,34 @@
         function showSMSNotificationSuccess() {
             const successDiv = document.createElement('div');
             successDiv.className = 'success-message';
-            successDiv.innerHTML = '<i class="fas fa-sms"></i> SMS notification sent to customer!';
-            successDiv.style.cssText = `
-                position: fixed;
-                top: 60px;
-                right: 20px;
-                background: #007bff;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                z-index: 1001;
-                font-weight: 500;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: slideIn 0.3s ease;
+            successDiv.innerHTML = `
+                <i class="fas fa-sms"></i>
+                SMS notification sent to customer!
+                <button class="close-alert" onclick="this.parentNode.remove()">×</button>
             `;
             document.body.appendChild(successDiv);
             setTimeout(() => {
                 successDiv.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => {
-                    document.body.removeChild(successDiv);
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        // SUCCESS MESSAGE
+        function showSuccessMessage() {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                QR Code scanned successfully!
+                <button class="close-alert" onclick="this.parentNode.remove()">×</button>
+            `;
+            document.body.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv);
                 }, 300);
             }, 3000);
         }
@@ -453,35 +429,16 @@
         }
 
         // COMPLETE PICK-UP FUNCTIONS
-        function completePickup(customerId) {
-            // SAMPLE DATA
-            const sampleData = {
-                'F001': {
-                    customerId: 'F001',
-                    name: 'Alexa De Luna',
-                    orderId: 'ORD-2024-001',
-                    phone: '09254412457'
-                }
-            };
-            
-            const customerData = sampleData[customerId] || {
-                customerId: customerId,
-                name: 'Sample Customer',
-                orderId: 'ORD-2025-SAMPLE',
-                phone: '09254412457'
-            };
-            
-            document.getElementById('pickupCustomerId').textContent = customerData.customerId;
-            document.getElementById('pickupCustomerName').textContent = customerData.name;
-            document.getElementById('pickupOrderId').textContent = customerData.orderId;
-            document.getElementById('pickupPhone').textContent = customerData.phone;
-            
-            // RESET CHECKBOX AND BUTTON STATE
+        function completePickup(orderId, customerId, customerName, phone) {
+            document.getElementById('pickupCustomerId').textContent = customerId;
+            document.getElementById('pickupCustomerName').textContent = customerName;
+            document.getElementById('pickupOrderId').textContent = orderId;
+            document.getElementById('pickupPhone').textContent = phone;
             document.getElementById('confirmPickup').checked = false;
             document.getElementById('confirmPickupBtn').disabled = true;
-            
-            // SHOW MODAL
             document.getElementById('pickupModal').style.display = 'flex';
+            // Store orderId for confirmation
+            document.getElementById('pickupModal').dataset.orderId = orderId;
         }
 
         function closePickupModal() {
@@ -489,42 +446,62 @@
         }
 
         function confirmPickup() {
-            const customerId = document.getElementById('pickupCustomerId').textContent;
-            
-            // API TO BACKEND 
-            // EXAMPLE MUNA SA SUCCESS MESS. 
-            showPickupSuccessMessage(customerId);
-            
-            closePickupModal();
-            
-            // UPDATE BUTTON STATE IN THE TABLE (OPTIONAL)
-            updatePickupButtonState(customerId);
+            const orderId = document.getElementById('pickupModal').dataset.orderId;
+            if (!orderId) {
+                alert("Order ID not found.");
+                return;
+            }
+            // Send request to backend to mark order as Completed
+            fetch(`/api/complete_pickup/${orderId}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Send SMS after successful pick-up
+                    const customerName = document.getElementById('pickupCustomerName').textContent;
+                    const phone = document.getElementById('pickupPhone').textContent;
+                    sendSMSNotification(phone, orderId, customerName, true);
+                    showPickupSuccessMessage(document.getElementById('pickupCustomerId').textContent);
+                    closePickupModal();
+                    // Remove row from table instead of reload for faster UX
+                    removeOrderRow(orderId);
+                } else {
+                    alert("Failed to complete pick-up: " + (data.msg || "Unknown error"));
+                }
+            })
+            .catch(() => {
+                alert("Network error while completing pick-up.");
+            });
+        }
+
+        // Remove order row from table by orderId
+        function removeOrderRow(orderId) {
+            const tableBody = document.getElementById('pickupOrdersTableBody');
+            if (!tableBody) return;
+            const rows = tableBody.querySelectorAll('tr');
+            for (let row of rows) {
+                const cell = row.querySelector('td:nth-child(3)');
+                if (cell && cell.textContent == orderId) {
+                    row.parentNode.removeChild(row);
+                    break;
+                }
+            }
         }
 
         function showPickupSuccessMessage(customerId) {
             const successDiv = document.createElement('div');
             successDiv.className = 'success-message';
-            successDiv.innerHTML = `<i class="fas fa-check-circle"></i> Pick-up completed successfully for Customer ${customerId}!`;
-            successDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #28a745;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                z-index: 1001;
-                font-weight: 500;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: slideIn 0.3s ease;
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                Pick-up completed successfully for Customer ${customerId}!
+                <button class="close-alert" onclick="this.parentNode.remove()">×</button>
             `;
-            
             document.body.appendChild(successDiv);
-            
             setTimeout(() => {
                 successDiv.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => {
-                    document.body.removeChild(successDiv);
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv);
                 }, 300);
             }, 3000);
         }
@@ -536,54 +513,47 @@
         }
 
         // RESEND MESSAGE FUNCTION
-        function resendMessage(customerId) {
-            // SAMPLE DATA
-            const sampleData = {
-                'F001': {
-                    customerId: 'F001',
-                    name: 'Alexa De Luna',
-                    phone: '09254412457'
-                }
-            };
-            
-            const customerData = sampleData[customerId] || {
-                customerId: customerId,
-                name: 'Sample Customer',
-                phone: '09254412457'
-            };
-            
-            // CONFIRMATION DIALOG
-            if (confirm(`Resend notification message to ${customerData.name} (${customerData.phone})?`)) {
-                // API TO BACKEND  
-                // EXAMPLE MUNA SA SUCCESS MESS. 
-                showResendSuccessMessage(customerData.name);
+        function resendMessage(phone, customerName, orderId) {
+            if (!phone) {
+                alert("No phone number available for this customer.");
+                return;
+            }
+            if (confirm(`Resend notification message to ${customerName} (${phone})?`)) {
+                fetch('/api/send_sms', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        phone: phone,
+                        message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showResendSuccessMessage(customerName);
+                    } else {
+                        alert("Failed to send SMS: " + (data.msg || "Unknown error"));
+                    }
+                })
+                .catch(() => {
+                    alert("Failed to send SMS due to network error.");
+                });
             }
         }
 
         function showResendSuccessMessage(customerName) {
             const successDiv = document.createElement('div');
             successDiv.className = 'success-message';
-            successDiv.innerHTML = `<i class="fas fa-paper-plane"></i> Message resent successfully to ${customerName}!`;
-            successDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #17a2b8;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                z-index: 1001;
-                font-weight: 500;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: slideIn 0.3s ease;
+            successDiv.innerHTML = `
+                <i class="fas fa-paper-plane"></i>
+                Message resent successfully to ${customerName}!
+                <button class="close-alert" onclick="this.parentNode.remove()">×</button>
             `;
-            
             document.body.appendChild(successDiv);
-            
             setTimeout(() => {
                 successDiv.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => {
-                    document.body.removeChild(successDiv);
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv);
                 }, 300);
             }, 3000);
         }
