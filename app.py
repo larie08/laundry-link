@@ -1306,7 +1306,7 @@ def download_inventory_report(format):
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
             # Table header
-            pdf.set_font('Arial', 'B', 😎
+            pdf.set_font('Arial', 'B', 8)
             pdf.set_fill_color(245, 247, 250)  # #f5f7fa
             pdf.set_text_color(35, 56, 114)    # #233872
             # Calculate column widths
@@ -1551,7 +1551,7 @@ def download_customer_report(format):
             for col_num, value in enumerate(df.columns.values):
                 worksheet.write(0, col_num, value, header_format)
                 
-            worksheet.set_column('A:A', 😎   # ID
+            worksheet.set_column('A:A', 8)   # ID
             worksheet.set_column('B:B', 20)  # Full Name
             worksheet.set_column('C:C', 15)  # Phone Number
             worksheet.set_column('D:D', 15)  # Date Created
@@ -1580,7 +1580,7 @@ def download_customer_report(format):
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
                 
-            pdf.set_font('Arial', 'B', 😎
+            pdf.set_font('Arial', 'B', 8)
             pdf.set_fill_color(245, 247, 250)  # #f5f7fa
             pdf.set_text_color(35, 56, 114)    # #233872
             
