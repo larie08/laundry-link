@@ -586,6 +586,8 @@ main {
 .badge-self-table { background: #3498db; }
 .badge-priority-table { background: #f39c12; }
 .badge-pending-table { background: #f1c40f; color: #333; }
+.badge-pickup-table { background: #355fd1; color: #fff; }
+.badge-completed-table { background: #81C784; color: #333; }
 .badge-paid-table { background: #27ae60; }
 .badge-unpaid-table { background: #e74c3c; }
 .badge-normal-table { background: #7b8db0; }

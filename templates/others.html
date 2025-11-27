@@ -24,7 +24,7 @@
             <form id="othersForm" action="{{ url_for('submit_others') }}" method="post">
                 <input type="hidden" name="pickup_date" id="hiddenPickupDate" />
                 <input type="hidden" name="pickup_time" id="hiddenPickupTime" />
-                <!-- <input type="hidden" name="order_note" id="hiddenOrderNote" /> -->
+                <input type="hidden" name="order_note" id="hiddenOrderNote" />
                                 
                 <div class="button-container">
                     <div class="v100_98">
@@ -80,6 +80,7 @@
                         </div>
                     </div>
                 </div>
+                <div class="v100_157"></div>
                 <div class="v100_158"></div>
                 <div class="v100_159"></div>
                 <button class="v100_149" type="button" id="ownDetergentBtn">OWN DETERGENT</button>
@@ -125,7 +126,6 @@
                 <span class="v100_114">PAYMENT</span>
                 <div class="v91_256"></div>
                 {% if order_type != 'Self-service' %}
-                <div class="v100_157"></div>
                 <div class="v100_163"></div>
                 <div class="v100_165"></div>
                 <span class="v100_267">Php 70.00</span>
@@ -177,8 +177,11 @@
                 </div>
                 {% endif %}
                 
-                <!-- <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'">ADD NOTE</button> -->
-                <!-- <div id="noteModal" class="modal">
+                <!-- ADD NOTE -->
+                <div class="v244_285"></div>
+                <div class="v245_296"></div>
+                <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'">ADD NOTE</button>
+                <div id="noteModal" class="modal">
                     <div class="modal-content note-modal">
                         <span class="close" onclick="document.getElementById('noteModal').style.display='none'">&times;</span>
                         <h2>Note</h2>
@@ -190,8 +193,7 @@
                             <button type="button" class="cancel" onclick="document.getElementById('noteModal').style.display='none'">Cancel</button>
                         </div>
                     </div>
-                </div> -->
-                <!-- <div class="v245_296"></div> -->
+                </div>
             </form>
         </div>
 </body>
@@ -374,22 +376,22 @@
         closeScheduleModal();
     }
     
-    // function saveNote() {
-    //     const noteText = document.getElementById('note-text').value.trim();
+    function saveNote() {
+        const noteText = document.getElementById('note-text').value.trim();
     
-    //     document.getElementById('hiddenOrderNote').value = noteText || '';
+        document.getElementById('hiddenOrderNote').value = noteText || '';
     
-    //     const noteBtn = document.querySelector('button.v244_290');
-    //     if (noteText) {
-    //         noteBtn.classList.add('selected');
-    //         toggleBoxHighlight('.v244_285', true);
-    //     } else {
-    //         noteBtn.classList.remove('selected');
-    //         toggleBoxHighlight('.v244_285', false);
-    //     }
+        const noteBtn = document.querySelector('button.v244_290');
+        if (noteText) {
+            noteBtn.classList.add('selected');
+            toggleBoxHighlight('.v244_285', true);
+        } else {
+            noteBtn.classList.remove('selected');
+            toggleBoxHighlight('.v244_285', false);
+        }
         
-    //     document.getElementById('noteModal').style.display = 'none';
-    // }
+        document.getElementById('noteModal').style.display = 'none';
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         function updateTotals() {
