@@ -162,14 +162,14 @@
                         {% endif %}
                     </div>
 
-                    <div class="payment-section">
+                    <!-- <div class="payment-section">
                     <h3>Mode of Payment</h3>
                     <form method="POST" action="{{ url_for('payments') }}">
                         <div class="payment-methods">
                             <label class="payment-method" data-method="cash">
                                 <input type="radio" name="payment_mode" value="cash" class="payment-radio">
                                 <!-- Change img to button for cash -->
-                                <button type="submit" style="background:none;border:none;padding:0;">
+                                <!-- <button type="submit" style="background:none;border:none;padding:0;">
                                     <img src="{{ url_for('static', filename='images/cash.png') }}" alt="Cash Payment">
                                 </button>
                             </label>
@@ -186,10 +186,10 @@
                         </div>
                         <input type="hidden" id="selected_payment_method" name="payment_method" value="cash">
                     </form>
-                    </div>
+                    </div> -->
                 </div>
 
-                <!-- Display QR Code for Order -->
+                <!-- Display QR Code for Order
                 {% if qr_code_path %}
                 <div class="order-qr-section" style="margin-top:20px;">
                     <h4>Order QR Code</h4>
@@ -197,10 +197,10 @@
                     <br>
                     <button type="button" onclick="openOrderQRModal()" style="margin-top:8px;">View QR Code</button>
                 </div>
-                {% endif %}
+                {% endif %} -->
 
                 <!-- Order Note Section -->
-                <div class="note-section">
+                <!-- <div class="note-section">
                     <h3>Add Note</h3>
                     <form id="noteForm" method="POST" action="{{ url_for('save_order_note') }}">
                         <textarea 
@@ -212,7 +212,7 @@
                         <button type="submit" class="note-submit-btn">Save Note</button>
                     </form>
                     <div id="noteMessage" class="note-message"></div>
-                </div>
+                </div> -->
 
                 <!-- Confirm Order Button -->
                 <div class="confirm-section">
@@ -299,6 +299,9 @@
                             <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code" style="width:220px;height:220px;">
                         </div>
                         <p class="qr-instructions">Scan this QR code to pay via GCash.</p>
+                        <div class="modal-buttons" style="margin-top: 20px;">
+                            <button type="button" class="submit" onclick="handleTransactionComplete('gcash')">Done</button>
+                        </div>
                     </div>
                 </div>
 
@@ -312,6 +315,21 @@
                             <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code" style="width:220px;height:220px;">
                         </div>
                         <p class="qr-instructions">Scan this QR code to pay via Maya.</p>
+                        <div class="modal-buttons" style="margin-top: 20px;">
+                            <button type="button" class="submit" onclick="handleTransactionComplete('maya')">Done</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thank You Modal -->
+                <div id="thankYouModal" class="qr-modal">
+                    <div class="modal-content thank-you-content">
+                        <h2>Thank You!</h2>
+                        <p class="thank-you-message">Your payment has been received successfully.</p>
+                        <div class="countdown-container">
+                            <div id="countdown">10</div>
+                            <p class="countdown-text">Redirecting to home page in <span id="countdownText">10</span> seconds...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,10 +346,16 @@
 
             // QR Modal Functions
             function openQRModal(type) {
-                if (event && event.stopPropagation) {
+                if (typeof event !== 'undefined' && event && event.stopPropagation) {
                     event.stopPropagation(); // Prevent label click event
                 }
-                document.getElementById(type + 'Modal').style.display = 'block';
+                const modalId = type + 'Modal';
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'block';
+                } else {
+                    console.error('Modal not found:', modalId);
+                }
             }
 
             function closeQRModal(type) {
@@ -380,33 +404,77 @@
             }
             
             function savePaymentMethodAndShowQR(paymentMethod) {
-                // Save payment method via AJAX
+                // Show QR code modal immediately
+                openQRModal(paymentMethod);
+                
+                // Save payment method via AJAX in the background
                 const formData = new FormData();
                 formData.append('payment_method', paymentMethod);
                 
                 fetch('{{ url_for("payments") }}', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    redirect: 'manual' // Prevent automatic redirect following
                 })
                 .then(response => {
-                    if (response.redirected) {
-                        // If redirected, follow the redirect
-                        window.location.href = response.url;
+                    // Check if response is ok or redirect
+                    if (response.ok) {
+                        // Try to parse as JSON
+                        return response.json().catch(() => {
+                            // If not JSON, assume success
+                            return { success: true };
+                        });
+                    } else if (response.status >= 300 && response.status < 400) {
+                        // Redirect response - don't follow it, just log
+                        console.log('Server redirected, but QR modal is already shown');
+                        return { success: true };
                     } else {
-                        // Parse JSON response
-                        return response.json();
+                        // Error response
+                        throw new Error('Failed to save payment method');
                     }
                 })
                 .then(data => {
-                    if (data && data.success) {
-                        // Show QR code modal
-                        openQRModal(paymentMethod);
-                    }
+                    // Payment method saved successfully
+                    console.log('Payment method saved:', paymentMethod);
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
+                    console.error('Error saving payment method:', error);
+                    // Don't show alert - QR modal is already displayed
+                    // User can still proceed with payment
                 });
+            }
+            
+            function handleTransactionComplete(paymentMethod) {
+                // Close the current QR modal
+                closeQRModal(paymentMethod);
+                
+                // Show thank you modal
+                const thankYouModal = document.getElementById('thankYouModal');
+                if (thankYouModal) {
+                    thankYouModal.style.display = 'block';
+                }
+                
+                // Start countdown
+                let countdown = 10;
+                const countdownElement = document.getElementById('countdown');
+                const countdownTextElement = document.getElementById('countdownText');
+                
+                // Update countdown display immediately
+                if (countdownElement) countdownElement.textContent = countdown;
+                if (countdownTextElement) countdownTextElement.textContent = countdown;
+                
+                // Countdown interval
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdownElement) countdownElement.textContent = countdown;
+                    if (countdownTextElement) countdownTextElement.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        // Redirect to landing page
+                        window.location.href = '{{ url_for("home") }}';
+                    }
+                }, 1000);
             }
             
             // Payment method selection styling
@@ -435,7 +503,10 @@
                     closePaymentModal();
                 }
                 if (event.target.classList.contains('qr-modal')) {
-                    event.target.style.display = 'none';
+                    // Don't close Thank You modal - let countdown complete
+                    if (event.target.id !== 'thankYouModal') {
+                        event.target.style.display = 'none';
+                    }
                 }
             }
 

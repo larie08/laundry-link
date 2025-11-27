@@ -443,7 +443,6 @@ input[type="number"] {
 #paymentModal .modal-content {
   background: #fff;
   border: 1px solid #827979;
-  margin: 10% auto;
   padding: 10px;
   border-radius: 10px;
   width: 400px;
@@ -700,18 +699,25 @@ input[type="number"] {
     top: 0;
     width: 100%;
     height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
 }
 
-.modal-content {
+.qr-modal[style*="block"] {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-modal .modal-content {
     background-color: #fff;
     border: 1px solid #827979;
-    margin: 15% auto;
-    padding: 10px;
     width: 90%;
     max-width: 300px;
     border-radius: 8px;
     position: relative;
     text-align: center;
+    margin: 0;
 }
 
 .modal-content h2 {
@@ -881,8 +887,6 @@ input[type="number"] {
 /* Update existing modal styles */
 .modal-content {
     background-color: #fff;
-    margin: 10% auto;
-    width: 90%;
     border-radius: 8px;
 }
 
@@ -1032,4 +1036,110 @@ input[type="number"] {
 
 .note-message.error {
     color: #dc3545;
+}
+
+/* QR Modal Button Styles */
+.qr-modal .modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 0 10px;
+}
+
+.qr-modal .modal-buttons .submit {
+    background: rgba(255, 193, 7, 1);
+    color: white;
+    padding: 12px 40px;
+    border: none;
+    border-radius: 8px;
+    font-family: Poppins;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 200px;
+}
+
+.qr-modal .modal-buttons .submit:hover {
+    background: rgba(255, 193, 7, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.qr-modal .modal-buttons .submit:active {
+    transform: translateY(0);
+}
+
+/* Thank You Modal Styles */
+#thankYouModal.qr-modal {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+}
+
+#thankYouModal .thank-you-content {
+    background-color: #fff;
+    border: 1px solid #827979;
+    margin: 0;
+    padding: 30px 20px;
+    width: 90%;
+    max-width: 350px;
+    border-radius: 12px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+#thankYouModal .thank-you-content h2 {
+    color: #4CAF50;
+    margin-bottom: 20px;
+    font-family: Poppins;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+#thankYouModal .thank-you-message {
+    font-size: 16px;
+    margin-bottom: 30px;
+    color: #333;
+    font-family: Poppins;
+    line-height: 1.5;
+}
+
+#thankYouModal .countdown-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#thankYouModal #countdown {
+    font-size: 56px;
+    font-weight: bold;
+    color: rgba(18, 45, 105, 1);
+    margin-bottom: 10px;
+    font-family: Poppins;
+    line-height: 1;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+#thankYouModal .countdown-text {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 0;
+    font-family: Poppins;
+}
+
+#thankYouModal #countdownText {
+    font-weight: 600;
+    color: rgba(18, 45, 105, 1);
 }

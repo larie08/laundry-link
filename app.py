@@ -56,22 +56,33 @@ def contact():
         fullname = request.form['name']
         phone_number = request.form['contact']
         
-        success = dbhelper.add_customer(fullname, phone_number)
+        # Store customer data in session instead of saving to DB immediately
+        session['customer_data'] = {
+            'fullname': fullname,
+            'phone_number': phone_number
+        }
         
-        if success:
-            flash('Customer added successfully!')
-            return redirect(url_for('weight_laundry'))
-        else:
-            flash('An error occurred. Please try again.')
-            return redirect(url_for('contact'))
+        flash('Customer information saved!')
+        return redirect(url_for('weight_laundry'))
 
-    return render_template('contact.html', order_type=session.get('order_type'))
+    # Pre-fill form with session data if user goes back
+    customer_data = session.get('customer_data', {})
+    return render_template('contact.html', 
+                         order_type=session.get('order_type'),
+                         customer_name=customer_data.get('fullname', ''),
+                         customer_phone=customer_data.get('phone_number', ''))
 
 
 
 @app.route('/weight_laundry', methods=['GET', 'POST'])
 def weight_laundry():
     global weight_page_active
+    
+    # Check if customer data exists in session
+    if 'customer_data' not in session:
+        flash('Please provide customer information first.')
+        return redirect(url_for('contact'))
+    
     if request.method == 'POST':
         weight_page_active = False  # User leaving page
         weight_str = request.form.get('weight', '')
@@ -87,8 +98,12 @@ def weight_laundry():
         session['total_weight'] = weight
         session['total_load'] = total_load
         return redirect(url_for('other_services'))
+    
     weight_page_active = True  # User is on page
-    return render_template('weight.html')
+    # Pre-fill with session data if user goes back
+    return render_template('weight.html',
+                         weight=session.get('total_weight', ''),
+                         total_load=session.get('total_load', ''))
 
 @app.route('/other_services')
 def other_services():
@@ -99,6 +114,14 @@ def other_services():
 
 @app.route('/submit_others', methods=['POST'])
 def submit_others():
+    # Check if customer and weight data exists in session
+    if 'customer_data' not in session:
+        flash('Please provide customer information first.')
+        return redirect(url_for('contact'))
+    if 'total_weight' not in session or 'total_load' not in session:
+        flash('Please provide weight and load information first.')
+        return redirect(url_for('weight_laundry'))
+    
     # Get form data
     detergent_ids = request.form.getlist('detergent_ids')
     fabcon_ids = request.form.getlist('fabcon_ids')
@@ -120,57 +143,44 @@ def submit_others():
     elif pickup_date:
         pickup_schedule = f"{pickup_date} 00:00:00"
     
-    # If order_note is empty, set to None for database
+    # If order_note is empty, set to None
     if not order_note:
         order_note = None
 
-    # Insert into ORDER_ITEM
-    orderitem_id = add_order_item(own_detergent, own_fabcon, iron, fold, priority)
-
-    # Only insert into ORDERITEM_DETERGENT if not own detergent
-    if not own_detergent:
-        for det_id in detergent_ids:
-            qty = int(request.form.get(f'detergent_qty_{det_id}', 1))
-            price = float(request.form.get(f'detergent_price_{det_id}', 0))
-            add_orderitem_detergent(orderitem_id, int(det_id), qty, price)
-
-    # Only insert into ORDERITEM_FABCON if not own fabcon
-    if not own_fabcon:
-        for fab_id in fabcon_ids:
-            qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
-            price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
-            add_orderitem_fabcon(orderitem_id, int(fab_id), qty, price)
-
-    # Get the last customer (most recently added)
-    last_customer = get_latest_customer()  # Use helper instead of get_all_customers()
-    if not last_customer:
-        flash('No customer found. Please start from the beginning.')
-        return redirect(url_for('contact'))
-
-    customer_id = last_customer['CUSTOMER_ID']
-
-    # Get weight and load from session (move this up before using total_load)
+    # Get weight and load from session
     total_weight = session.get('total_weight', 0.0)
     total_load = session.get('total_load', 0)
 
-    # Calculate totals (you may need to adjust this based on your pricing logic)
+    # Calculate totals
     total_price = 0.0
 
     # Load price (50 per load)
     total_price += total_load * 50
 
-    # Detergent costs
+    # Store detergent details
+    detergent_details = []
     if not own_detergent:
         for det_id in detergent_ids:
             qty = int(request.form.get(f'detergent_qty_{det_id}', 1))
             price = float(request.form.get(f'detergent_price_{det_id}', 0))
+            detergent_details.append({
+                'detergent_id': int(det_id),
+                'quantity': qty,
+                'unit_price': price
+            })
             total_price += qty * price
 
-    # Fabcon costs
+    # Store fabcon details
+    fabcon_details = []
     if not own_fabcon:
         for fab_id in fabcon_ids:
             qty = int(request.form.get(f'fabcon_qty_{fab_id}', 1))
             price = float(request.form.get(f'fabcon_price_{fab_id}', 0))
+            fabcon_details.append({
+                'fabcon_id': int(fab_id),
+                'quantity': qty,
+                'unit_price': price
+            })
             total_price += qty * price
 
     # Additional service costs
@@ -181,35 +191,114 @@ def submit_others():
     if priority:
         total_price += 50.00
     
-    # Create the ORDER record with null user_id
-    order_id = add_order(
-        customer_id=customer_id,
-        orderitem_id=orderitem_id,
-        user_id=None,
-        order_type=session.get('order_type'),
-        total_weight=total_weight,
-        total_load=total_load,
-        total_price=total_price,
-        order_note=order_note,
-        pickup_schedule=pickup_schedule
-    )
-    
-    # Store in session for payments page
-    session['order_id'] = order_id
-    session['customer_id'] = customer_id
-    session['total_price'] = total_price
+    # Store all order data in session instead of saving to DB
+    session['order_data'] = {
+        'order_type': session.get('order_type', 'Drop-off'),
+        'total_weight': total_weight,
+        'total_load': total_load,
+        'total_price': total_price,
+        'order_note': order_note,
+        'pickup_schedule': pickup_schedule,
+        'own_detergent': own_detergent,
+        'own_fabcon': own_fabcon,
+        'iron': iron,
+        'fold': fold,
+        'priority': priority,
+        'detergent_details': detergent_details,
+        'fabcon_details': fabcon_details
+    }
 
     return redirect(url_for('payments'))
 
 @app.route('/payments', methods=['GET', 'POST'])
 def payments():
     if request.method == 'POST':
-        # Handle payment submission
-        order_id = session.get('order_id')
+        # Check if all required session data exists
+        if 'customer_data' not in session or 'order_data' not in session:
+            flash('Order data is missing. Please start from the beginning.')
+            return redirect(url_for('contact'))
+        
         payment_method = request.form.get('payment_method')
         
-        # Update order payment status
-        update_order_payment(order_id, payment_method, 'PAID')
+        # NOW save everything to database when payment is confirmed
+        customer_data = session.get('customer_data')
+        order_data = session.get('order_data')
+        
+        # Save customer to database
+        customer_id = None
+        # Check if customer already exists
+        existing_customers = dbhelper.get_all_customers()
+        for cust in existing_customers:
+            if cust.get('FULLNAME') == customer_data['fullname'] and cust.get('PHONE_NUMBER') == customer_data['phone_number']:
+                customer_id = cust['CUSTOMER_ID']
+                break
+        
+        # If customer doesn't exist, create new one
+        if customer_id is None:
+            dbhelper.add_customer(customer_data['fullname'], customer_data['phone_number'])
+            # Get the newly created customer
+            latest_customer = dbhelper.get_latest_customer()
+            if latest_customer:
+                customer_id = latest_customer['CUSTOMER_ID']
+            else:
+                flash('Error creating customer. Please try again.')
+                return redirect(url_for('contact'))
+        else:
+            latest_customer = dbhelper.get_customer_by_id(customer_id)
+        
+        # Create ORDER_ITEM
+        orderitem_id = dbhelper.add_order_item(
+            order_data['own_detergent'],
+            order_data['own_fabcon'],
+            order_data['iron'],
+            order_data['fold'],
+            order_data['priority']
+        )
+        
+        # Add detergents to junction table
+        if not order_data['own_detergent']:
+            for det in order_data['detergent_details']:
+                dbhelper.add_orderitem_detergent(
+                    orderitem_id,
+                    det['detergent_id'],
+                    det['quantity'],
+                    det['unit_price']
+                )
+        
+        # Add fabcons to junction table
+        if not order_data['own_fabcon']:
+            for fab in order_data['fabcon_details']:
+                dbhelper.add_orderitem_fabcon(
+                    orderitem_id,
+                    fab['fabcon_id'],
+                    fab['quantity'],
+                    fab['unit_price']
+                )
+        
+        # Create ORDER record
+        order_id = dbhelper.add_order(
+            customer_id=customer_id,
+            orderitem_id=orderitem_id,
+            user_id=None,
+            order_type=order_data['order_type'],
+            total_weight=order_data['total_weight'],
+            total_load=order_data['total_load'],
+            total_price=order_data['total_price'],
+            order_note=order_data['order_note'],
+            pickup_schedule=order_data['pickup_schedule'],
+            order_status='Pending',
+            payment_method=payment_method,
+            payment_status='PAID'
+        )
+        
+        # Generate QR code
+        qr_img = qrcode.make(str(order_id))
+        qr_filename = f"qr_order_{order_id}.png"
+        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
+        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
+        qr_img.save(qr_filepath)
+        qr_code_path = f"qr/{qr_filename}"
+        dbhelper.update_order_qr_code(order_id, qr_code_path)
 
         # Receipt printing for cash payments
         if payment_method and payment_method.lower() == 'cash':
@@ -217,42 +306,41 @@ def payments():
                 from escpos.printer import Usb
                 p = Usb(0x0483, 0x5743, encoding='GB18030')
 
-                order = get_order_by_id(order_id)
-                customer = get_latest_customer()
-                orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
+                order = dbhelper.get_order_by_id(order_id)
+                orderitem = dbhelper.get_orderitem_by_id(orderitem_id)
                 orderitem_detergents = []
-                if not orderitem['CUSTOMER_OWN_DETERGENT']:
-                    orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
+                if not order_data['own_detergent']:
+                    orderitem_detergents = dbhelper.get_orderitem_detergents(orderitem_id)
                 orderitem_fabcons = []
-                if not orderitem['CUSTOMER_OWN_FABCON']:
-                    orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
+                if not order_data['own_fabcon']:
+                    orderitem_fabcons = dbhelper.get_orderitem_fabcons(orderitem_id)
 
                 lines = []
                 lines.append("Laundry Link Receipt\n")
                 lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
-                lines.append(f"Customer: {customer.get('FULLNAME')}\n")
-                lines.append(f"Phone: {customer.get('PHONE_NUMBER')}\n")
+                lines.append(f"Customer: {latest_customer.get('FULLNAME')}\n")
+                lines.append(f"Phone: {latest_customer.get('PHONE_NUMBER')}\n")
                 lines.append(f"Order Type: {order.get('ORDER_TYPE')}\n")
                 lines.append(f"Status: {order.get('ORDER_STATUS')}\n")
                 lines.append(f"Payment: {order.get('PAYMENT_STATUS')}\n")
                 lines.append(f"Payment Method: {order.get('PAYMENT_METHOD')}\n")
-                lines.append(f"Date Created: {order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else ''}\n")
+                lines.append(f"Date Created: {datetime.now().strftime('%Y-%m-%d')}\n")
                 lines.append(f"Pickup Schedule: {order.get('PICKUP_SCHEDULE')}\n")
                 lines.append(f"Total Weight: {order.get('TOTAL_WEIGHT')} kg\n")
-                lines.append(f"Order Notes: {order.get('ORDER_NOTE')}\n")
+                lines.append(f"Order Notes: {order.get('ORDER_NOTE') or 'None'}\n")
                 lines.append("-" * 32 + "\n")
                 # Load
                 if order.get('TOTAL_LOAD'):
                     lines.append(f"Total Load: {order.get('TOTAL_LOAD')} Loads\n")
                     lines.append(f"Load Price: ₱{order.get('TOTAL_LOAD') * 50:.2f}\n")
                 # Priority
-                if orderitem.get('PRIORITIZE_ORDER'):
+                if order_data['priority']:
                     lines.append("Priority: ₱50.00\n")
                 # Iron
-                if orderitem.get('IRON'):
+                if order_data['iron']:
                     lines.append("Ironing: ₱50.00\n")
                 # Fold
-                if orderitem.get('FOLD_CLOTHES'):
+                if order_data['fold']:
                     lines.append("Folding: ₱70.00\n")
                 # Detergents
                 if orderitem_detergents:
@@ -274,7 +362,6 @@ def payments():
                 p.text(receipt_text)
 
                 # Print QR code if available
-                qr_code_path = order.get('QR_CODE')
                 if qr_code_path:
                     qr_full_path = os.path.join(app.static_folder, qr_code_path)
                     if os.path.exists(qr_full_path):
@@ -284,99 +371,127 @@ def payments():
                 p.cut()
             except Exception as e:
                 print("Printer error:", e)
-        return redirect(url_for('home'))
-    
-    # Get latest customer
-    latest_customer = get_latest_customer()
-    if not latest_customer:
-        flash('No customer found. Please add customer details first.')
-        return redirect(url_for('contact'))
-    
-    # Get order details from session
-    order_id = session.get('order_id')
-    
-    # Get order data
-    order = get_order_by_id(order_id)
-    if not order:
-        flash('Order not found.')
-        return redirect(url_for('home'))
         
-    orderitem = get_orderitem_by_id(order['ORDERITEM_ID'])
+        # Clear session data after successful order creation
+        session.pop('customer_data', None)
+        session.pop('order_data', None)
+        session.pop('total_weight', None)
+        session.pop('total_load', None)
+        session.pop('order_type', None)
+        
+        flash('Order confirmed successfully!')
+        return redirect(url_for('home'))
     
-    # Calculate price per load (8kg = 1 load at ₱50)
-    load_price = order['TOTAL_LOAD'] * 50.00
+    # GET request - display payment page using session data
+    # Check if all required session data exists
+    if 'customer_data' not in session:
+        flash('Please provide customer information first.')
+        return redirect(url_for('contact'))
+    if 'order_data' not in session:
+        flash('Please complete order details first.')
+        return redirect(url_for('other_services'))
     
-    # Get detergents and fabric conditioners from junction tables
+    customer_data = session.get('customer_data')
+    order_data = session.get('order_data')
+    
+    # Create customer dict for template
+    customer = {
+        'FULLNAME': customer_data['fullname'],
+        'PHONE_NUMBER': customer_data['phone_number']
+    }
+    
+    # Create order dict for template
+    order = {
+        'ORDER_ID': 'Pending',  # Will be assigned when saved
+        'ORDER_TYPE': order_data['order_type'],
+        'ORDER_STATUS': 'Pending',
+        'PAYMENT_STATUS': 'Unpaid',
+        'TOTAL_WEIGHT': order_data['total_weight'],
+        'TOTAL_LOAD': order_data['total_load'],
+        'TOTAL_PRICE': order_data['total_price'],
+        'ORDER_NOTE': order_data['order_note'],
+        'PICKUP_SCHEDULE': order_data['pickup_schedule']
+    }
+    
+    # Create orderitem dict for template
+    orderitem = {
+        'CUSTOMER_OWN_DETERGENT': order_data['own_detergent'],
+        'CUSTOMER_OWN_FABCON': order_data['own_fabcon'],
+        'IRON': order_data['iron'],
+        'FOLD_CLOTHES': order_data['fold'],
+        'PRIORITIZE_ORDER': order_data['priority']
+    }
+    
+    # Calculate load price
+    load_price = order_data['total_load'] * 50.00
+    
+    # Get detergent and fabcon details for display
     orderitem_detergents = []
-    if not orderitem['CUSTOMER_OWN_DETERGENT']:
-        orderitem_detergents = get_orderitem_detergents(orderitem['ORDERITEM_ID'])
+    if not order_data['own_detergent']:
+        for det in order_data['detergent_details']:
+            detergent = dbhelper.get_detergent_by_id(det['detergent_id'])
+            if detergent:
+                orderitem_detergents.append({
+                    'DETERGENT_NAME': detergent.get('DETERGENT_NAME', 'Unknown'),
+                    'QUANTITY': det['quantity'],
+                    'UNIT_PRICE': det['unit_price'],
+                    'total_price': det['quantity'] * det['unit_price']
+                })
     
     orderitem_fabcons = []
-    if not orderitem['CUSTOMER_OWN_FABCON']:
-        orderitem_fabcons = get_orderitem_fabcons(orderitem['ORDERITEM_ID'])
+    if not order_data['own_fabcon']:
+        for fab in order_data['fabcon_details']:
+            fabcon = dbhelper.get_fabric_conditioner_by_id(fab['fabcon_id'])
+            if fabcon:
+                orderitem_fabcons.append({
+                    'FABCON_NAME': fabcon.get('FABCON_NAME', 'Unknown'),
+                    'QUANTITY': fab['quantity'],
+                    'UNIT_PRICE': fab['unit_price'],
+                    'total_price': fab['quantity'] * fab['unit_price']
+                })
     
     # Format the current date
     current_date = datetime.now().strftime('%B %d, %Y')
     
-    # Generate QR code if not present
-    qr_code_path = order.get('QR_CODE')
-    if not qr_code_path:
-        qr_img = qrcode.make(str(order_id))
-        qr_filename = f"qr_order_{order_id}.png"
-        qr_filepath = os.path.join(app.static_folder, "qr", qr_filename)
-        os.makedirs(os.path.dirname(qr_filepath), exist_ok=True)
-        qr_img.save(qr_filepath)
-        # Save relative path for template
-        qr_code_path = f"qr/{qr_filename}"
-        # Update order in Firestore using helper
-        dbhelper.update_order_qr_code(order_id, qr_code_path)
-
-    # --- FIX: Format pickup schedule for template ---
+    # Format pickup schedule
     pickup_schedule_formatted = None
-    pickup_schedule = order.get('PICKUP_SCHEDULE')
+    pickup_schedule = order_data.get('pickup_schedule')
     if pickup_schedule:
         try:
-            # Try parsing as 'YYYY-MM-DD HH:MM:SS'
             if isinstance(pickup_schedule, str):
                 try:
                     pickup_dt = datetime.strptime(pickup_schedule, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
-                    # Try parsing as 'YYYY-MM-DD'
                     pickup_dt = datetime.strptime(pickup_schedule, '%Y-%m-%d')
                 pickup_schedule_formatted = pickup_dt.strftime('%B %d, %Y %I:%M %p')
-            elif hasattr(pickup_schedule, 'strftime'):
-                pickup_schedule_formatted = pickup_schedule.strftime('%B %d, %Y %I:%M %p')
         except Exception:
             pickup_schedule_formatted = str(pickup_schedule)
-    # -----------------------------------------------
 
     return render_template('payments.html',
                          order=order,
-                         customer=latest_customer,
+                         customer=customer,
                          orderitem=orderitem,
                          load_price=load_price,
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
                          current_date=current_date,
-                         qr_code_path=qr_code_path,
+                         qr_code_path=None,  # No QR code until order is saved
                          pickup_schedule_formatted=pickup_schedule_formatted)
 
 @app.route('/save_order_note', methods=['POST'], endpoint='save_order_note')
 def save_order_note():
-    """Save order note to database."""
-    order_id = session.get('order_id')
-    if not order_id:
-        return jsonify({'success': False, 'message': 'No order found'}), 400
+    """Save order note to session (order not created until payment confirmation)."""
+    if 'order_data' not in session:
+        return jsonify({'success': False, 'message': 'No order data found'}), 400
     
     order_note = request.form.get('order_note', '').strip()
     
-    # Update order note in database
-    success = dbhelper.update_order_note(order_id, order_note)
+    # Update order note in session
+    if 'order_data' in session:
+        session['order_data']['order_note'] = order_note if order_note else None
+        session.modified = True
     
-    if success:
         return jsonify({'success': True, 'message': 'Note saved successfully'})
-    else:
-        return jsonify({'success': False, 'message': 'Failed to save note'}), 500
 
 
 
@@ -1039,9 +1154,44 @@ def download_order_report(format):
     search_query = request.args.get('q', '').strip().lower()
     start_date = request.args.get('start_date', '').strip()
     end_date = request.args.get('end_date', '').strip()
+    view = request.args.get('view', '')
+    selected_month = request.args.get('month', '')
+    customer_id = request.args.get('customer_id', type=int)
 
     # Get all orders
     orders = dbhelper.get_all_orders_with_priority()
+
+    # If view and month are provided (from income statement page), calculate date range
+    if view and not start_date and not end_date:
+        now = datetime.now()
+        if view == 'weekly':
+            start_date_obj = now - timedelta(days=7)
+            end_date_obj = now
+        elif view == 'monthly':
+            if selected_month:
+                try:
+                    year, month = map(int, selected_month.split('-'))
+                    start_date_obj = datetime(year, month, 1)
+                    if month == 12:
+                        end_date_obj = datetime(year + 1, 1, 1) - timedelta(days=1)
+                    else:
+                        end_date_obj = datetime(year, month + 1, 1) - timedelta(days=1)
+                    end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
+                except (ValueError, AttributeError):
+                    start_date_obj = now.replace(day=1)
+                    end_date_obj = now
+            else:
+                start_date_obj = now.replace(day=1)
+                end_date_obj = now
+        elif view == 'yearly':
+            start_date_obj = now.replace(month=1, day=1)
+            end_date_obj = now
+        else:
+            start_date_obj = now - timedelta(days=7)
+            end_date_obj = now
+        
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+        end_date = end_date_obj.strftime('%Y-%m-%d')
 
     # Filter orders
     filtered_orders = []
@@ -1059,6 +1209,9 @@ def download_order_report(format):
         if end_date:
             order_date = str(order.get('DATE_CREATED', ''))[:10]
             if order_date > end_date:
+                match = False
+        if customer_id is not None:
+            if order.get('CUSTOMER_ID') != customer_id:
                 match = False
         if match:
             filtered_orders.append(order)
@@ -1718,42 +1871,681 @@ def download_customer_report(format):
         return "Invalid format", 400
 
 # INCOME STATEMENT
-app.add_url_rule(
-    '/income_statement',
-    'income_statement',
-    lambda: render_template(
+@app.route('/income_statement', methods=['GET'])
+def income_statement():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    # Get filter parameters
+    view = request.args.get('view', 'weekly')
+    customer_id = request.args.get('customer_id', type=int)
+    tax_rate = float(request.args.get('tax_rate', 0.12))
+    selected_month = request.args.get('month', '')  # Format: YYYY-MM
+    
+    # Pagination parameters
+    customer_page = request.args.get('customer_page', 1, type=int)
+    order_page = request.args.get('order_page', 1, type=int)
+    per_page = 15  # 15 items per page (between 10-20)
+    
+    # Expense inputs
+    detergents_consumables = float(request.args.get('detergents_consumables', 0.0))
+    utilities_direct = float(request.args.get('utilities_direct', 0.0))
+    salaries_wages = float(request.args.get('salaries_wages', 0.0))
+    rent_utilities = float(request.args.get('rent_utilities', 0.0))
+    maintenance_repairs = float(request.args.get('maintenance_repairs', 0.0))
+    
+    # Get all orders
+    all_orders = dbhelper.get_all_orders_with_priority()
+    
+    # Get inventory data for Inventory Page tab
+    all_detergents = dbhelper.get_all_detergents()
+    all_fabric_conditioners = dbhelper.get_all_fabric_conditioners()
+    low_stock_detergents = [d for d in all_detergents if d.get('QTY', 0) <= 10]
+    low_stock_fabcons = [f for f in all_fabric_conditioners if f.get('QTY', 0) <= 10]
+    total_detergents_count = len(all_detergents)
+    total_fabcons_count = len(all_fabric_conditioners)
+    low_stock_detergents_count = len(low_stock_detergents)
+    low_stock_fabcons_count = len(low_stock_fabcons)
+    
+    # Calculate date range based on view
+    now = datetime.now()
+    if view == 'weekly':
+        start_date = now - timedelta(days=7)
+        end_date = now
+        period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    elif view == 'monthly':
+        if selected_month:
+            # Parse selected month (YYYY-MM format)
+            try:
+                year, month = map(int, selected_month.split('-'))
+                start_date = datetime(year, month, 1)
+                # Get last day of the month
+                if month == 12:
+                    end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+                end_date = end_date.replace(hour=23, minute=59, second=59)
+                period_label = f"Month of {start_date.strftime('%B %Y')}"
+            except (ValueError, AttributeError):
+                start_date = now.replace(day=1)
+                end_date = now
+                period_label = f"Month of {now.strftime('%B %Y')}"
+        else:
+            start_date = now.replace(day=1)
+            end_date = now
+            period_label = f"Month of {now.strftime('%B %Y')}"
+    elif view == 'yearly':
+        start_date = now.replace(month=1, day=1)
+        end_date = now
+        period_label = f"Year {now.year}"
+    else:
+        start_date = now - timedelta(days=7)
+        end_date = now
+        period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    
+    # Helper function to make datetime naive (timezone-unaware)
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    
+    # Get order report data for Order Page tab (all orders, not just completed)
+    all_orders_for_report = []
+    for order in all_orders:
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            # Handle datetime objects
+            if hasattr(order_date, 'date'):
+                order_date_only = order_date.date()
+                order_datetime = order_date if isinstance(order_date, datetime) else datetime.combine(order_date_only, datetime.min.time())
+            elif isinstance(order_date, datetime):
+                order_date_only = order_date.date()
+                order_datetime = order_date
+            else:
+                continue
+            
+            # Convert to naive datetime for comparison
+            order_datetime = make_naive(order_datetime)
+            
+            # Check date range
+            if hasattr(start_date, 'date'):
+                start_date_only = start_date.date()
+            else:
+                start_date_only = start_date
+            
+            # Ensure start_date and end_date are naive
+            start_date_naive = make_naive(start_date)
+            end_date_naive = make_naive(end_date)
+            
+            # Check if order is within date range
+            in_range = False
+            if view == 'monthly' and selected_month:
+                in_range = start_date_naive <= order_datetime <= end_date_naive
+            else:
+                in_range = order_date_only >= start_date_only
+            
+            if in_range:
+                # Check customer filter
+                if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
+                    all_orders_for_report.append(order)
+    
+    # Calculate order report metrics
+    total_orders_count = len(all_orders_for_report)
+    total_order_revenue = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in all_orders_for_report)
+    pending_orders_count = len([o for o in all_orders_for_report if (o.get('ORDER_STATUS') or '').lower() == 'pending'])
+    completed_orders_count = len([o for o in all_orders_for_report if (o.get('ORDER_STATUS') or '').lower() == 'completed'])
+    pickup_orders_count = len([o for o in all_orders_for_report if (o.get('ORDER_STATUS') or '').lower() in ['pickup', 'pick-up']])
+    
+    # Filter orders by date range and customer (for Main Page - completed orders only)
+    filtered_orders = []
+    for order in all_orders:
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            # Handle datetime objects
+            if hasattr(order_date, 'date'):
+                order_date_only = order_date.date()
+                order_datetime = order_date if isinstance(order_date, datetime) else datetime.combine(order_date_only, datetime.min.time())
+            elif isinstance(order_date, datetime):
+                order_date_only = order_date.date()
+                order_datetime = order_date
+            else:
+                continue
+            
+            # Convert to naive datetime for comparison
+            order_datetime = make_naive(order_datetime)
+            
+            # Check date range
+            if hasattr(start_date, 'date'):
+                start_date_only = start_date.date()
+            else:
+                start_date_only = start_date
+            
+            # Ensure start_date and end_date are naive
+            start_date_naive = make_naive(start_date)
+            end_date_naive = make_naive(end_date)
+            
+            # Check if order is within date range
+            in_range = False
+            if view == 'monthly' and selected_month:
+                # For monthly with specific month, check if order is within that month
+                in_range = start_date_naive <= order_datetime <= end_date_naive
+            else:
+                # For other views, check if order is after start date
+                in_range = order_date_only >= start_date_only
+            
+            if in_range:
+                # Only include completed orders
+                order_status = (order.get('ORDER_STATUS') or '').lower()
+                if order_status == 'completed':
+                    # Check customer filter
+                    if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
+                        filtered_orders.append(order)
+    
+    # Calculate metrics
+    total_transactions = len(filtered_orders)
+    total_sales = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    
+    # Calculate service sales (from orders with ORDER_TYPE)
+    service_sales = 0.0
+    other_sales = 0.0
+    
+    # Count services for best/slowest selling
+    # Include: Order types, Detergents, Fabric Conditioners, Additional Services (Iron, Fold, Priority), Pickup Schedule
+    service_counts = {}
+    detergent_counts = {}  # Separate counts for detergents only
+    fabcon_counts = {}  # Separate counts for fabric conditioners only
+    
+    for order in filtered_orders:
+        order_type = order.get('ORDER_TYPE', '').strip()
+        if order_type:
+            service_counts[order_type] = service_counts.get(order_type, 0) + 1
+            price = float(order.get('TOTAL_PRICE', 0) or 0)
+            service_sales += price
+        
+        # Get order item details
+        orderitem_id = order.get('ORDERITEM_ID')
+        if orderitem_id:
+            orderitem = dbhelper.get_orderitem_by_id(orderitem_id)
+            if orderitem:
+                # Count additional services
+                if orderitem.get('IRON'):
+                    service_counts['Iron'] = service_counts.get('Iron', 0) + 1
+                if orderitem.get('FOLD_CLOTHES'):
+                    service_counts['Fold'] = service_counts.get('Fold', 0) + 1
+                if orderitem.get('PRIORITIZE_ORDER'):
+                    service_counts['Priority'] = service_counts.get('Priority', 0) + 1
+                
+                # Count detergents
+                if not orderitem.get('CUSTOMER_OWN_DETERGENT'):
+                    detergents = dbhelper.get_orderitem_detergents(orderitem_id)
+                    for det in detergents:
+                        det_name = det.get('DETERGENT_NAME', 'Unknown Detergent')
+                        service_counts[f'Detergent: {det_name}'] = service_counts.get(f'Detergent: {det_name}', 0) + 1
+                        # Count for detergent-specific tracking
+                        detergent_counts[det_name] = detergent_counts.get(det_name, 0) + 1
+                
+                # Count fabric conditioners
+                if not orderitem.get('CUSTOMER_OWN_FABCON'):
+                    fabcons = dbhelper.get_orderitem_fabcons(orderitem_id)
+                    for fab in fabcons:
+                        fab_name = fab.get('FABCON_NAME', 'Unknown Fabcon')
+                        service_counts[f'Fabric Conditioner: {fab_name}'] = service_counts.get(f'Fabric Conditioner: {fab_name}', 0) + 1
+                        # Count for fabcon-specific tracking
+                        fabcon_counts[fab_name] = fabcon_counts.get(fab_name, 0) + 1
+        
+        # Count pickup schedule
+        if order.get('PICKUP_SCHEDULE'):
+            service_counts['Scheduled Pickup'] = service_counts.get('Scheduled Pickup', 0) + 1
+    
+    # Determine best selling service
+    best_selling_service = 'N/A'
+    if service_counts:
+        # Sort by count (descending - highest first)
+        sorted_services = sorted(service_counts.items(), key=lambda x: x[1], reverse=True)
+        if len(sorted_services) > 0:
+            best_selling_service = sorted_services[0][0]
+    
+    # Determine best and slowest selling detergents
+    best_selling_detergent = 'N/A'
+    slowest_selling_detergent = 'N/A'
+    if detergent_counts:
+        sorted_detergents = sorted(detergent_counts.items(), key=lambda x: x[1], reverse=True)
+        if len(sorted_detergents) > 0:
+            best_selling_detergent = sorted_detergents[0][0]
+        if len(sorted_detergents) > 1:
+            sorted_detergents_asc = sorted(detergent_counts.items(), key=lambda x: x[1], reverse=False)
+            slowest_selling_detergent = sorted_detergents_asc[0][0]
+    
+    # Determine best and slowest selling fabric conditioners
+    best_selling_fabcon = 'N/A'
+    slowest_selling_fabcon = 'N/A'
+    if fabcon_counts:
+        sorted_fabcons = sorted(fabcon_counts.items(), key=lambda x: x[1], reverse=True)
+        if len(sorted_fabcons) > 0:
+            best_selling_fabcon = sorted_fabcons[0][0]
+        if len(sorted_fabcons) > 1:
+            sorted_fabcons_asc = sorted(fabcon_counts.items(), key=lambda x: x[1], reverse=False)
+            slowest_selling_fabcon = sorted_fabcons_asc[0][0]
+    
+    net_sales = service_sales + other_sales
+    
+    # Calculate expenses
+    total_cogs = detergents_consumables + utilities_direct
+    total_opex = salaries_wages + rent_utilities + maintenance_repairs
+    gross_profit = net_sales - total_cogs
+    operating_income = gross_profit - total_opex
+    income_before_tax = operating_income
+    income_tax_amount = income_before_tax * tax_rate if income_before_tax > 0 else 0
+    net_income = income_before_tax - income_tax_amount
+    
+    # Get all customers for dropdown
+    customers = dbhelper.get_all_customers()
+    
+    # Calculate breakdowns
+    customers_breakdown = []
+    orders_breakdown = []
+    
+    # Group by customer
+    customer_dict = {}
+    for order in filtered_orders:
+        cid = order.get('CUSTOMER_ID')
+        if cid not in customer_dict:
+            customer_dict[cid] = {
+                'CUSTOMER_ID': cid,
+                'Orders': 0,
+                'Revenue': 0.0,
+                'OtherSales': 0.0,
+                'COGS': 0.0,
+                'Net': 0.0
+            }
+        customer_dict[cid]['Orders'] += 1
+        revenue = float(order.get('TOTAL_PRICE', 0) or 0)
+        customer_dict[cid]['Revenue'] += revenue
+    
+    # Prepare customers breakdown (without names, using customer IDs)
+    all_customers_breakdown = []
+    for cid, data in customer_dict.items():
+        # Estimate COGS (simplified - 30% of revenue)
+        data['COGS'] = data['Revenue'] * 0.3
+        data['Net'] = data['Revenue'] - data['COGS']
+        all_customers_breakdown.append(data)
+    
+    # Paginate customers breakdown
+    total_customer_pages = (len(all_customers_breakdown) + per_page - 1) // per_page if all_customers_breakdown else 1
+    customer_page = max(1, min(customer_page, total_customer_pages)) if total_customer_pages > 0 else 1
+    start_customer_idx = (customer_page - 1) * per_page
+    end_customer_idx = start_customer_idx + per_page
+    customers_breakdown = all_customers_breakdown[start_customer_idx:end_customer_idx]
+    
+    # Orders breakdown - prepare all orders (without customer names)
+    all_orders_breakdown = []
+    for order in filtered_orders:
+        all_orders_breakdown.append({
+            'ORDER_ID': order.get('ORDER_ID'),
+            'CUSTOMER_ID': order.get('CUSTOMER_ID'),
+            'Revenue': float(order.get('TOTAL_PRICE', 0) or 0),
+            'COGS': float(order.get('TOTAL_PRICE', 0) or 0) * 0.3,
+            'Net': float(order.get('TOTAL_PRICE', 0) or 0) * 0.7
+        })
+    
+    # Paginate orders breakdown
+    total_order_pages = (len(all_orders_breakdown) + per_page - 1) // per_page if all_orders_breakdown else 1
+    order_page = max(1, min(order_page, total_order_pages)) if total_order_pages > 0 else 1
+    start_order_idx = (order_page - 1) * per_page
+    end_order_idx = start_order_idx + per_page
+    orders_breakdown = all_orders_breakdown[start_order_idx:end_order_idx]
+    
+    return render_template(
         'admin_incostate_report.html',
-        view='weekly',
+        view=view,
         start='',
         end='',
-        customer_id=None,
-        customers=[],
-        tax_rate=0.12,
-        detergents_consumables=0.0,
-        utilities_direct=0.0,
-        direct_labor=0.0,
-        salaries_wages=0.0,
-        rent_utilities=0.0,
-        maintenance_repairs=0.0,
-        depreciation=0.0,
-        admin_misc=0.0,
-        other_income_expense=0.0,
-        period_label='This period',
-        service_sales=0.0,
-        other_sales=0.0,
-        net_sales=0.0,
-        total_cogs=0.0,
-        total_opex=0.0,
-        gross_profit=0.0,
-        operating_income=0.0,
-        income_before_tax=0.0,
-        income_tax_amount=0.0,
-        net_income=0.0,
-        customers_breakdown=[],
-        orders_breakdown=[]
-    ),
-    methods=['GET']
+        selected_month=selected_month,
+        customer_id=customer_id,
+        customers=customers,
+        tax_rate=tax_rate,
+        max=max,
+        detergents_consumables=detergents_consumables,
+        utilities_direct=utilities_direct,
+        salaries_wages=salaries_wages,
+        rent_utilities=rent_utilities,
+        maintenance_repairs=maintenance_repairs,
+        period_label=period_label,
+        service_sales=service_sales,
+        other_sales=other_sales,
+        net_sales=net_sales,
+        total_cogs=total_cogs,
+        total_opex=total_opex,
+        gross_profit=gross_profit,
+        operating_income=operating_income,
+        income_before_tax=income_before_tax,
+        income_tax_amount=income_tax_amount,
+        net_income=net_income,
+        total_transactions=total_transactions,
+        best_selling_service=best_selling_service,
+        customers_breakdown=customers_breakdown,
+        all_customers_breakdown=all_customers_breakdown,  # For modals
+        orders_breakdown=orders_breakdown,
+        customer_page=customer_page,
+        order_page=order_page,
+        total_customer_pages=total_customer_pages,
+        total_order_pages=total_order_pages,
+        per_page=per_page,
+        # Inventory Page data
+        all_detergents=all_detergents,
+        all_fabric_conditioners=all_fabric_conditioners,
+        total_detergents_count=total_detergents_count,
+        total_fabcons_count=total_fabcons_count,
+        low_stock_detergents_count=low_stock_detergents_count,
+        low_stock_fabcons_count=low_stock_fabcons_count,
+        best_selling_detergent=best_selling_detergent,
+        slowest_selling_detergent=slowest_selling_detergent,
+        best_selling_fabcon=best_selling_fabcon,
+        slowest_selling_fabcon=slowest_selling_fabcon,
+        # Order Page data
+        total_orders_count=total_orders_count,
+        total_order_revenue=total_order_revenue,
+        pending_orders_count=pending_orders_count,
+        completed_orders_count=completed_orders_count,
+        pickup_orders_count=pickup_orders_count
 )
+
+@app.route('/download_income_statement/<format>')
+def download_income_statement(format):
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    # Get filter parameters (same as income_statement route)
+    view = request.args.get('view', 'weekly')
+    customer_id = request.args.get('customer_id', type=int)
+    tax_rate = float(request.args.get('tax_rate', 0.12))
+    selected_month = request.args.get('month', '')
+    
+    # Expense inputs
+    detergents_consumables = float(request.args.get('detergents_consumables', 0.0))
+    utilities_direct = float(request.args.get('utilities_direct', 0.0))
+    salaries_wages = float(request.args.get('salaries_wages', 0.0))
+    rent_utilities = float(request.args.get('rent_utilities', 0.0))
+    maintenance_repairs = float(request.args.get('maintenance_repairs', 0.0))
+    
+    # Get all orders
+    all_orders = dbhelper.get_all_orders_with_priority()
+    
+    # Get inventory data
+    all_detergents = dbhelper.get_all_detergents()
+    all_fabric_conditioners = dbhelper.get_all_fabric_conditioners()
+    total_detergents_count = len(all_detergents)
+    total_fabcons_count = len(all_fabric_conditioners)
+    
+    # Calculate date range based on view
+    now = datetime.now()
+    if view == 'weekly':
+        start_date = now - timedelta(days=7)
+        end_date = now
+        period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    elif view == 'monthly':
+        if selected_month:
+            try:
+                year, month = map(int, selected_month.split('-'))
+                start_date = datetime(year, month, 1)
+                if month == 12:
+                    end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+                end_date = end_date.replace(hour=23, minute=59, second=59)
+                period_label = f"Month of {start_date.strftime('%B %Y')}"
+            except (ValueError, AttributeError):
+                start_date = now.replace(day=1)
+                end_date = now
+                period_label = f"Month of {now.strftime('%B %Y')}"
+        else:
+            start_date = now.replace(day=1)
+            end_date = now
+            period_label = f"Month of {now.strftime('%B %Y')}"
+    elif view == 'yearly':
+        start_date = now.replace(month=1, day=1)
+        end_date = now
+        period_label = f"Year {now.year}"
+    else:
+        start_date = now - timedelta(days=7)
+        end_date = now
+        period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    
+    # Helper function to make datetime naive (timezone-unaware)
+    def make_naive_dt(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    
+    # Filter completed orders
+    filtered_orders = []
+    for order in all_orders:
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            if hasattr(order_date, 'date'):
+                order_date_only = order_date.date()
+                order_datetime = order_date if isinstance(order_date, datetime) else datetime.combine(order_date_only, datetime.min.time())
+            elif isinstance(order_date, datetime):
+                order_date_only = order_date.date()
+                order_datetime = order_date
+            else:
+                continue
+            
+            # Convert to naive datetime for comparison
+            order_datetime = make_naive_dt(order_datetime)
+            
+            if hasattr(start_date, 'date'):
+                start_date_only = start_date.date()
+            else:
+                start_date_only = start_date
+            
+            # Ensure start_date and end_date are naive
+            start_date_naive = make_naive_dt(start_date)
+            end_date_naive = make_naive_dt(end_date)
+            
+            in_range = False
+            if view == 'monthly' and selected_month:
+                in_range = start_date_naive <= order_datetime <= end_date_naive
+            else:
+                in_range = order_date_only >= start_date_only
+            
+            if in_range:
+                order_status = (order.get('ORDER_STATUS') or '').lower()
+                if order_status == 'completed':
+                    if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
+                        filtered_orders.append(order)
+    
+    # Calculate metrics
+    total_transactions = len(filtered_orders)
+    total_sales = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    
+    # Count services for best/slowest selling
+    # Include: Order types, Detergents, Fabric Conditioners, Additional Services (Iron, Fold, Priority), Pickup Schedule
+    service_counts = {}
+    for order in filtered_orders:
+        order_type = order.get('ORDER_TYPE', '').strip()
+        if order_type:
+            service_counts[order_type] = service_counts.get(order_type, 0) + 1
+        
+        # Get order item details
+        orderitem_id = order.get('ORDERITEM_ID')
+        if orderitem_id:
+            orderitem = dbhelper.get_orderitem_by_id(orderitem_id)
+            if orderitem:
+                # Count additional services
+                if orderitem.get('IRON'):
+                    service_counts['Iron'] = service_counts.get('Iron', 0) + 1
+                if orderitem.get('FOLD_CLOTHES'):
+                    service_counts['Fold'] = service_counts.get('Fold', 0) + 1
+                if orderitem.get('PRIORITIZE_ORDER'):
+                    service_counts['Priority'] = service_counts.get('Priority', 0) + 1
+                
+                # Count detergents
+                if not orderitem.get('CUSTOMER_OWN_DETERGENT'):
+                    detergents = dbhelper.get_orderitem_detergents(orderitem_id)
+                    for det in detergents:
+                        det_name = det.get('DETERGENT_NAME', 'Unknown Detergent')
+                        service_counts[f'Detergent: {det_name}'] = service_counts.get(f'Detergent: {det_name}', 0) + 1
+                
+                # Count fabric conditioners
+                if not orderitem.get('CUSTOMER_OWN_FABCON'):
+                    fabcons = dbhelper.get_orderitem_fabcons(orderitem_id)
+                    for fab in fabcons:
+                        fab_name = fab.get('FABCON_NAME', 'Unknown Fabcon')
+                        service_counts[f'Fabric Conditioner: {fab_name}'] = service_counts.get(f'Fabric Conditioner: {fab_name}', 0) + 1
+        
+        # Count pickup schedule
+        if order.get('PICKUP_SCHEDULE'):
+            service_counts['Scheduled Pickup'] = service_counts.get('Scheduled Pickup', 0) + 1
+    
+    best_selling_service = 'N/A'
+    if service_counts:
+        # Sort by count (descending - highest first) for best selling
+        sorted_services = sorted(service_counts.items(), key=lambda x: x[1], reverse=True)
+        if len(sorted_services) > 0:
+            best_selling_service = sorted_services[0][0]
+    
+    # Get all orders count
+    all_orders_for_report = []
+    for order in all_orders:
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            if hasattr(order_date, 'date'):
+                order_date_only = order_date.date()
+                order_datetime = order_date if isinstance(order_date, datetime) else datetime.combine(order_date_only, datetime.min.time())
+            elif isinstance(order_date, datetime):
+                order_date_only = order_date.date()
+                order_datetime = order_date
+            else:
+                continue
+            
+            # Convert to naive datetime for comparison
+            order_datetime = make_naive_dt(order_datetime)
+            
+            if hasattr(start_date, 'date'):
+                start_date_only = start_date.date()
+            else:
+                start_date_only = start_date
+            
+            # Ensure start_date and end_date are naive
+            start_date_naive = make_naive_dt(start_date)
+            end_date_naive = make_naive_dt(end_date)
+            
+            in_range = False
+            if view == 'monthly' and selected_month:
+                in_range = start_date_naive <= order_datetime <= end_date_naive
+            else:
+                in_range = order_date_only >= start_date_only
+            
+            if in_range:
+                if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
+                    all_orders_for_report.append(order)
+    
+    total_orders_count = len(all_orders_for_report)
+    
+    # Calculate expenses
+    total_cogs = detergents_consumables + utilities_direct
+    total_opex = salaries_wages + rent_utilities + maintenance_repairs
+    net_sales = total_sales
+    gross_profit = net_sales - total_cogs
+    operating_income = gross_profit - total_opex
+    income_before_tax = operating_income
+    income_tax_amount = income_before_tax * tax_rate if income_before_tax > 0 else 0
+    net_income = income_before_tax - income_tax_amount
+    
+    # Prepare data for export
+    data = [{
+        'Metric': 'Total Sales (Completed Orders)',
+        'Value': f"₱ {net_sales:,.2f}"
+    }, {
+        'Metric': 'Total Transactions (Completed)',
+        'Value': total_transactions
+    }, {
+        'Metric': 'Total Orders (All Status)',
+        'Value': total_orders_count
+    }, {
+        'Metric': 'Total Inventory Items',
+        'Value': total_detergents_count + total_fabcons_count
+    }, {
+        'Metric': 'Best Selling Service',
+        'Value': best_selling_service
+    }, {
+        'Metric': 'Net Revenue',
+        'Value': f"₱ {net_income:,.2f}"
+    }]
+    
+    df = pd.DataFrame(data)
+    filename = 'income_statement_report'
+    
+    if format == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Income Statement', index=False)
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
+    elif format == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}.csv"})
+    elif format == 'pdf':
+        pdf = FPDF(orientation='P', unit='mm', format='letter')
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        def add_title_bar(title):
+            pdf.set_fill_color(18, 45, 105)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('Arial', 'B', 16)
+            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
+            pdf.ln(2)
+        
+        def add_table(df):
+            if df.empty:
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_font('Arial', '', 10)
+                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                return
+            
+            pdf.set_font('Arial', 'B', 10)
+            pdf.set_fill_color(245, 247, 250)
+            pdf.set_text_color(35, 56, 114)
+            available_width = pdf.w - 2 * pdf.l_margin
+            col_widths = [available_width * 0.6, available_width * 0.4]
+            
+            # Header
+            pdf.cell(col_widths[0], 7, 'Metric', border=1, align='C', fill=True)
+            pdf.cell(col_widths[1], 7, 'Value', border=1, align='C', fill=True)
+            pdf.ln()
+            
+            # Table rows
+            pdf.set_font('Arial', '', 9)
+            for idx, row in df.iterrows():
+                if idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)
+                else:
+                    pdf.set_fill_color(255, 255, 255)
+                pdf.set_text_color(0, 0, 0)
+                pdf.cell(col_widths[0], 7, str(row['Metric']), border=1, align='L', fill=True)
+                pdf.cell(col_widths[1], 7, str(row['Value']), border=1, align='R', fill=True)
+                pdf.ln()
+        
+        pdf.add_page()
+        add_title_bar('Income Statement Report')
+        pdf.set_font('Arial', '', 10)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 7, f"Period: {period_label}", ln=True, align='L')
+        pdf.ln(2)
+        add_table(df)
+        
+        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+    else:
+        return "Invalid format", 400
 
 # Store latest weight in a global variable
 latest_weight = 0.0

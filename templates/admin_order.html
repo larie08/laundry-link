@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Customers Management</title>
+    <title>Orders Management</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -94,7 +94,7 @@
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="#">
-                            <span>Income Statement</span>
+                            <span>Sales Report</span>
                         </a>
                     </li>
                     
@@ -215,9 +215,9 @@
                                     <span class="badge-table 
                                         {% if order.ORDER_STATUS|lower == 'pending' %}badge-pending-table
                                         {% elif order.ORDER_STATUS|lower == 'completed' %}badge-completed-table
-                                        {% elif order.ORDER_STATUS|lower == 'pickup' %}badge-pickup-table
+                                        {% elif order.ORDER_STATUS|lower == 'pickup' or order.ORDER_STATUS|lower == 'pick-up' %}badge-pickup-table
                                         {% endif %}">
-                                        {{ order.ORDER_STATUS|capitalize }}
+                                        {% if order.ORDER_STATUS|lower == 'pick-up' %}Pick-up{% else %}{{ order.ORDER_STATUS|capitalize }}{% endif %}
                                     </span>
                                 </td>
                                 <td>

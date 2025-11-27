@@ -778,22 +778,32 @@ button.v245_298 {
   align-items: center;
   height: auto;
 }
-/* button.v244_290 {
-  width: 85px;
-  color: rgba(18,45,105,1);
-  position: absolute;
-  top: 452px;
-  left: 338px;
-  font-family: Poppins;
-  font-weight: Bold;
-  font-size: 11px;
+/* ADD NOTE Section */
+.v244_285 {
+  width: 160px;
+  height: 50px;
+  background: rgba(255,255,255,1);
   opacity: 1;
-  text-align: left;
-  background: none;
-  border: none;
+  position: absolute;
+  top: 524px;
+  left: 78px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
   cursor: pointer;
-} */
-/* .v245_296 {
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.v244_285.selected {
+  background: rgba(13, 71, 161, 0.1);
+  border: 1px solid #0d47a1;
+}
+
+.v245_296 {
   width: 32px;
   height: 32px;
   background: url("../images/v245_296.png");
@@ -802,10 +812,32 @@ button.v245_298 {
   background-size: cover;
   opacity: 1;
   position: absolute;
-  top: 446px;
-  left: 298px;
+  top: 533px;
+  left: 88px;
   overflow: hidden;
-} */
+  z-index: 1;
+}
+
+button.v244_290 {
+  width: 120px;
+  color: rgba(18,45,105,1);
+  position: absolute;
+  top: 537px;
+  left: 128px;
+  font-family: Poppins;
+  font-weight: Bold;
+  font-size: 11px;
+  opacity: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  height: auto;
+}
 
 /* Button container*/
 .button-container {
@@ -1129,7 +1161,7 @@ input[type="time"] {
 }
 /*Pickup Schedule Modal*/
 
-/* Add Note Modal Specific Styles
+/* Add Note Modal Specific Styles */
 .note-modal {
   width: 350px;
   padding: 30px 35px;
@@ -1166,7 +1198,7 @@ input[type="time"] {
 
 .note-text-area textarea::placeholder {
   color: #999;
-} */
+}
 
 /* Fabcon Modal - gi reuse ang detergent modal styles */
 #fabconModal .modal-content {
@@ -1301,7 +1333,6 @@ input[type="time"] {
   border-radius: 5px;
 }
 
-/* button.v244_290:hover, */
 button.v100_145:hover,
 button.v100_147:hover,
 button.v100_149:hover,
@@ -1309,6 +1340,7 @@ button.v100_154:hover,
 button.v100_167:hover,
 button.v100_173:hover,
 button.v244_288:hover,
+button.v244_290:hover,
 button.v245_298:hover {
   opacity: 100;
   transition: opacity 0.2s;
