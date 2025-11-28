@@ -139,9 +139,9 @@
                                 <i class="fas fa-chart-line"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>Today's Revenue</h3>
-                                <p class="stat-number">₱2,450</p>
-                                <p class="stat-detail">+15% from yesterday</p>
+                                <h3>Today's Sales</h3>
+                                <p class="stat-number">₱{{ "%.2f"|format(todays_sales) }}</p>
+                                <p class="stat-detail">Total orders today: {{ total_orders }}</p>
                             </div>
                         </div>
 
@@ -151,7 +151,7 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Inventory Alerts</h3>
-                                <p class="stat-number">3</p>
+                                <p class="stat-number">{{ low_detergents|length + low_fabcons|length }}</p>
                                 <p class="stat-detail">Low stock items</p>
                             </div>
                         </div>
@@ -161,9 +161,9 @@
                                 <i class="fas fa-money-bill-wave"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>Total Payment Overall</h3>
-                                <p class="stat-number">₱15,750</p>
-                                <p class="stat-detail">This month's revenue</p>
+                                <h3>Monthly Earnings</h3>
+                                <p class="stat-number">₱{{ "%.2f"|format(monthly_earnings) }}</p>
+                                <p class="stat-detail">This month's total</p>
                             </div>
                         </div>
                     </div>
@@ -354,10 +354,11 @@
                         <div class="dashboard-card inventory-alerts-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
-                                <span class="card-badge alert">2</span>
+                                <span class="card-badge alert">{{ low_detergents|length + low_fabcons|length }}</span>
                             </div>
                             <div class="card-content">
                                 <div class="inventory-details inventory-details-alone">
+                                    {% if low_detergents %}
                                     <div class="inventory-item">
                                         <div class="item-header">
                                             <div class="item-icon detergent-icon">
@@ -365,14 +366,12 @@
                                             </div>
                                             <div class="item-info">
                                                 <h4>Detergent</h4>
-                                                <span class="item-stock">5 items left</span>
-                                                {% if low_detergents %}
+                                                <span class="item-stock">{{ low_detergents|length }} item{% if low_detergents|length != 1 %}s{% endif %} low</span>
                                                 <ul class="low-stock-list">
                                                     {% for item in low_detergents %}
                                                     <li>{{ item['DETERGENT_NAME'] }} ({{ item['QTY'] }} left)</li>
                                                     {% endfor %}
                                                 </ul>
-                                                {% endif %}
                                             </div>
                                             <div class="stock-indicator critical">
                                                 <i class="fas fa-exclamation-triangle"></i>
@@ -381,18 +380,14 @@
                                         <div class="progress-bar">
                                             <div class="progress-fill critical" style="width: 25%"></div>
                                         </div>
-                                        <div class="stock-details">
-                                            <span class="current-stock">5</span>
-                                            <span class="stock-separator">/</span>
-                                            <span class="max-stock">20</span>
-                                            <span class="stock-unit">items</span>
-                                        </div>
                                     </div>
 
                                     <div class="view-all-inventory-btn-container">
                                         <a href="{{ url_for('detergent_inventory') }}" class="view-all-inventory-btn">View All Detergent Inventory</a>
                                     </div>
+                                    {% endif %}
 
+                                    {% if low_fabcons %}
                                     <div class="inventory-item">
                                         <div class="item-header">
                                             <div class="item-icon conditioner-icon">
@@ -400,14 +395,12 @@
                                             </div>
                                             <div class="item-info">
                                                 <h4>Fabric Conditioner</h4>
-                                                <span class="item-stock">8 items left</span>
-                                                {% if low_fabcons %}
+                                                <span class="item-stock">{{ low_fabcons|length }} item{% if low_fabcons|length != 1 %}s{% endif %} low</span>
                                                 <ul class="low-stock-list">
                                                     {% for item in low_fabcons %}
                                                     <li>{{ item['FABCON_NAME'] }} ({{ item['QTY'] }} left)</li>
                                                     {% endfor %}
                                                 </ul>
-                                                {% endif %}
                                             </div>
                                             <div class="stock-indicator warning">
                                                 <i class="fas fa-exclamation-circle"></i>
@@ -416,16 +409,18 @@
                                         <div class="progress-bar">
                                             <div class="progress-fill warning" style="width: 40%"></div>
                                         </div>
-                                        <div class="stock-details">
-                                            <span class="current-stock">8</span>
-                                            <span class="stock-separator">/</span>
-                                            <span class="max-stock">20</span>
-                                            <span class="stock-unit">items</span>
-                                        </div>
                                     </div>
                                     <div class="view-all-inventory-btn-container">
                                         <a href="{{ url_for('fabric_conditioner') }}" class="view-all-inventory-btn">View All Fabcon Inventory</a>
                                     </div>
+                                    {% endif %}
+
+                                    {% if not low_detergents and not low_fabcons %}
+                                    <div style="text-align: center; padding: 20px; color: #6c757d;">
+                                        <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 10px; color: #28a745;"></i>
+                                        <p>All inventory levels are healthy</p>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
