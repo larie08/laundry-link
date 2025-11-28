@@ -694,8 +694,9 @@ main {
 }
 
 /* ACTION BUTTONS FOR PICK-UP AND RESEND MESSAGE */
+
 .pickup-btn {
-    background: #28a745 !important;
+    background: #233872 !important;
     color: #fff !important;
     border: none;
     border-radius: 6px;
@@ -704,18 +705,18 @@ main {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s, box-shadow 0.3s;
-    box-shadow: 0 2px 6px rgba(40,167,69,0.08);
+    box-shadow: 0 2px 6px rgba(35,56,114,0.08);
 }
 
 .pickup-btn:hover, .pickup-btn:focus {
-    background: #218838 !important;
+    background: #122D69 !important;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(40,167,69,0.15);
+    box-shadow: 0 4px 12px rgba(35,56,114,0.15);
 }
 
 .resend-btn {
-    background: #dc3545 !important;
-    color: #fff !important;
+    background: #ffc107 !important;
+    color: #233872 !important;
     border: none;
     border-radius: 6px;
     padding: 8px 16px;
@@ -723,13 +724,13 @@ main {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s, box-shadow 0.3s;
-    box-shadow: 0 2px 6px rgba(220,53,69,0.08);
+    box-shadow: 0 2px 6px rgba(255,193,7,0.08);
 }
 
 .resend-btn:hover, .resend-btn:focus {
-    background: #c82333 !important;
-    color: #fff !important;
-    box-shadow: 0 4px 12px rgba(220,53,69,0.15);
+    background: #e0a800 !important;
+    color: #233872 !important;
+    box-shadow: 0 4px 12px rgba(255,193,7,0.15);
 }
 
 /* MESSAGE ALERT (SUCCESS, INFO, ERROR) */

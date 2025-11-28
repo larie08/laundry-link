@@ -518,27 +518,43 @@
                 alert("No phone number available for this customer.");
                 return;
             }
-            if (confirm(`Resend notification message to ${customerName} (${phone})?`)) {
-                fetch('/api/send_sms', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        phone: phone,
-                        message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
+                // Custom styled alert for resend confirmation (Laundrylink color scheme)
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'custom-resend-alert';
+                alertDiv.innerHTML = `
+                    <div style="background: #f5f7fa; border-radius: 16px; box-shadow: 0 4px 16px rgba(35,56,114,0.10); padding: 32px 24px; max-width: 400px; margin: 0 auto; text-align: center; color: #233872; font-family: 'Poppins', sans-serif; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2000; border: 2px solid #122D69;">
+                        <div style='font-size: 1.2rem; font-weight: 600; margin-bottom: 12px;'><i class="fas fa-paper-plane" style="color:#ffc107; margin-right:8px;"></i>Resend Notification</div>
+                        <div style='margin-bottom: 18px;'>Resend notification message to <span style="font-weight:600; color:#122D69;">${customerName}</span> <span style="color:#233872;">(${phone})</span>?</div>
+                        <button id="resendOkBtn" style="background:#233872; color:#fff; border:none; border-radius:8px; padding:8px 24px; font-weight:500; margin-right:10px; cursor:pointer; box-shadow:0 2px 8px rgba(35,56,114,0.08);">OK</button>
+                        <button id="resendCancelBtn" style="background:#ffc107; color:#233872; border:none; border-radius:8px; padding:8px 24px; font-weight:500; cursor:pointer; box-shadow:0 2px 8px rgba(35,56,114,0.08);">Cancel</button>
+                    </div>
+                `;
+                document.body.appendChild(alertDiv);
+                document.getElementById('resendOkBtn').onclick = function() {
+                    document.body.removeChild(alertDiv);
+                    fetch('/api/send_sms', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            phone: phone,
+                            message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
+                        })
                     })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showResendSuccessMessage(customerName);
-                    } else {
-                        alert("Failed to send SMS: " + (data.msg || "Unknown error"));
-                    }
-                })
-                .catch(() => {
-                    alert("Failed to send SMS due to network error.");
-                });
-            }
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showResendSuccessMessage(customerName);
+                        } else {
+                            alert("Failed to send SMS: " + (data.msg || "Unknown error"));
+                        }
+                    })
+                    .catch(() => {
+                        alert("Failed to send SMS due to network error.");
+                    });
+                };
+                document.getElementById('resendCancelBtn').onclick = function() {
+                    document.body.removeChild(alertDiv);
+                };
         }
 
         function showResendSuccessMessage(customerName) {
