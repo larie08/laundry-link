@@ -167,7 +167,7 @@ def getallprocess(sql: str, params: tuple = ()) -> list:
 # - update_customer(): edit customer info
 # - delete_customer(): remove customer
 # ==================================================
-def add_customer(fullname: str, phone_number: str) -> bool:
+def add_customer(fullname: str, phone_number: str, user_id: int = None) -> bool:
     """Create a new customer and assign an incremental CUSTOMER_ID."""
     _require_db()
     transaction = db.transaction()
@@ -178,6 +178,9 @@ def add_customer(fullname: str, phone_number: str) -> bool:
         'PHONE_NUMBER': phone_number,
         'DATE_CREATED': _now(),
     })
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Add', customer_id, fullname, phone_number)
     return True
 
 def get_all_customers() -> list:
@@ -192,7 +195,7 @@ def get_customer_by_id(customer_id: int) -> dict:
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
     return docs[0].to_dict() if docs else None
 
-def update_customer(customer_id: int, fullname: str, phone_number: str) -> bool:
+def update_customer(customer_id: int, fullname: str, phone_number: str, user_id: int = None) -> bool:
     """Update FULLNAME and PHONE_NUMBER for a customer."""
     _require_db()
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
@@ -202,15 +205,22 @@ def update_customer(customer_id: int, fullname: str, phone_number: str) -> bool:
         'FULLNAME': fullname,
         'PHONE_NUMBER': phone_number,
     })
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Update', customer_id, fullname, phone_number)
     return True
 
-def delete_customer(customer_id: int) -> bool:
+def delete_customer(customer_id: int, user_id: int = None) -> bool:
     """Delete a customer document by CUSTOMER_ID."""
     _require_db()
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
     if not docs:
         return False
+    customer = docs[0].to_dict()
     db.collection('CUSTOMER').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Delete', customer_id, customer.get('FULLNAME', ''), customer.get('PHONE_NUMBER', ''))
     return True
 
 def add_user(username: str, password: str, role: str, fullname: str) -> bool:
@@ -283,7 +293,7 @@ def authenticate_user(username: str, password: str) -> dict:
 # - search_detergents(): simple name/ID search
 # - get_detergent_total_value(): compute total value
 # ==================================================
-def add_detergent(name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def add_detergent(name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Add a detergent to inventory with auto-increment DETERGENT_ID."""
     _require_db()
     transaction = db.transaction()
@@ -298,9 +308,12 @@ def add_detergent(name: str, price: float, qty: int, image_filename: str = None)
         'DATE_UPDATED': now,
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Add', 'Detergent', det_id, name, qty, price)
     return True
 
-def update_detergent(detergent_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def update_detergent(detergent_id: int, name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Update a detergent by DETERGENT_ID."""
     _require_db()
     docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
@@ -313,15 +326,22 @@ def update_detergent(detergent_id: int, name: str, price: float, qty: int, image
         'DATE_UPDATED': _now(),
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Update', 'Detergent', detergent_id, name, qty, price)
     return True
 
-def delete_detergent(detergent_id: int) -> bool:
+def delete_detergent(detergent_id: int, user_id: int = None) -> bool:
     """Delete a detergent by DETERGENT_ID."""
     _require_db()
     docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
     if not docs:
         return False
+    det = docs[0].to_dict()
     db.collection('DETERGENT').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Delete', 'Detergent', detergent_id, det.get('DETERGENT_NAME', ''), det.get('QTY', 0), det.get('DETERGENT_PRICE', 0.0))
     return True
 
 def get_all_detergents() -> list:
@@ -369,7 +389,7 @@ def get_detergent_total_value() -> dict:
 # - search_fabric_conditioners(): simple name/ID search
 # - get_fabcon_total_value(): compute total value
 # ==================================================
-def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Add a fabric conditioner to inventory with auto-increment FABCON_ID."""
     _require_db()
     transaction = db.transaction()
@@ -384,9 +404,12 @@ def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: st
         'DATE_UPDATED': now,
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Add', 'Fabric Conditioner', fab_id, name, qty, price)
     return True
 
-def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Update a fabric conditioner by FABCON_ID."""
     _require_db()
     docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
@@ -399,17 +422,23 @@ def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: floa
         'DATE_UPDATED': _now(),
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Update', 'Fabric Conditioner', fabric_conditioner_id, name, qty, price)
     return True
 
-def delete_fabric_conditioner(fabric_conditioner_id: int) -> bool:
+def delete_fabric_conditioner(fabric_conditioner_id: int, user_id: int = None) -> bool:
     """Delete a fabric conditioner by FABCON_ID."""
     _require_db()
     docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
     if not docs:
         return False
+    fab = docs[0].to_dict()
     db.collection('FABCON').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Delete', 'Fabric Conditioner', fabric_conditioner_id, fab.get('FABCON_NAME', ''), fab.get('QTY', 0), fab.get('FABCON_PRICE', 0.0))
     return True
-
 def get_all_fabric_conditioners() -> list:
     """Return all fabric conditioners ordered by name."""
     _require_db()
@@ -444,7 +473,7 @@ def get_fabcon_total_value() -> dict:
         d = doc.to_dict()
         total += float(d.get('FABCON_PRICE', 0)) * int(d.get('QTY', 0))
     return {'ItemType': 'Fabric Conditioner', 'TotalValue': total}
-
+    
 ##################################################
 # ORDER_ITEM TABLE
 # - add_order_item(): create order item flags/options
@@ -475,8 +504,8 @@ def add_orderitem_detergent(orderitem_id: int, detergent_id: int, quantity: int,
     """
     _require_db()
     docs = db.collection('ORDERITEM_DETERGENT') \
-        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
-        .where(field_path='DETERGENT_ID', op_string='==', value=detergent_id).limit(1).get()
+        .where('ORDERITEM_ID', '==', orderitem_id) \
+        .where('DETERGENT_ID', '==', detergent_id).limit(1).get()
     if docs:
         return False
     db.collection('ORDERITEM_DETERGENT').add({
@@ -497,8 +526,8 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     """
     _require_db()
     docs = db.collection('ORDERITEM_FABCON') \
-        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
-        .where(field_path='FABCON_ID', op_string='==', value=fabcon_id).limit(1).get()
+        .where('ORDERITEM_ID', '==', orderitem_id) \
+        .where('FABCON_ID', '==', fabcon_id).limit(1).get()
     if docs:
         return False
     db.collection('ORDERITEM_FABCON').add({
@@ -708,15 +737,22 @@ def get_all_customers_with_order_stats():
         cid = customer['CUSTOMER_ID']
         cust_orders = orders_by_customer.get(cid, [])
         customer['total_orders'] = len(cust_orders)
+        # Add CUSTOMER_NAME for template compatibility
+        customer['CUSTOMER_NAME'] = customer.get('FULLNAME', '')
         if cust_orders:
             latest_order = max(cust_orders, key=lambda x: x.get('DATE_CREATED', datetime.min))
             customer['ORDER_ID'] = latest_order.get('ORDER_ID', 'N/A')
             customer['ORDER_STATUS'] = latest_order.get('ORDER_STATUS', 'N/A')
             customer['PAYMENT_STATUS'] = latest_order.get('PAYMENT_STATUS', 'N/A')
+            # Add ORDER_TYPE and TOTAL_PRICE for template compatibility
+            customer['ORDER_TYPE'] = latest_order.get('ORDER_TYPE', '')
+            customer['TOTAL_PRICE'] = latest_order.get('TOTAL_PRICE', '')
         else:
             customer['ORDER_ID'] = 'N/A'
             customer['ORDER_STATUS'] = 'N/A'
             customer['PAYMENT_STATUS'] = 'N/A'
+            customer['ORDER_TYPE'] = ''
+            customer['TOTAL_PRICE'] = ''
         customers.append(customer)
     return customers
 
@@ -850,6 +886,32 @@ def get_all_orders_with_priority():
 
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
+
+def add_inventory_log(user_id: int, action: str, item_type: str, item_id: int, name: str, qty: int, price: float):
+    """Add an inventory log entry for detergent/fabcon actions."""
+    _require_db()
+    db.collection('INVENTORY_LOG').add({
+        'USER_ID': user_id,
+        'ACTION': action,  # 'Add', 'Update', 'Delete'
+        'ITEM_TYPE': item_type,  # 'Detergent' or 'Fabric Conditioner'
+        'ITEM_ID': item_id,
+        'NAME': name,
+        'QTY': qty,
+        'PRICE': price,
+        'DATE': _now(),
+    })
+
+def add_customer_log(user_id: int, action: str, customer_id: int, fullname: str, phone_number: str):
+    """Log customer actions (add, update, delete)."""
+    _require_db()
+    db.collection('CUSTOMER_LOG').add({
+        'USER_ID': user_id,
+        'ACTION': action,  # 'Add', 'Update', 'Delete'
+        'CUSTOMER_ID': customer_id,
+        'FULLNAME': fullname,
+        'PHONE_NUMBER': phone_number,
+        'DATE': _now(),
+    })
 
     
 if __name__ == "__main__":
