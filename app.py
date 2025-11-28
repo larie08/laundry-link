@@ -603,6 +603,7 @@ def detergent_inventory():
 
     if request.method == 'POST':
         action = request.form.get('action', 'Add')
+        user_id = session.get('user_id')
 
         if action == 'Add' or action == 'Update':
             name = request.form['name']
@@ -616,17 +617,18 @@ def detergent_inventory():
                 image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             if action == 'Add':
-                add_detergent(name, price, quantity, filename)
+                add_detergent(name, price, quantity, filename, user_id=user_id)
             elif action == 'Update':
                 detergent_id = int(request.form['detergent_id'])
                 if not filename:
                     old = get_detergent_by_id(detergent_id)
                     filename = old['IMAGE_FILENAME'] if old else None
-                update_detergent(detergent_id, name, price, quantity, filename)
+                update_detergent(detergent_id, name, price, quantity, filename, user_id=user_id)
 
         elif action == 'Delete':
             detergent_id = int(request.form['detergent_id'])
-            delete_detergent(detergent_id)
+            user_id = session.get('user_id')
+            delete_detergent(detergent_id, user_id=user_id)
 
         return redirect(url_for('detergent_inventory'))
 
@@ -678,6 +680,7 @@ def fabric_conditioner():
 
     if request.method == 'POST':
         action = request.form.get('action', 'Add')
+        user_id = session.get('user_id')
 
         if action == 'Add' or action == 'Update':
             name = request.form['name']
@@ -691,17 +694,18 @@ def fabric_conditioner():
                 image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             if action == 'Add':
-                add_fabric_conditioner(name, price, quantity, filename)
+                add_fabric_conditioner(name, price, quantity, filename, user_id=user_id)
             elif action == 'Update':
                 fabcon_id = int(request.form['fabric_conditioner_id'])
                 if not filename:
                     old = get_fabric_conditioner_by_id(fabcon_id)
                     filename = old['IMAGE_FILENAME'] if old else None
-                update_fabric_conditioner(fabcon_id, name, price, quantity, filename)
+                update_fabric_conditioner(fabcon_id, name, price, quantity, filename, user_id=user_id)
 
         elif action == 'Delete':
             fabcon_id = int(request.form['fabric_conditioner_id'])
-            delete_fabric_conditioner(fabcon_id)
+            user_id = session.get('user_id')
+            delete_fabric_conditioner(fabcon_id, user_id=user_id)
 
         return redirect(url_for('fabric_conditioner'))
 
@@ -803,6 +807,47 @@ def customers():
                          current_page=page,
                          total_pages=total_pages)
 
+# ADMIN AND STAFF - Edit Customer Routes
+@app.route('/get_customer/<int:customer_id>', methods=['GET'])
+def get_customer(customer_id):
+    """Get customer data for editing."""
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    customer = dbhelper.get_customer_by_id(customer_id)
+    if not customer:
+        return jsonify({'error': 'Customer not found'}), 404
+    
+    return jsonify({
+        'CUSTOMER_ID': customer.get('CUSTOMER_ID'),
+        'FULLNAME': customer.get('FULLNAME', ''),
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER', '')
+    })
+
+@app.route('/edit_customer', methods=['POST'])
+def edit_customer():
+    """Update customer information."""
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        customer_id = int(request.form.get('customer_id'))
+        fullname = request.form.get('fullname', '').strip()
+        phone_number = request.form.get('phone_number', '').strip()
+        user_id = session.get('user_id')  # <-- Get current user ID
+
+        if not fullname:
+            return jsonify({'error': 'Full name is required'}), 400
+
+        # Pass user_id to log the update
+        success = dbhelper.update_customer(customer_id, fullname, phone_number, user_id=user_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Customer updated successfully'})
+        else:
+            return jsonify({'error': 'Customer not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ADMIN AND STAFF
 @app.route('/orders')
 def orders():
@@ -859,6 +904,17 @@ def orders():
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
     paginated_orders = filtered_orders[start_idx:end_idx]
+
+    # --- Add this block: fetch order item data for each order ---
+    orderitems_map = {}
+    orderitem_ids = [order.get('ORDERITEM_ID') for order in paginated_orders if order.get('ORDERITEM_ID')]
+    # Remove duplicates and None
+    orderitem_ids = list({oid for oid in orderitem_ids if oid is not None})
+    for oid in orderitem_ids:
+        orderitems_map[oid] = dbhelper.get_orderitem_by_id(oid)
+    # Attach orderitem data to each order
+    for order in paginated_orders:
+        order['orderitem_data'] = orderitems_map.get(order.get('ORDERITEM_ID'))
 
     template_name = 'admin_order.html' if session['role'] == 'admin' else 'staff_order.html'
     return render_template(template_name, 
@@ -1024,6 +1080,18 @@ def admin_order_report():
     end_idx = start_idx + items_per_page
     paginated_orders = filtered_orders[start_idx:end_idx]
 
+    # Fetch order item data for each order
+    orderitems_map = {}
+    orderitem_ids = [order.get('ORDERITEM_ID') for order in paginated_orders if order.get('ORDERITEM_ID')]
+    # Remove duplicates and None
+    orderitem_ids = list({oid for oid in orderitem_ids if oid is not None})
+    for oid in orderitem_ids:
+        orderitems_map[oid] = dbhelper.get_orderitem_by_id(oid)
+    
+    # Attach orderitem data to each order
+    for order in paginated_orders:
+        order['orderitem_data'] = orderitems_map.get(order.get('ORDERITEM_ID'))
+
     return render_template('admin_order_report.html',
                            paginated_orders=paginated_orders,
                            total_orders=total_orders,
@@ -1031,7 +1099,9 @@ def admin_order_report():
                            pending_count=len(pending_orders),
                            completed_count=len(completed_orders),
                            page=page,
-                           total_pages=total_pages)
+                           total_pages=total_pages,
+                           dbhelper=dbhelper
+    )
 # INVENTORY REPORT
 @app.route('/inventory_report')
 def inventory_report():
@@ -1042,6 +1112,8 @@ def inventory_report():
     # Get query parameters
     search_query = request.args.get('q', '').strip()
     inv_type = request.args.get('type', 'detergent')
+    if inv_type not in ['detergent', 'fabcon']:
+        inv_type = 'detergent'
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     
@@ -1054,18 +1126,18 @@ def inventory_report():
     fabric_conditioners = []
     
     # Get filtered data based on inventory type and search query
-    if inv_type == 'detergent' or inv_type == None:
+    if inv_type == 'detergent':
         if search_query:
             detergents = search_detergents(search_query)
         else:
             detergents = all_detergents.copy()
-        fabric_conditioners = []  # Ensure only one table is filled
+        fabric_conditioners = []
     elif inv_type == 'fabcon':
         if search_query:
             fabric_conditioners = search_fabric_conditioners(search_query)
         else:
             fabric_conditioners = all_fabric_conditioners.copy()
-        detergents = []  # Ensure only one table is filled
+        detergents = []
     
     # Apply date filtering if dates are provided
     if start_date or end_date:
@@ -1076,12 +1148,11 @@ def inventory_report():
         if start_date:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         if end_date:
-            # Set end_date to end of day
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
             end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
         
         # Filter detergents by date
-        if inv_type == 'detergent' or inv_type == None:
+        if inv_type == 'detergent':
             filtered_detergents = []
             for item in detergents:
                 item_date = item['DATE_CREATED']
@@ -1102,15 +1173,24 @@ def inventory_report():
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_fabcons.append(item)
             fabric_conditioners = filtered_fabcons
-    
-    # If no type is specified, get both for initial page load
-    if inv_type == None:
-        fabric_conditioners = all_fabric_conditioners.copy()
+    elif inv_type == 'both':
+        # For both, combine and filter by date
+        combined_inventory = all_detergents + all_fabric_conditioners
+        filtered_combined = []
+        for item in combined_inventory:
+            item_date = item['DATE_CREATED']
+            if not isinstance(item_date, datetime):
+                item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+            if (not start_date_obj or item_date >= start_date_obj) and \
+               (not end_date_obj or item_date <= end_date_obj):
+                filtered_combined.append(item)
+        detergents = filtered_combined
+        fabric_conditioners = filtered_combined
     
     # PAGINATION LOGIC
     items_per_page = 10
     page = request.args.get('page', 1, type=int)
-    if inv_type == 'detergent' or inv_type is None:
+    if inv_type == 'detergent':
         total_items = len(detergents)
         total_pages = (total_items + items_per_page - 1) // items_per_page if total_items > 0 else 1
         if page < 1:
@@ -1390,7 +1470,6 @@ def download_inventory_report(format):
         if start_date:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         if end_date:
-            # Set end_date to end of day
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
             end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
         
@@ -1624,8 +1703,11 @@ def customer_report():
     ]
     new_customers = len(new_customers_list)
     total_orders = sum(c.get('total_orders', 0) for c in customers)
-    avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
-    
+    # avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
+    # Get monthly growth from dbhelper
+    stats = dbhelper.get_customer_statistics()
+    monthly_growth = stats.get('monthly_growth', 0)
+
     # PAGINATION LOGIC
     page = request.args.get('page', 1, type=int)
     per_page = 10
@@ -1637,11 +1719,11 @@ def customer_report():
     paginated_customers = customers[start_idx:end_idx]
 
     return render_template('admin_customer_report.html', 
-                          customers=paginated_customers,
+                          transactions=paginated_customers,
                           total_customers=total_customers,
                           new_customers_count=new_customers,
                           total_orders=total_orders,
-                          avg_orders_per_customer=avg_orders,
+                          customer_monthly_growth=monthly_growth,  # <-- changed variable name
                           current_page=page,
                           total_pages=total_pages)
 
@@ -1784,12 +1866,13 @@ def download_customer_report(format):
                 available_width * 0.13   # Payment Status
             ]
             
+            # Header
             for i, col in enumerate(columns):
                 pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
             pdf.ln()
             
             pdf.set_font('Arial', '', 9)
-            for row_idx, customer in enumerate(customers_to_display):
+            for row_idx, customer in df.iterrows():
                 if row_idx % 2 == 0:
                     pdf.set_fill_color(248, 250, 252)  # #f8fafc
                 else:
@@ -1834,7 +1917,7 @@ def download_customer_report(format):
                 date_range += f"To {date_to}"
             pdf.cell(0, 7, date_range, ln=True, align='L')
             pdf.ln(2)
-            
+        
         add_table(df)
         
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
@@ -1919,7 +2002,6 @@ def income_statement():
             try:
                 year, month = map(int, selected_month.split('-'))
                 start_date = datetime(year, month, 1)
-                # Get last day of the month
                 if month == 12:
                     end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
                 else:
@@ -2287,6 +2369,7 @@ def download_income_statement(format):
         period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
     elif view == 'monthly':
         if selected_month:
+            # Parse selected month (YYYY-MM format)
             try:
                 year, month = map(int, selected_month.split('-'))
                 start_date = datetime(year, month, 1)
@@ -2509,7 +2592,7 @@ def download_income_statement(format):
                 pdf.set_font('Arial', '', 10)
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
-            
+        
             pdf.set_font('Arial', 'B', 10)
             pdf.set_fill_color(245, 247, 250)
             pdf.set_text_color(35, 56, 114)
@@ -2523,11 +2606,11 @@ def download_income_statement(format):
             
             # Table rows
             pdf.set_font('Arial', '', 9)
-            for idx, row in df.iterrows():
-                if idx % 2 == 0:
-                    pdf.set_fill_color(248, 250, 252)
+            for row_idx, row in df.iterrows():
+                if row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
                 else:
-                    pdf.set_fill_color(255, 255, 255)
+                    pdf.set_fill_color(255, 255, 255)  # white
                 pdf.set_text_color(0, 0, 0)
                 pdf.cell(col_widths[0], 7, str(row['Metric']), border=1, align='L', fill=True)
                 pdf.cell(col_widths[1], 7, str(row['Value']), border=1, align='R', fill=True)
@@ -2612,20 +2695,20 @@ def api_send_sms():
 def api_orders_by_date():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return jsonify({'error': 'Unauthorized'}), 401
-    
+
     date_str = request.args.get('date')
     if not date_str:
         return jsonify({'error': 'Date parameter required'}), 400
-    
+
     try:
         # Parse date (format: YYYY-MM-DD)
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         start_datetime = datetime.combine(target_date, datetime.min.time())
         end_datetime = datetime.combine(target_date, datetime.max.time())
-        
+
         # Get all orders
         all_orders = dbhelper.get_all_orders_with_priority()
-        
+
         # Filter orders for the target date
         orders_for_date = []
         for order in all_orders:
@@ -2638,7 +2721,7 @@ def api_orders_by_date():
                     order_date = date_created.date()
                 else:
                     continue
-                
+
                 if start_datetime.date() <= order_date <= end_datetime.date():
                     # Format time for display
                     if hasattr(date_created, 'strftime'):
@@ -2649,7 +2732,7 @@ def api_orders_by_date():
                     order['TOTAL_LOAD'] = order.get('TOTAL_LOAD', 0)
                     order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
                     orders_for_date.append(order)
-        
+
         return jsonify({'orders': orders_for_date})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -2711,8 +2794,8 @@ def api_pickups_by_date():
                         order['PICKUP_TIME'] = pickup_time
                         order['ORDER_STATUS'] = order.get('ORDER_STATUS', 'Pending')
                         pickups_for_date.append(order)
-                except Exception as e:
-                    continue
+                except:
+                    pass
         
         return jsonify({'pickups': pickups_for_date})
     except Exception as e:
@@ -2760,7 +2843,9 @@ def api_calendar_dates():
                         pickup_date = pickup_datetime.date()
                     else:
                         pickup_date = pickup_datetime.date()
-                    dates_with_pickups.add(pickup_date.strftime('%Y-%m-%d'))
+                    
+                    if pickup_date.strftime('%Y-%m-%d') != order_date.strftime('%Y-%m-%d'):
+                        dates_with_pickups.add(pickup_date.strftime('%Y-%m-%d'))
                 except:
                     pass
         
@@ -2777,14 +2862,14 @@ def api_calendar_dates():
 def api_pickup_orders():
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return jsonify({'error': 'Unauthorized'}), 401
-    orders = dbhelper.get_all_orders_with_priority()
+    orders = get_all_orders_with_priority()
     pickup_orders = [
         o for o in orders
         if (o.get('ORDER_STATUS', '').lower() == 'pick-up')
     ]
     # Attach customer phone number and QR code if available
     for o in pickup_orders:
-        customer = dbhelper.get_customer_by_id(o['CUSTOMER_ID']) if o.get('CUSTOMER_ID') else None
+        customer = get_customer_by_id(o['CUSTOMER_ID']) if o.get('CUSTOMER_ID') else None
         o['PHONE_NUMBER'] = customer.get('PHONE_NUMBER') if customer else ''
         o['QR_CODE'] = o.get('QR_CODE', '')
     return jsonify({'orders': pickup_orders})
@@ -2794,7 +2879,7 @@ def api_complete_pickup(order_id):
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return jsonify({'status': 'error', 'msg': 'Unauthorized'}), 401
     # Update order status to Completed
-    docs = dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    docs = dbheldb.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
     if not docs:
         return jsonify({'status': 'error', 'msg': 'Order not found'}), 404
     dbhelper.db.collection('ORDER').document(docs[0].id).update({

@@ -91,7 +91,7 @@
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
-                            <span>Customer Reports</span>
+                            <span>Transaction Reports</span>
                         </a>
                     </li>
                 </ul>
@@ -185,7 +185,7 @@
                 </div>
 
                 <!-- DETERGENT TABLE -->
-                <div id="detergentTableSection" class="table-container">
+                <div id="detergentTableSection" class="table-container" {% if request.args.get('type', 'detergent') != 'detergent' %}style="display:none;"{% endif %}>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Detergent Inventory</h3>
                         <div class="download-btns" style="display:flex; gap:10px;">
@@ -235,7 +235,7 @@
                 </div>
 
                 <!-- FABRIC CONDITIONER TABLE -->
-                <div id="fabconTableSection" class="table-container" style="margin-top: 40px; display: none;">
+                <div id="fabconTableSection" class="table-container" style="margin-top: 40px; {% if request.args.get('type', 'detergent') != 'fabcon' %}display:none;{% endif %}">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Fabric Conditioner Inventory</h3>
                         <div class="download-btns" style="display:flex; gap:10px;">
