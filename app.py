@@ -562,9 +562,16 @@ def dashboard():
         order['TOTAL_PRICE'] = order.get('TOTAL_PRICE', 0.0)
         orders_with_details.append(order)
     
-    # Separate orders into priority orders (drop-off) and self-service orders
-    priority_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off']
-    self_service_orders = [o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service']
+    # Separate orders into priority orders and self-service orders
+    # Priority is determined by the 'PRIORITY' field provided by
+    # dbhelper.get_all_orders_with_priority() (values: 'Priority' or 'Normal').
+    priority_orders = [o for o in orders_with_details if str(o.get('PRIORITY', '')).lower() == 'priority']
+    # Robustly detect self-service orders (tolerate casing and minor format variations)
+    def is_self_service(o):
+        t = str(o.get('ORDER_TYPE', '') or '').lower().replace(' ', '').replace('_', '')
+        return 'selfservice' in t or t == 'self-service' or 'self' == t
+
+    self_service_orders = [o for o in orders_with_details if is_self_service(o)]
     
     # Limit to 5 most recent for each section
     priority_orders = priority_orders[:5]
@@ -578,6 +585,33 @@ def dashboard():
     pending_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pending'])
     pickup_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pickup'])
     completed_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'completed'])
+    
+    # Calculate today's sales (sum of TOTAL_PRICE for orders created today)
+    today = datetime.now().date()
+    todays_sales = 0.0
+    
+    # Calculate monthly earnings (sum of TOTAL_PRICE for orders created this month)
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    monthly_earnings = 0.0
+    
+    for order in orders_with_details:
+        date_created = order.get('DATE_CREATED')
+        if date_created:
+            # Handle both datetime objects and date objects
+            if hasattr(date_created, 'date'):
+                order_date = date_created.date()
+            else:
+                order_date = date_created
+            
+            order_price = float(order.get('TOTAL_PRICE', 0.0))
+            
+            if order_date == today:
+                todays_sales += order_price
+            
+            # Check if order is from current month and year
+            if order_date.month == current_month and order_date.year == current_year:
+                monthly_earnings += order_price
 
     # BASED ON ROLE
     template_name = 'admin_dashboard.html' if session['role'] == 'admin' else 'staff_dashboard.html'
@@ -592,7 +626,9 @@ def dashboard():
         drop_off_count=drop_off_count,
         pending_count=pending_count,
         pickup_count=pickup_count,
-        completed_count=completed_count
+        completed_count=completed_count,
+        todays_sales=todays_sales,
+        monthly_earnings=monthly_earnings
     )
 
 # ADMIN AND STAFF
