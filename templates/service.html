@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="google" content="notranslate">
         <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
@@ -14,20 +15,20 @@
             <!-- Self-Service Container -->
             <div class="v91_154"></div>
             <div class="v91_163"></div>
-            <a href="{{ url_for('contact', order_type='Self-service') }}" class="v91_164">Self - Service</a>
+            <a href="{{ url_for('contact', order_type='Self-service') }}" class="v91_164" data-translate="self_service">Self - Service</a>
 
             <!-- Drop-Off Container -->
             <div class="v91_194"></div>
-            <a href="{{ url_for('contact', order_type='Drop-off') }}" class="v91_166">Drop Off</a>
+            <a href="{{ url_for('contact', order_type='Drop-off') }}" class="v91_166" data-translate="drop_off">Drop Off</a>
             <div class="v91_167"></div>
 
-        <span class="v91_136">Select Service Type</span>
+        <span class="v91_136 notranslate" data-translate="select_service">Select Service Type</span>
 
            <!-- Language Button -->
             <div class="v91_144" onclick="openLanguageModal()">
                 <div class="v91_145">
                     <div class="v91_146"></div>
-                    <span class="v91_147">English</span>
+                    <span class="v91_147" id="currentLanguage">English</span>
                 </div>
             </div>
 
@@ -35,19 +36,19 @@
             <div id="languageModal" class="modal-overlay">
                 <div class="language-modal">
                     <button class="close-btn" onclick="closeLanguageModal()">&times;</button>
-                    <h2 class="modal-title">Select Your Language</h2>
+                    <h2 class="modal-title" data-translate="select_language">Select Your Language</h2>
                     <div class="language-grid">
-                    <button class="lang-option">
+                    <button class="lang-option" onclick="changeLanguage('en')">
                       <img src="{{ url_for('static', filename='images/v91_146.png') }}" alt="UK"> English
                     </button>
-                    <button class="lang-option">
-                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Cebuano
+                    <button class="lang-option" onclick="changeLanguage('fil')">
+                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Filipino
                     </button>
-                    <button class="lang-option">
-                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Tagalog
+                    <button class="lang-option" onclick="changeLanguage('ja')">
+                      <img src="{{ url_for('static', filename='images/jp.png') }}" alt="Japan"> 日本語
                     </button>
-                    <button class="lang-option">
-                      <img src="{{ url_for('static', filename='images/ph.png') }}" alt="Philippines"> Waray
+                    <button class="lang-option" onclick="changeLanguage('ko')">
+                      <img src="{{ url_for('static', filename='images/kr.jpg') }}" alt="Korea"> 한국어
                     </button>
                   </div>
                 </div>
@@ -58,6 +59,68 @@
     </div>
 </body>
 <script>
+  const translations = {
+    en: {
+      select_service: "Select Service Type",
+      self_service: "Self - Service",
+      drop_off: "Drop Off",
+      select_language: "Select Your Language",
+      current_lang_name: "English"
+    },
+    fil: {
+      select_service: "Pumili ng Uri ng Serbisyo",
+      self_service: "Self - Service",
+      drop_off: "Drop Off",
+      select_language: "Pumili ng Iyong Wika",
+      current_lang_name: "Filipino"
+    },
+    ja: {
+      select_service: "サービスタイプを選択",
+      self_service: "セルフサービス",
+      drop_off: "ドロップオフ",
+      select_language: "言語を選択してください",
+      current_lang_name: "日本語"
+    },
+    ko: {
+      select_service: "서비스 유형 선택",
+      self_service: "셀프 서비스",
+      drop_off: "드롭 오프",
+      select_language: "언어를 선택하세요",
+      current_lang_name: "한국어"
+    }
+  };
+
+  function getCurrentLanguage() {
+    return sessionStorage.getItem('language') || 'en';
+  }
+
+  function setCurrentLanguage(lang) {
+    sessionStorage.setItem('language', lang);
+  }
+
+  function applyTranslations() {
+    const currentLang = getCurrentLanguage();
+    const elements = document.querySelectorAll('[data-translate]');
+    
+    elements.forEach(element => {
+      const key = element.getAttribute('data-translate');
+      if (translations[currentLang] && translations[currentLang][key]) {
+        element.textContent = translations[currentLang][key];
+      }
+    });
+
+    const currentLangElement = document.getElementById('currentLanguage');
+    if (currentLangElement && translations[currentLang]) {
+      currentLangElement.textContent = translations[currentLang].current_lang_name;
+    }
+  }
+
+  function changeLanguage(lang) {
+    setCurrentLanguage(lang);
+    applyTranslations();
+    closeLanguageModal();
+  }
+
   function openLanguageModal() {
     document.getElementById('languageModal').style.display = 'block';
   }
@@ -72,5 +135,9 @@
       modal.style.display = 'none';
     }
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    applyTranslations();
+  });
 </script>
 </html>

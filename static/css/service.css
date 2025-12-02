@@ -39,8 +39,6 @@ body {
   overflow: hidden;
 }
 
-/* Removed duplicate .v91_155 and .v91_156 - using .v91_154 */
-
 /* Drop-Off Container */
 .v91_157 {
   width: 267px;
@@ -57,8 +55,6 @@ body {
   box-shadow: 0px 4px 25px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
-
-/* Removed duplicate .v91_158 - using .v91_157 */
 
 .v91_163 {
   width: 183px;
@@ -221,8 +217,8 @@ body {
 
 .language-modal {
   background-color: #fcd100;
-  width: 30vw; 
-  height: 60vh; 
+  width: 40vw; 
+  height: 45vh; 
   margin: auto;
   padding: 30px 30px 20px;
   border-radius: 25px;
@@ -335,3 +331,5 @@ body {
   align-items: center;
   position: relative;
 }
+
+

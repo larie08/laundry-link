@@ -1,0 +1,97 @@
+* {
+    box-sizing: border-box;
+}
+            
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center; 
+    align-items: center;    
+    overflow: hidden;
+    position: relative;
+}
+            
+.page-wrapper {
+    background-image: url("../images/Thank%20You.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100vw;            
+    height: 100vh;           
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+            
+/* Order Number Display */
+.v325_734 {
+    color: rgba(18, 45, 105, 1);
+    position: absolute;
+    top: 50%;
+    left: 73%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: 300;
+    font-size: 25px; 
+    opacity: 1;
+    text-align: center;
+    white-space: nowrap; 
+}
+                        
+/* New Order Button */
+.v104_2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    width: 350px; 
+    height: 90px;
+    background: rgba(255, 193, 7, 0.95);
+    margin: 10px;
+    opacity: 1;
+    position: absolute;
+    top: 68%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4), 
+                0px 4px 10px rgba(255, 193, 7, 0.3);
+                overflow: hidden;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                border: none;
+                cursor: pointer;
+}
+            
+.v104_2:hover {
+        transform: translateX(-50%) scale(1.05);
+            box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.5), 
+                        0px 6px 15px rgba(255, 193, 7, 0.5);
+}
+            
+.v104_3 {
+    color: rgba(18, 45, 105, 1);
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 32px;
+    text-align: center;
+}
+            
+/* Thank You Message  */
+.thank-you-message {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Titan One', cursive;
+    font-size: 72px;
+    color: rgba(18, 45, 105, 1);
+    text-align: center;
+    text-shadow: 3px 3px 6px rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    pointer-events: none;
+}
+        

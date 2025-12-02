@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="google" content="notranslate">
         <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
@@ -13,7 +14,6 @@
         <div class="v128_49">
             <div class="v128_50"></div>
             
-            <!-- Progress Bar -->
             <div class="v128_51">
                 <div class="v128_52"></div>
                 <div class="v128_53"></div>
@@ -21,112 +21,229 @@
                 <div class="v128_55"></div>
                 <div class="v128_56"></div>
             </div>
-             <!-- Step Labels -->
-            <span class="v128_58">YOU</span>
-            <span class="v128_59">WEIGH</span>
-            <span class="v128_60">OTHER</span>
-            <span class="v128_61">PAYMENT</span>
+
+            <span class="v128_58 notranslate" data-translate="step_you">YOU</span>
+            <span class="v128_59 notranslate" data-translate="step_weigh">WEIGH</span>
+            <span class="v128_60 notranslate" data-translate="step_other">OTHER</span>
+            <span class="v128_61 notranslate" data-translate="step_payment">PAYMENT</span>
             
-            <!-- Phone Icon -->
             <div class="v128_75"></div>
             
-            <!-- Main Heading -->
-            <span class="v128_62">How do we contact you?</span>
+            <span class="v128_62 notranslate" data-translate="contact_heading">How do we contact you?</span>
             
-            <!-- Form -->
             <form action="{{ url_for('contact') }}" method="POST" id="contactForm">
-                <span class="v128_63">Name</span>
+                <span class="v128_63 notranslate" data-translate="name_label">Name</span>
                 <div class="v128_66">
-                    <input class="v128_67" id="nameInput" type="text" name="name" value="{{ customer_name }}" placeholder="Enter your full name" required />
+                    <input class="v128_67" id="nameInput" type="text" name="name" value="{{ customer_name }}" data-translate-placeholder="name_placeholder" placeholder="Enter your full name" required />
                 </div>
 
-                <span class="v128_64">Contact Number</span>
+                <span class="v128_64 notranslate" data-translate="contact_label">Contact Number</span>
                 <div class="v128_69">
-                    <input class="v128_70" id="contactInput" type="tel" name="contact" value="{{ customer_phone if customer_phone else '+63' }}" placeholder="(+63) 912 345 6789" maxlength="13" required />
+                    <input class="v128_70" id="contactInput" type="tel" name="contact" value="{{ customer_phone if customer_phone else '+63' }}" data-translate-placeholder="contact_placeholder" placeholder="(+63) 912 345 6789" maxlength="13" required />
                 </div>
                 
-                <!-- Button container -->
                 <div class="button-container">
                     <a href="{{ url_for('service_type') }}" class="v128_79" style="text-decoration: none;">
-                        <span class="v128_80">Previous</span>
+                        <span class="v128_80 notranslate" data-translate="previous_btn">Previous</span>
                     </a>
                     <button type="submit" class="v128_77">
-                        <span class="v128_78">Next</span>
+                        <span class="v128_78 notranslate" data-translate="next_btn">Next</span>
                     </button>
                 </div>
             </form>
         </div>
         
-        <!-- Error Modal -->
         <div id="errorModal" class="error-modal">
             <div class="error-content">
                 <div class="error-icon"></div>
-                <div class="error-title"><b>Missing Information</b></div>
-                <div class="error-message" id="errorMessage">Please fill in all required fields before proceeding.</div>
-                <button class="error-button" onclick="closeErrorModal()">Got it</button>
+                <div class="error-title"><b class="notranslate" data-translate="error_title">Missing Information</b></div>
+                <div class="error-message notranslate" id="errorMessage">Please fill in all required fields before proceeding.</div>
+                <button class="error-button" onclick="closeErrorModal()"><span class="notranslate" data-translate="error_button">Got it</span></button>
             </div>
         </div>
         
         <script>
-            // Show error modal with custom message
-            function showErrorModal(message) {
+            const translations = {
+                en: {
+                    step_you: "YOU",
+                    step_weigh: "WEIGH",
+                    step_other: "OTHER",
+                    step_payment: "PAYMENT",
+                    contact_heading: "How do we contact you?",
+                    name_label: "Name",
+                    contact_label: "Contact Number",
+                    name_placeholder: "Enter your full name",
+                    contact_placeholder: "(+63) 912 345 6789",
+                    previous_btn: "Previous",
+                    next_btn: "Next",
+                    error_title: "Missing Information",
+                    error_all_fields: "Please fill in all required fields before proceeding.",
+                    error_name: "Please enter your name.",
+                    error_contact: "Please enter a valid 10-digit contact number.",
+                    error_button: "Got it",
+                    select_service: "Select Service Type",
+                    self_service: "Self - Service",
+                    drop_off: "Drop Off",
+                    select_language: "Select Your Language",
+                    current_lang_name: "English"
+                },
+                fil: {
+                    step_you: "IKAW",
+                    step_weigh: "TIMBANG",
+                    step_other: "IBA PA",
+                    step_payment: "BAYAD",
+                    contact_heading: "Paano ka namin makikipag-ugnayan?",
+                    name_label: "Pangalan",
+                    contact_label: "Numero ng Telepono",
+                    name_placeholder: "Ilagay ang iyong buong pangalan",
+                    contact_placeholder: "(+63) 912 345 6789",
+                    previous_btn: "Nakaraan",
+                    next_btn: "Susunod",
+                    error_title: "Kulang ang Impormasyon",
+                    error_all_fields: "Pakipunan ang lahat ng kinakailangang patlang bago magpatuloy.",
+                    error_name: "Pakipasok ang iyong pangalan.",
+                    error_contact: "Pakipasok ang wastong 10-digit na numero ng telepono.",
+                    error_button: "Sige",
+                    select_service: "Pumili ng Uri ng Serbisyo",
+                    self_service: "Self - Service",
+                    drop_off: "Drop Off",
+                    select_language: "Pumili ng Iyong Wika",
+                    current_lang_name: "Filipino"
+                },
+                ja: {
+                    step_you: "あなた",
+                    step_weigh: "重さ",
+                    step_other: "その他",
+                    step_payment: "支払い",
+                    contact_heading: "ご連絡方法を教えてください",
+                    name_label: "名前",
+                    contact_label: "電話番号",
+                    name_placeholder: "フルネームを入力してください",
+                    contact_placeholder: "(+63) 912 345 6789",
+                    previous_btn: "前へ",
+                    next_btn: "次へ",
+                    error_title: "情報が不足しています",
+                    error_all_fields: "続行する前に、すべての必須フィールドに入力してください。",
+                    error_name: "お名前を入力してください。",
+                    error_contact: "有効な10桁の電話番号を入力してください。",
+                    error_button: "了解",
+                    select_service: "サービスタイプを選択",
+                    self_service: "セルフサービス",
+                    drop_off: "ドロップオフ",
+                    select_language: "言語を選択してください",
+                    current_lang_name: "日本語"
+                },
+                ko: {
+                    step_you: "당신",
+                    step_weigh: "무게",
+                    step_other: "기타",
+                    step_payment: "결제",
+                    contact_heading: "어떻게 연락드릴까요?",
+                    name_label: "이름",
+                    contact_label: "연락처",
+                    name_placeholder: "전체 이름을 입력하세요",
+                    contact_placeholder: "(+63) 912 345 6789",
+                    previous_btn: "이전",
+                    next_btn: "다음",
+                    error_title: "정보 누락",
+                    error_all_fields: "계속하기 전에 모든 필수 항목을 입력하세요.",
+                    error_name: "이름을 입력하세요.",
+                    error_contact: "유효한 10자리 전화번호를 입력하세요.",
+                    error_button: "확인",
+                    select_service: "서비스 유형 선택",
+                    self_service: "셀프 서비스",
+                    drop_off: "드롭 오프",
+                    select_language: "언어를 선택하세요",
+                    current_lang_name: "한국어"
+                }
+            };
+
+            function getCurrentLanguage() {
+                return sessionStorage.getItem('language') || 'en';
+            }
+
+            function setCurrentLanguage(lang) {
+                sessionStorage.setItem('language', lang);
+            }
+
+            function applyTranslations() {
+                const currentLang = getCurrentLanguage();
+                
+                const elements = document.querySelectorAll('[data-translate]');
+                elements.forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.textContent = translations[currentLang][key];
+                    }
+                });
+
+                const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+                placeholderElements.forEach(element => {
+                    const key = element.getAttribute('data-translate-placeholder');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.placeholder = translations[currentLang][key];
+                    }
+                });
+
+                const currentLangElement = document.getElementById('currentLanguage');
+                if (currentLangElement && translations[currentLang]) {
+                    currentLangElement.textContent = translations[currentLang].current_lang_name;
+                }
+            }
+
+            function changeLanguage(lang) {
+                setCurrentLanguage(lang);
+                applyTranslations();
+                closeLanguageModal();
+            }
+
+            function showErrorModal(messageKey) {
+                const currentLang = getCurrentLanguage();
+                const message = translations[currentLang][messageKey] || messageKey;
                 document.getElementById('errorMessage').textContent = message;
                 document.getElementById('errorModal').classList.add('show');
             }
             
-            // Close error modal
             function closeErrorModal() {
                 document.getElementById('errorModal').classList.remove('show');
             }
             
-            // Close modal when clicking outside
             document.getElementById('errorModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeErrorModal();
                 }
             });
             
-            // Format contact number input to only allow numbers after +63
             const contactInput = document.getElementById('contactInput');
             contactInput.addEventListener('input', function(e) {
                 let value = this.value;
                 const cursorPosition = this.selectionStart;
                 
-                // Ensure it always starts with +63
                 if (!value.startsWith('+63')) {
-                    // Extract only numbers from the input
                     const numbers = value.replace(/[^0-9]/g, '');
-                    // Limit to 10 digits
                     const limitedNumbers = numbers.substring(0, 10);
                     this.value = '+63' + limitedNumbers;
                     
-                    // Restore cursor position (adjust for the +63 prefix)
                     const newPosition = Math.min(cursorPosition, this.value.length);
                     this.setSelectionRange(newPosition, newPosition);
                 } else {
-                    // Keep +63 and only allow numbers after it
                     const prefix = '+63';
                     const afterPrefix = value.substring(prefix.length);
                     const numbers = afterPrefix.replace(/[^0-9]/g, '');
-                    // Limit to 10 digits
                     const limitedNumbers = numbers.substring(0, 10);
                     this.value = prefix + limitedNumbers;
                     
-                    // Restore cursor position
                     const newPosition = Math.min(cursorPosition, this.value.length);
                     this.setSelectionRange(newPosition, newPosition);
                 }
             });
             
-            // Handle backspace/delete to prevent issues
             contactInput.addEventListener('keydown', function(e) {
                 const value = this.value;
                 const cursorPosition = this.selectionStart;
                 
-                // If backspace/delete would remove part of +63, prevent it
                 if ((e.key === 'Backspace' || e.key === 'Delete') && cursorPosition <= 3) {
                     e.preventDefault();
-                    // If there are digits after +63, remove the last digit
                     if (value.length > 3) {
                         const numbers = value.substring(3).replace(/[^0-9]/g, '');
                         this.value = '+63' + numbers.slice(0, -1);
@@ -135,26 +252,29 @@
                 }
             });
             
-            // Form validation before submit
             document.getElementById('contactForm').addEventListener('submit', function(e) {
                 const nameInput = document.getElementById('nameInput').value.trim();
                 const contactValue = contactInput.value.trim();
-                // Extract digits after +63 (should be 10 digits)
+    
                 const digitsAfterCode = contactValue.substring(3).replace(/[^0-9]/g, '');
                 
                 if (!nameInput && (!contactValue || contactValue === '+63' || digitsAfterCode.length !== 10)) {
                     e.preventDefault();
-                    showErrorModal('Please fill in all required fields before proceeding.');
+                    showErrorModal('error_all_fields');
                     return false;
                 } else if (!nameInput) {
                     e.preventDefault();
-                    showErrorModal('Please enter your name.');
+                    showErrorModal('error_name');
                     return false;
                 } else if (!contactValue || contactValue === '+63' || digitsAfterCode.length !== 10) {
                     e.preventDefault();
-                    showErrorModal('Please enter a valid 10-digit contact number.');
+                    showErrorModal('error_contact');
                     return false;
                 }
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                applyTranslations();
             });
         </script>
     </body>
