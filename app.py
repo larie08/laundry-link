@@ -492,6 +492,11 @@ def save_order_note():
         session.modified = True
     
         return jsonify({'success': True, 'message': 'Note saved successfully'})
+    
+@app.route('/new_order', methods=['GET'])
+def new_order():
+    order_id = request.args.get('order_id', 'N/A')
+    return render_template('thankyou.html', order_id=order_id)
 
 
 

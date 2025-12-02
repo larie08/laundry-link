@@ -32,8 +32,6 @@ body {
 }
 
 .page-wrapper {
-  width: 50vw; 
-  height: 100vh;
   position: relative;
   display: flex;
   justify-content: center;
@@ -193,3 +191,7 @@ body {
   font-size: 33px;
   text-align: center;
 }
+
+
+
+

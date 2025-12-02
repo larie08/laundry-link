@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="google" content="notranslate">
         <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
@@ -15,14 +16,104 @@
     </div>
         <div class="page-wrapper">
             <div class="v91_57">
-            <span class="v91_115">WELCOME TO</span>
-            <span class="v91_116">LAUNDRYLINK</span>
+            <span class="v91_115 notranslate" data-translate="welcome_to">WELCOME TO</span>
+            <span class="v91_116 notranslate" data-translate="laundrylink">LAUNDRYLINK</span>
             <div class="v91_122"></div>
-            <span class="v91_124">Laundry day, made easy.</span>
+            <span class="v91_124 notranslate" data-translate="tagline">Laundry day, made easy.</span>
             <a href="{{ url_for('service_type') }}" class="v91_118">
-                <span class="v91_119">START</span>
+                <span class="v91_119" data-translate="start_btn">START</span>
             </a>
             </div>
         </div>
     </body>
+    <script>
+        // Translation dictionary
+        const translations = {
+            en: {
+                welcome_to: "WELCOME TO",
+                laundrylink: "LAUNDRYLINK",
+                tagline: "Laundry day, made easy.",
+                start_btn: "START",
+                select_service: "Select Service Type",
+                self_service: "Self - Service",
+                drop_off: "Drop Off",
+                select_language: "Select Your Language",
+                current_lang_name: "English"
+            },
+            fil: {
+                welcome_to: "MALIGAYANG PAGDATING SA",
+                laundrylink: "LAUNDRYLINK",
+                tagline: "Araw ng paglalaba, ginawang madali.",
+                start_btn: "MAGSIMULA",
+                select_service: "Pumili ng Uri ng Serbisyo",
+                self_service: "Self - Service",
+                drop_off: "Drop Off",
+                select_language: "Pumili ng Iyong Wika",
+                current_lang_name: "Filipino"
+            },
+            ja: {
+                welcome_to: "ようこそ",
+                laundrylink: "LAUNDRYLINK",
+                tagline: "洗濯日を簡単に。",
+                start_btn: "スタート",
+                select_service: "サービスタイプを選択",
+                self_service: "セルフサービス",
+                drop_off: "ドロップオフ",
+                select_language: "言語を選択してください",
+                current_lang_name: "日本語"
+            },
+            ko: {
+                welcome_to: "환영합니다",
+                laundrylink: "LAUNDRYLINK",
+                tagline: "세탁일을 쉽게 만듭니다.",
+                start_btn: "시작",
+                select_service: "서비스 유형 선택",
+                self_service: "셀프 서비스",
+                drop_off: "드롭 오프",
+                select_language: "언어를 선택하세요",
+                current_lang_name: "한국어"
+            }
+        };
+
+        // Get current language from session storage or default to English
+        function getCurrentLanguage() {
+            return sessionStorage.getItem('language') || 'en';
+        }
+
+        // Set language in session storage
+        function setCurrentLanguage(lang) {
+            sessionStorage.setItem('language', lang);
+        }
+
+        // Apply translations to the page
+        function applyTranslations() {
+            const currentLang = getCurrentLanguage();
+            const elements = document.querySelectorAll('[data-translate]');
+            
+            elements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[currentLang] && translations[currentLang][key]) {
+                element.textContent = translations[currentLang][key];
+            }
+            });
+
+            // Update current language display
+            const currentLangElement = document.getElementById('currentLanguage');
+            if (currentLangElement && translations[currentLang]) {
+            currentLangElement.textContent = translations[currentLang].current_lang_name;
+            }
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            setCurrentLanguage(lang);
+            applyTranslations();
+            closeLanguageModal();
+        }
+
+        // Apply translations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            applyTranslations();
+        });
+    </script>
 </html>
