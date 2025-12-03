@@ -177,6 +177,16 @@
                 </div>
                 {% endif %}
                 
+                <!-- ERROR MODAL -->
+                <div id="errorModal" class="error-modal">
+                    <div class="error-content">
+                        <div class="error-icon"></div>
+                        <div class="error-title"><b>Notification</b></div>
+                        <div class="error-message" id="errorMessage"></div>
+                        <button type="button" class="error-button" onclick="closeErrorModal(); return false;">Got it</button>
+                    </div>
+                </div>
+                
                 <!-- ADD NOTE -->
                 <div class="v244_285"></div>
                 <div class="v245_296"></div>
@@ -252,7 +262,7 @@
             own_detergent_btn: "SARILING DETERHENTE",
             own_fabcon_btn: "SARILING FABCON",
             fabcon_btn: "FABCON",
-            iron_btn: "PAG-PRESS",
+            iron_btn: "PLANTSA",
             fold_btn: "TIKLOP",
             priority_btn: "PRIORITY ORDER",
             schedule_pickup_btn: "I-SCHEDULE ANG PICKUP",
@@ -415,31 +425,14 @@
         input.dispatchEvent(new Event('change'));
     }
     
-    // Alert 
-    function customAlert(message) {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-alert-overlay';
-        
-        const alertBox = document.createElement('div');
-        alertBox.className = 'custom-alert';
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'custom-alert-message';
-        messageDiv.textContent = message;
-        
-        const button = document.createElement('button');
-        button.className = 'custom-alert-button';
-        button.textContent = 'OK';
-        button.onclick = function() {
-            document.body.removeChild(overlay);
-            document.body.removeChild(alertBox);
-        };
-        
-        alertBox.appendChild(messageDiv);
-        alertBox.appendChild(button);
-        
-        document.body.appendChild(overlay);
-        document.body.appendChild(alertBox);
+    // Error Modal
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.add('show');
+    }
+    
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.remove('show');
     }
     
     const philippineHolidays = [
@@ -466,28 +459,26 @@
         return date.getDay() === 2; 
     }
     
-    function validatePickupDate() {
-        const pickupDate = document.getElementById('pickup-date').value;
-        
-        if (pickupDate) {
-            const selectedDate = new Date(pickupDate + 'T00:00:00');
-            if (isTuesday(selectedDate)) {
-                const currentLang = getCurrentLanguage();
-                customAlert(translations[currentLang]['tuesday_unavailable']);
-                document.getElementById('pickup-date').value = '';
-                return false;
-            }
-            if (isHoliday(selectedDate)) {
-                const currentLang = getCurrentLanguage();
-                customAlert(translations[currentLang]['holiday_unavailable']);
-                document.getElementById('pickup-date').value = '';
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    function validatePickupTime() {
+            function validatePickupDate() {
+                const pickupDate = document.getElementById('pickup-date').value;
+                
+                if (pickupDate) {
+                    const selectedDate = new Date(pickupDate + 'T00:00:00');
+                    if (isTuesday(selectedDate)) {
+                        const currentLang = getCurrentLanguage();
+                        showErrorModal(translations[currentLang]['tuesday_unavailable']);
+                        document.getElementById('pickup-date').value = '';
+                        return false;
+                    }
+                    if (isHoliday(selectedDate)) {
+                        const currentLang = getCurrentLanguage();
+                        showErrorModal(translations[currentLang]['holiday_unavailable']);
+                        document.getElementById('pickup-date').value = '';
+                        return false;
+                    }
+                }
+                return true;
+            }    function validatePickupTime() {
         const pickupTime = document.getElementById('pickup-time').value;
         
         if (pickupTime) {
@@ -498,7 +489,7 @@
             
             if (timeInMinutes < minTime || timeInMinutes > maxTime) {
                 const currentLang = getCurrentLanguage();
-                customAlert(translations[currentLang]['time_invalid']);
+                showErrorModal(translations[currentLang]['time_invalid']);
                 document.getElementById('pickup-time').value = '';
                 return false;
             }
@@ -514,11 +505,11 @@
         if (pickupDate) {
             const selectedDate = new Date(pickupDate + 'T00:00:00');
             if (isTuesday(selectedDate)) {
-                customAlert(translations[currentLang]['tuesday_pickup_unavailable']);
+                showErrorModal(translations[currentLang]['tuesday_pickup_unavailable']);
                 return;
             }
             if (isHoliday(selectedDate)) {
-                customAlert(translations[currentLang]['holiday_pickup_unavailable']);
+                showErrorModal(translations[currentLang]['holiday_pickup_unavailable']);
                 return;
             }
         }
@@ -530,7 +521,7 @@
             const maxTime = 18 * 60; // 6:00 PM
             
             if (timeInMinutes < minTime || timeInMinutes > maxTime) {
-                customAlert(translations[currentLang]['time_pickup_invalid']);
+                showErrorModal(translations[currentLang]['time_pickup_invalid']);
                 return;
             }
         }
@@ -571,6 +562,14 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         applyTranslations();
+        
+        // Close error modal when clicking outside
+        document.getElementById('errorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeErrorModal();
+            }
+        });
+        
         function updateTotals() {
             let detTotal = 0;
             let anyDetSelected = false;
