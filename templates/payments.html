@@ -17,7 +17,7 @@
             </div>
             <div class="v100_4">
                 <form action="{{ url_for('other_services') }}" method="get">
-                    <button class="v100_5" type="submit">Previous</button>
+                    <button class="v100_5" type="submit" data-translate="previous_btn">Previous</button>
                 </form>
             </div>
             <div class="v100_200">
@@ -34,18 +34,18 @@
                 <div class="v100_109"></div>
                 <span class="v100_210">4</span>
             </div>
-            <span class="v100_211">YOU</span>
-            <span class="v100_212">WEIGH</span>
-            <span class="v100_213">OTHER</span>
-            <span class="v100_214">PAYMENT</span>
+            <span class="v100_211" data-translate="step_you">YOU</span>
+            <span class="v100_212" data-translate="step_weigh">WEIGH</span>
+            <span class="v100_213" data-translate="step_other">OTHER</span>
+            <span class="v100_214" data-translate="step_payment">PAYMENT</span>
             
             <div class="receipt-box" style="font-family: 'Poppins', sans-serif;">
                 <div id="receipt-print-area">
                     <p class="date">{{ current_date }}</p>
-                    <p><strong>Order Number:</strong> {{ order.ORDER_ID }}</p>
-                    <p><strong>Customer:</strong> {{ customer.FULLNAME }}</p>
-                    <p><strong>Contact Number:</strong> {{ customer.PHONE_NUMBER }}</p>
-                    <h3 style="font-family: 'Poppins', sans-serif;">Order Breakdown</h3>
+                    <p><strong data-translate="order_number_label">Order Number:</strong> {{ order.ORDER_ID }}</p>
+                    <p><strong data-translate="customer_label">Customer:</strong> {{ customer.FULLNAME }}</p>
+                    <p><strong data-translate="contact_number_label">Contact Number:</strong> {{ customer.PHONE_NUMBER }}</p>
+                    <h3 style="font-family: 'Poppins', sans-serif;" data-translate="order_breakdown_title">Order Breakdown</h3>
 
                     {% set load_amt = order.TOTAL_LOAD * 50 %}
                     {% set iron_amt = 50 if orderitem.IRON else 0 %}
@@ -67,12 +67,12 @@
                     <!-- Load Section -->
                     <div class="order-section compact-order-section">
                         <div class="section-item section-header">
-                            <span>Load</span>
-                            <span>Qty</span>
-                            <span>Amount</span>
+                            <span data-translate="load_header">Load</span>
+                            <span data-translate="qty_header">Qty</span>
+                            <span data-translate="amount_header">Amount</span>
                         </div>
                         <div class="section-item">
-                            <span>{{ order.TOTAL_LOAD }} Load</span>
+                            <span>{{ order.TOTAL_LOAD }} <span data-translate="load_unit">Load</span></span>
                             <span>{{ order.TOTAL_LOAD }}</span>
                             <span>₱{{ "%.2f"|format(load_amt) }}</span>
                         </div>
@@ -80,17 +80,17 @@
 
                     <!-- Additional Services Section -->
                     <div class="order-section compact-order-section">
-                        <div class="section-title" style="margin-top:6px;">Additional Services</div>
+                        <div class="section-title" style="margin-top:6px;" data-translate="additional_services_title">Additional Services</div>
                         {% if orderitem.IRON %}
                         <div class="section-item">
-                            <span>Iron</span>
+                            <span data-translate="iron_label">Iron</span>
                             <span></span>
                             <span>₱50.00</span>
                         </div>
                         {% endif %}
                         {% if orderitem.FOLD_CLOTHES %}
                         <div class="section-item">
-                            <span>Fold</span>
+                            <span data-translate="fold_label">Fold</span>
                             <span></span>
                             <span>₱70.00</span>
                         </div>
@@ -99,10 +99,10 @@
 
                     <!-- Add Ons Section -->
                     <div class="order-section compact-order-section">
-                        <div class="section-title" style="margin-top:6px;">Add Ons</div>
+                        <div class="section-title" style="margin-top:6px;" data-translate="add_ons_title">Add Ons</div>
                         {% if orderitem.CUSTOMER_OWN_DETERGENT %}
                         <div class="section-item">
-                            <span>Own Detergent</span>
+                            <span data-translate="own_detergent_label">Own Detergent</span>
                             <span>-</span>
                             <span>₱0.00</span>
                         </div>
@@ -117,7 +117,7 @@
                         {% endif %}
                         {% if orderitem.CUSTOMER_OWN_FABCON %}
                         <div class="section-item">
-                            <span>Own Fabric Conditioner</span>
+                            <span data-translate="own_fabcon_label">Own Fabric Conditioner</span>
                             <span>-</span>
                             <span>₱0.00</span>
                         </div>
@@ -136,7 +136,7 @@
                     {% if orderitem.PRIORITIZE_ORDER %}
                     <div class="order-section compact-order-section">
                         <div class="section-item">
-                            <span>Priority Service</span>
+                            <span data-translate="priority_service_label">Priority Service</span>
                             <span></span>
                             <span>₱50.00</span>
                         </div>
@@ -147,7 +147,7 @@
                     <div class="total-section" style="margin-top:18px;">
                         <hr>
                         <div class="total-row" style="font-weight:700; font-size:1.1em;">
-                            <span style="color:#122D69;">Grand Total</span>
+                            <span style="color:#122D69;" data-translate="grand_total_label">Grand Total</span>
                             <span style="color:#122D69;">₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</span>
                         </div>
                     </div>
@@ -166,7 +166,7 @@
 
                 <!-- Confirm Order Button -->
                 <div class="confirm-section">
-                    <button type="button" class="confirm-order-btn" onclick="openPaymentModal()">Confirm Order</button>
+                    <button type="button" class="confirm-order-btn" onclick="openPaymentModal()" data-translate="confirm_order_btn">Confirm Order</button>
                 </div>
 
                 <!-- Print Buttons -->
@@ -175,7 +175,7 @@
                     <button 
                         type="button" 
                         onclick="printReceiptOnly()" 
-                        style="padding:10px 18px; background:#122D69; color:white; border:none; border-radius:6px; cursor:pointer;">
+                        style="padding:10px 18px; background:#122D69; color:white; border:none; border-radius:6px; cursor:pointer;" data-translate="print_receipt_btn">
                         Print Order Receipt
                     </button>
 
@@ -183,7 +183,7 @@
                     <button 
                         type="button" 
                         onclick="printQRCodeOnly()" 
-                        style="padding:10px 18px; background:#4CAF50; color:white; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">
+                        style="padding:10px 18px; background:#4CAF50; color:white; border:none; border-radius:6px; cursor:pointer; margin-left:10px;" data-translate="print_qr_btn">
                         Print QR Code
                     </button>
                 </div>
@@ -192,7 +192,7 @@
                 <div id="paymentModal" class="modal">
                     <div class="modal-content">
                         <span class="close" onclick="closePaymentModal()">&times;</span>
-                        <h2>Select Payment Method</h2>
+                        <h2 data-translate="select_payment_method">Select Payment Method</h2>
                         <div class="payment-methods-container">
                             <label class="payment-method-option" data-method="cash">
                                 <input type="radio" name="payment_method_radio" value="cash" class="payment-radio-input">
@@ -219,8 +219,8 @@
                             </label>
                         </div>
                         <div class="modal-buttons">
-                            <button type="button" class="submit" onclick="confirmPaymentMethod()">Confirm</button>
-                            <button type="button" class="cancel" onclick="closePaymentModal()">Cancel</button>
+                            <button type="button" class="submit" onclick="confirmPaymentMethod()" data-translate="confirm_btn">Confirm</button>
+                            <button type="button" class="cancel" onclick="closePaymentModal()" data-translate="cancel_btn">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -229,13 +229,13 @@
                 <div id="orderQRModal" class="qr-modal">
                     <div class="modal-content">
                         <span class="close-modal" onclick="closeOrderQRModal()">&times;</span>
-                        <h2>Order QR Code</h2>
+                        <h2 data-translate="order_qr_code_title">Order QR Code</h2>
                         {% if qr_code_path %}
                         <div class="qr-container" id="qr-print-area">
                             <img src="{{ url_for('static', filename=qr_code_path) }}" alt="Order QR Code" style="width:220px;height:220px;">
                         </div>
                         {% endif %}
-                        <p class="qr-instructions">Scan this QR code for order details.</p>
+                        <p class="qr-instructions" data-translate="qr_code_instruction">Scan this QR code for order details.</p>
                     </div>
                 </div>
 
@@ -243,14 +243,14 @@
                 <div id="gcashModal" class="qr-modal">
                     <div class="modal-content">
                         <span class="close-modal" onclick="closeQRModal('gcash')">&times;</span>
-                        <h2>GCash Payment</h2>
-                        <div class="modal-amount">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
+                        <h2 data-translate="gcash_payment_title">GCash Payment</h2>
+                        <div class="modal-amount" data-translate-prefix="amount_prefix">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
                         <div class="qr-container">
                             <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="GCash QR Code" style="width:220px;height:220px;">
                         </div>
-                        <p class="qr-instructions">Scan this QR code to pay via GCash.</p>
+                        <p class="qr-instructions" data-translate="gcash_scan_instruction">Scan this QR code to pay via GCash.</p>
                         <div class="modal-buttons" style="margin-top: 20px;">
-                            <button type="button" class="submit" onclick="handleTransactionComplete('gcash')">Done</button>
+                            <button type="button" class="submit" onclick="handleTransactionComplete('gcash')" data-translate="done_btn">Done</button>
                         </div>
                     </div>
                 </div>
@@ -259,14 +259,14 @@
                 <div id="mayaModal" class="qr-modal">
                     <div class="modal-content">
                         <span class="close-modal" onclick="closeQRModal('maya')">&times;</span>
-                        <h2>Maya Payment</h2>
-                        <div class="modal-amount">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
+                        <h2 data-translate="maya_payment_title">Maya Payment</h2>
+                        <div class="modal-amount" data-translate-prefix="amount_prefix">Amount: ₱{{ "%.2f"|format(order.TOTAL_PRICE) }}</div>
                         <div class="qr-container">
                             <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="Maya QR Code" style="width:220px;height:220px;">
                         </div>
-                        <p class="qr-instructions">Scan this QR code to pay via Maya.</p>
+                        <p class="qr-instructions" data-translate="maya_scan_instruction">Scan this QR code to pay via Maya.</p>
                         <div class="modal-buttons" style="margin-top: 20px;">
-                            <button type="button" class="submit" onclick="handleTransactionComplete('maya')">Done</button>
+                            <button type="button" class="submit" onclick="handleTransactionComplete('maya')" data-translate="done_btn">Done</button>
                         </div>
                     </div>
                 </div>
@@ -274,11 +274,11 @@
                 <!-- Thank You Modal -->
                 <div id="thankYouModal" class="qr-modal">
                     <div class="modal-content thank-you-content">
-                        <h2>Thank You!</h2>
-                        <p class="thank-you-message">Your payment has been received successfully.</p>
+                        <h2 data-translate="thank_you_title">Thank You!</h2>
+                        <p class="thank-you-message" data-translate="thank_you_message">Your payment has been received successfully.</p>
                         <div class="countdown-container">
                             <div id="countdown">10</div>
-                            <p class="countdown-text">Redirecting to home page in <span id="countdownText">10</span> seconds...</p>
+                            <p class="countdown-text" data-translate="redirecting_message">Redirecting to home page in <span id="countdownText">10</span> seconds...</p>
                         </div>
                     </div>
                 </div>
@@ -286,15 +286,202 @@
         </div>
         </body>
         <script>
-            function openScheduleModal() {
-                document.getElementById('scheduleModal').style.display = 'block';
+            const translations = {
+                en: {
+                    step_you: "YOU",
+                    step_weigh: "WEIGH",
+                    step_other: "OTHER",
+                    step_payment: "PAYMENT",
+                    previous_btn: "Previous",
+                    confirm_order_btn: "Confirm Order",
+                    print_receipt_btn: "Print Order Receipt",
+                    print_qr_btn: "Print QR Code",
+                    select_payment_method: "Select Payment Method",
+                    confirm_btn: "Confirm",
+                    cancel_btn: "Cancel",
+                    order_qr_code_title: "Order QR Code",
+                    qr_code_instruction: "Scan this QR code for order details.",
+                    gcash_payment_title: "GCash Payment",
+                    amount_prefix: "Amount: ",
+                    gcash_scan_instruction: "Scan this QR code to pay via GCash.",
+                    maya_payment_title: "Maya Payment",
+                    maya_scan_instruction: "Scan this QR code to pay via Maya.",
+                    done_btn: "Done",
+                    thank_you_title: "Thank You!",
+                    thank_you_message: "Your payment has been received successfully.",
+                    redirecting_message: "Redirecting to home page in ",
+                    select_language: "Select Your Language",
+                    order_number_label: "Order Number:",
+                    customer_label: "Customer:",
+                    contact_number_label: "Contact Number:",
+                    order_breakdown_title: "Order Breakdown",
+                    load_header: "Load",
+                    qty_header: "Qty",
+                    amount_header: "Amount",
+                    load_unit: "Load",
+                    additional_services_title: "Additional Services",
+                    iron_label: "Iron",
+                    fold_label: "Fold",
+                    add_ons_title: "Add Ons",
+                    own_detergent_label: "Own Detergent",
+                    own_fabcon_label: "Own Fabric Conditioner",
+                    priority_service_label: "Priority Service",
+                    grand_total_label: "Grand Total",
+                    current_lang_name: "English"
+                },
+                fil: {
+                    step_you: "IKAW",
+                    step_weigh: "TIMBANG",
+                    step_other: "IBA PA",
+                    step_payment: "BAYAD",
+                    previous_btn: "Nakaraan",
+                    confirm_order_btn: "Kumpirmahin ang Order",
+                    print_receipt_btn: "I-Print ang Order Receipt",
+                    print_qr_btn: "I-Print ang QR Code",
+                    select_payment_method: "Pumili ng Paraan ng Pagbabayad",
+                    confirm_btn: "Kumpirmahin",
+                    cancel_btn: "Kanselahin",
+                    order_qr_code_title: "Order QR Code",
+                    qr_code_instruction: "I-scan ang QR code na ito para sa mga detalye ng order.",
+                    gcash_payment_title: "GCash Payment",
+                    amount_prefix: "Halaga: ",
+                    gcash_scan_instruction: "I-scan ang QR code na ito upang magbayad sa pamamagitan ng GCash.",
+                    maya_payment_title: "Maya Payment",
+                    maya_scan_instruction: "I-scan ang QR code na ito upang magbayad sa pamamagitan ng Maya.",
+                    done_btn: "Tapos Na",
+                    thank_you_title: "Salamat!",
+                    thank_you_message: "Ang iyong pagbabayad ay matagumpay na natanggap.",
+                    redirecting_message: "Nag-redirect sa home page sa ",
+                    select_language: "Pumili ng Iyong Wika",
+                    order_number_label: "Numero ng Order:",
+                    customer_label: "Customer:",
+                    contact_number_label: "Numero ng Telepono:",
+                    order_breakdown_title: "Breakdown ng Order",
+                    load_header: "Karga",
+                    qty_header: "Dami",
+                    amount_header: "Halaga",
+                    load_unit: "Karga",
+                    additional_services_title: "Karagdagang Serbisyo",
+                    iron_label: "Pag-Press",
+                    fold_label: "Tikman",
+                    add_ons_title: "Mga Idagdag",
+                    own_detergent_label: "Sariling Deterhente",
+                    own_fabcon_label: "Sariling Fabric Conditioner",
+                    priority_service_label: "Priority Service",
+                    grand_total_label: "Kabuuang Halaga",
+                    current_lang_name: "Filipino"
+                },
+                ja: {
+                    step_you: "あなた",
+                    step_weigh: "計量",
+                    step_other: "その他",
+                    step_payment: "支払い",
+                    previous_btn: "戻る",
+                    confirm_order_btn: "注文を確認",
+                    print_receipt_btn: "注文レシートを印刷",
+                    print_qr_btn: "QRコードを印刷",
+                    select_payment_method: "支払い方法を選択",
+                    confirm_btn: "確認",
+                    cancel_btn: "キャンセル",
+                    order_qr_code_title: "注文QRコード",
+                    qr_code_instruction: "このQRコードをスキャンして注文の詳細を確認してください。",
+                    gcash_payment_title: "GCash支払い",
+                    amount_prefix: "金額: ",
+                    gcash_scan_instruction: "このQRコードをスキャンしてGCashで支払います。",
+                    maya_payment_title: "Maya支払い",
+                    maya_scan_instruction: "このQRコードをスキャンしてMayaで支払います。",
+                    done_btn: "完了",
+                    thank_you_title: "ありがとうございました！",
+                    thank_you_message: "ご支払いが正常に受け取られました。",
+                    redirecting_message: "ホームページにリダイレクト中：",
+                    select_language: "言語を選択してください",
+                    order_number_label: "注文番号：",
+                    customer_label: "顧客：",
+                    contact_number_label: "連絡先番号：",
+                    order_breakdown_title: "注文内訳",
+                    load_header: "負荷",
+                    qty_header: "数量",
+                    amount_header: "金額",
+                    load_unit: "ロード",
+                    additional_services_title: "追加サービス",
+                    iron_label: "アイロン",
+                    fold_label: "折り畳む",
+                    add_ons_title: "アドオン",
+                    own_detergent_label: "自分の洗剤",
+                    own_fabcon_label: "自分のファブリックコンディショナー",
+                    priority_service_label: "優先サービス",
+                    grand_total_label: "合計",
+                    current_lang_name: "日本語"
+                },
+                ko: {
+                    step_you: "당신",
+                    step_weigh: "무게",
+                    step_other: "기타",
+                    step_payment: "결제",
+                    previous_btn: "이전",
+                    confirm_order_btn: "주문 확인",
+                    print_receipt_btn: "주문 영수증 인쇄",
+                    print_qr_btn: "QR 코드 인쇄",
+                    select_payment_method: "결제 방법 선택",
+                    confirm_btn: "확인",
+                    cancel_btn: "취소",
+                    order_qr_code_title: "주문 QR 코드",
+                    qr_code_instruction: "이 QR 코드를 스캔하여 주문 세부 정보를 확인하세요.",
+                    gcash_payment_title: "GCash 결제",
+                    amount_prefix: "금액: ",
+                    gcash_scan_instruction: "이 QR 코드를 스캔하여 GCash로 결제하세요.",
+                    maya_payment_title: "Maya 결제",
+                    maya_scan_instruction: "이 QR 코드를 스캔하여 Maya로 결제하세요.",
+                    done_btn: "완료",
+                    thank_you_title: "감사합니다!",
+                    thank_you_message: "결제가 성공적으로 수령되었습니다.",
+                    redirecting_message: "홈 페이지로 리다이렉트 중：",
+                    select_language: "언어를 선택하세요",
+                    order_number_label: "주문 번호:",
+                    customer_label: "고객:",
+                    contact_number_label: "연락처:",
+                    order_breakdown_title: "주문 내역",
+                    load_header: "로드",
+                    qty_header: "수량",
+                    amount_header: "금액",
+                    load_unit: "로드",
+                    additional_services_title: "추가 서비스",
+                    iron_label: "다림질",
+                    fold_label: "접기",
+                    add_ons_title: "추가 옵션",
+                    own_detergent_label: "자신의 세제",
+                    own_fabcon_label: "자신의 섬유유연제",
+                    priority_service_label: "우선 서비스",
+                    grand_total_label: "총계",
+                    current_lang_name: "한국어"
+                }
+            };
+
+            function getCurrentLanguage() {
+                return sessionStorage.getItem('language') || 'en';
             }
 
-            function closeScheduleModal() {
-                document.getElementById('scheduleModal').style.display = 'none';
+            function setCurrentLanguage(lang) {
+                sessionStorage.setItem('language', lang);
             }
 
-            // QR Modal Functions
+            function applyTranslations() {
+                const currentLang = getCurrentLanguage();
+                const elements = document.querySelectorAll('[data-translate]');
+                
+                elements.forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.textContent = translations[currentLang][key];
+                    }
+                });
+
+                const currentLangElement = document.getElementById('currentLanguage');
+                if (currentLangElement && translations[currentLang]) {
+                    currentLangElement.textContent = translations[currentLang].current_lang_name;
+                }
+            }
+
             function openQRModal(type) {
                 if (typeof event !== 'undefined' && event && event.stopPropagation) {
                     event.stopPropagation(); 
@@ -407,7 +594,6 @@
                 }, 1000);
             }
             
-            // Payment method selection styling
             document.querySelectorAll('.payment-method-option').forEach(option => {
                 option.addEventListener('click', function() {
 
@@ -452,6 +638,10 @@
             function closeOrderQRModal() {
                 document.getElementById('orderQRModal').style.display = 'none';
             }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                applyTranslations();
+            });
 
             document.getElementById('noteForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -514,7 +704,6 @@
                 });
             });
 
-            // Print Functions
             function printReceiptOnly() {
                 let printContents = document.querySelector('.receipt-box').innerHTML;
 
