@@ -27,7 +27,7 @@
            <!-- Language Button -->
             <div class="v91_144" onclick="openLanguageModal()">
                 <div class="v91_145">
-                    <div class="v91_146"></div>
+                    <img id="currentLanguageFlag" src="{{ url_for('static', filename='images/v91_146.png') }}" alt="Language" style="width: 30px; height: 20px; margin-right: 8px;">
                     <span class="v91_147" id="currentLanguage">English</span>
                 </div>
             </div>
@@ -65,28 +65,32 @@
       self_service: "Self - Service",
       drop_off: "Drop Off",
       select_language: "Select Your Language",
-      current_lang_name: "English"
+      current_lang_name: "English",
+      flag_image: "images/v91_146.png"
     },
     fil: {
       select_service: "Pumili ng Uri ng Serbisyo",
       self_service: "Self - Service",
       drop_off: "Drop Off",
       select_language: "Pumili ng Iyong Wika",
-      current_lang_name: "Filipino"
+      current_lang_name: "Filipino",
+      flag_image: "images/ph.png"
     },
     ja: {
       select_service: "サービスタイプを選択",
       self_service: "セルフサービス",
       drop_off: "ドロップオフ",
       select_language: "言語を選択してください",
-      current_lang_name: "日本語"
+      current_lang_name: "日本語",
+      flag_image: "images/jp.png"
     },
     ko: {
       select_service: "서비스 유형 선택",
       self_service: "셀프 서비스",
       drop_off: "드롭 오프",
       select_language: "언어를 선택하세요",
-      current_lang_name: "한국어"
+      current_lang_name: "한국어",
+      flag_image: "images/kr.jpg"
     }
   };
 
@@ -112,6 +116,11 @@
     const currentLangElement = document.getElementById('currentLanguage');
     if (currentLangElement && translations[currentLang]) {
       currentLangElement.textContent = translations[currentLang].current_lang_name;
+    }
+
+    const currentLanguageFlag = document.getElementById('currentLanguageFlag');
+    if (currentLanguageFlag && translations[currentLang] && translations[currentLang].flag_image) {
+      currentLanguageFlag.src = "{{ url_for('static', filename='') }}" + translations[currentLang].flag_image;
     }
   }
 
