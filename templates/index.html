@@ -75,17 +75,14 @@
             }
         };
 
-        // Get current language from session storage or default to English
         function getCurrentLanguage() {
             return sessionStorage.getItem('language') || 'en';
         }
 
-        // Set language in session storage
         function setCurrentLanguage(lang) {
             sessionStorage.setItem('language', lang);
         }
 
-        // Apply translations to the page
         function applyTranslations() {
             const currentLang = getCurrentLanguage();
             const elements = document.querySelectorAll('[data-translate]');
@@ -97,21 +94,18 @@
             }
             });
 
-            // Update current language display
             const currentLangElement = document.getElementById('currentLanguage');
             if (currentLangElement && translations[currentLang]) {
             currentLangElement.textContent = translations[currentLang].current_lang_name;
             }
         }
 
-        // Change language
         function changeLanguage(lang) {
             setCurrentLanguage(lang);
             applyTranslations();
             closeLanguageModal();
         }
 
-        // Apply translations when page loads
         document.addEventListener('DOMContentLoaded', function() {
             applyTranslations();
         });
