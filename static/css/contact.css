@@ -15,7 +15,6 @@ background: rgba(255,255,255,1);
 overflow: auto;
 }
 
-/* ADJUSTED: Further reduced main container size from 1000px×1400px to 500px×700px */
 .v128_49 {
 width: 500px;
 height: 700px; 
@@ -25,7 +24,6 @@ position: relative;
 overflow: visible;
 }
 
-/* ADJUSTED: Further reduced form container size from 800px×1200px to 400px×600px */
 .v128_50 {
 width: 400px; 
 height: 600px; 
@@ -44,34 +42,29 @@ width: 300px;
 height: 25px; 
 opacity: 1;
 position: absolute;
-/* ADJUSTED: Repositioned from top: 60px, left: 200px */
 top: 30px;
 left: 100px;
 overflow: visible;
 }
 
-/* Progress bar container */
-/* ADJUSTED: Further reduced progress bar background size from 727px×39px to 364px×20px */
 .v128_51 {
-width: 364px; /* ADJUSTED: Further reduced from 485px */
-height: 20px; /* ADJUSTED: Further reduced from 26px */
+width: 364px; 
+height: 20px; 
 background: url("../images/v93_72.png"); 
 background-repeat: no-repeat;
 background-position: center center;
 background-size: cover;
 opacity: 1;
 position: absolute;
-/* ADJUSTED: Repositioned from top: 60px, left: 136px */
 top: 30px;
 left: 68px;
 overflow: hidden;
 }
 
 /* Progress bar steps */
-/* ADJUSTED: Further reduced step circles from 40px to 20px and font size from 18px to 10px */
 .v128_52, .v128_53, .v128_54, .v128_55 {
-width: 20px; /* ADJUSTED: Further reduced from 27px */
-height: 20px; /* ADJUSTED: Further reduced from 26px */
+width: 20px; 
+height: 20px; 
 background: rgba(217,217,217,1);
 border-radius: 50%;
 position: absolute;
@@ -83,59 +76,52 @@ align-items: center;
 color: white;
 font-family: Poppins;
 font-weight: 700;
-font-size: 10px; /* ADJUSTED: Further reduced from 12px */
+font-size: 10px; 
 }
 .v128_52 { left: 0; background: rgba(18,45,105,1); }
-/* ADJUSTED: Further adjusted step positions proportionally */
-.v128_53 { left: 115px; background: rgba(217,217,217,1); } /* ADJUSTED: Further reduced from left: 153px */
-.v128_54 { left: 229px; } /* ADJUSTED: Further reduced from left: 305px */
-.v128_55 { left: 344px; } /* ADJUSTED: Further reduced from left: 458px */
+.v128_53 { left: 115px; background: rgba(217,217,217,1); } 
+.v128_54 { left: 229px; } 
+.v128_55 { left: 344px; }
 
 .v128_52::before {
 content: "1";
 color: white;
 font-family: Poppins;
 font-weight: 700;
-font-size: 10px; /* ADJUSTED: Further reduced from 12px */
+font-size: 10px; 
 }
 
 /* Progress bar lines */
-/* ADJUSTED: Further reduced progress line size from 668px×8px to 334px×4px */
 .v128_56 {
-width: 334px; /* ADJUSTED: Further reduced from 445px */
-height: 4px; /* ADJUSTED: Further reduced from 5px */
+width: 334px; 
+height: 4px;
 background: rgba(217,217,217,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 15px, left: 40px */
 top: 8px;
 left: 20px;
 z-index: 1;
 }
 
-/* ADJUSTED: Further reduced progress fill size from 458px×8px to 229px×4px */
 .v128_56-fill {
-width: 229px; /* ADJUSTED: Further reduced from 305px */
-height: 4px; /* ADJUSTED: Further reduced from 5px */
+width: 229px; 
+height: 4px; 
 background: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 15px, left: 40px */
 top: 8px;
 left: 20px;
 z-index: 2;
 }
 
 /* Step Labels */
-/* ADJUSTED: Further reduced font size from 25px to 12px and repositioned */
 .v128_58 {
 width: 45px;
 color: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 130px, left: 136px */
 top: 65px;
 left: 68px; 
 font-family: Poppins;
 font-weight: 700;
-font-size: 12px; /* ADJUSTED: Further reduced from 17px */
+font-size: 12px;
 opacity: 1;
 text-align: center;
 }
@@ -144,12 +130,11 @@ text-align: center;
 width: 45px;
 color: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 130px, left: 342px */
 top: 65px;
 left: 171px; 
 font-family: Poppins;
 font-weight: 700;
-font-size: 12px; /* ADJUSTED: Further reduced from 17px */
+font-size: 12px; 
 opacity: 1;
 text-align: center;
 }
@@ -158,12 +143,11 @@ text-align: center;
 width: 45px;
 color: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 130px, left: 572px */
 top: 65px;
 left: 286px; 
 font-family: Poppins;
 font-weight: 700;
-font-size: 12px; /* ADJUSTED: Further reduced from 17px */
+font-size: 12px; 
 opacity: 1;
 text-align: center;
 }
@@ -172,25 +156,22 @@ text-align: center;
 width: 45px;
 color: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 130px, left: 744px */
 top: 65px;
 left: 372px; 
 font-family: Poppins;
 font-weight: 700;
-font-size: 12px; /* ADJUSTED: Further reduced from 17px */
+font-size: 12px; 
 opacity: 1;
 text-align: center;
 }
 
 /* Phone Icon */
-/* ADJUSTED: Further reduced phone icon size from 80px to 40px */
 .v128_75 {
-width: 40px; /* ADJUSTED: Further reduced from 53px */
-height: 40px; /* ADJUSTED: Further reduced from 53px */
+width: 40px; 
+height: 40px;
 background: rgba(18,45,105,1);
 opacity: 1;
 position: absolute;
-/* ADJUSTED: Repositioned from top: 290px, left: 460px */
 top: 145px;
 left: 230px;
 border-radius: 50%;
@@ -199,25 +180,22 @@ justify-content: center;
 align-items: center;
 }
 
-/* ADJUSTED: Further reduced icon size from 40px to 20px */
 .v128_75::before {
 content: "📞";
-font-size: 20px; /* ADJUSTED: Further reduced from 27px */
+font-size: 20px;
 color: white;
 }
 
 /* Main Heading */
-/* ADJUSTED: Further reduced heading font size from 42px to 21px */
 .v128_62 {
 width: 300px;
 color: rgba(0,0,0,0.7);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 390px, left: 200px */
 top: 195px;
 left: 100px;
 font-family: Poppins;
 font-weight: 700;
-font-size: 21px; /* ADJUSTED: Further reduced from 28px */
+font-size: 21px; 
 opacity: 1;
 text-align: center;
 }
@@ -232,7 +210,7 @@ top: 250px;
 left: 100px;
 font-family: Poppins;
 font-weight: 700;
-font-size: 15px; /* ADJUSTED: Further reduced from 20px */
+font-size: 15px; 
 opacity: 1;
 text-align: left;
 }
@@ -241,33 +219,30 @@ text-align: left;
 width: 200px;
 color: rgba(18,45,105,1);
 position: absolute;
-/* ADJUSTED: Repositioned from top: 650px, left: 200px */
 top: 325px;
 left: 100px;
 margin-top: 5px;
 font-family: Poppins;
 font-weight: 700;
-font-size: 15px; /* ADJUSTED: Further reduced from 20px */
+font-size: 15px; 
 opacity: 1;
 text-align: left;
 }
 
 /* Input Fields */
-/* ADJUSTED: Further reduced input field size from 600px×80px to 300px×40px */
 .v128_67 {
-width: 300px; /* ADJUSTED: Further reduced from 400px */
-height: 40px; /* ADJUSTED: Further reduced from 53px */
+width: 300px; 
+height: 40px; 
 background: rgba(255,255,255,1);
 opacity: 1;
 position: absolute;
-/* ADJUSTED: Repositioned from top: 540px, left: 200px */
 top: 273px;
 left: 100px;
 border: 1px solid rgba(0,0,0,0.45);
 border-radius: 15px;
-padding: 12px; /* ADJUSTED: Further reduced from 17px */
+padding: 12px;
 font-family: Poppins;
-font-size: 12px; /* ADJUSTED: Further reduced from 15px */
+font-size: 12px; 
 outline: none !important;
 box-sizing: border-box;
 }
@@ -277,51 +252,47 @@ outline: none !important;
 }
 
 .v128_70 {
-width: 300px; /* ADJUSTED: Further reduced from 400px */
-height: 40px; /* ADJUSTED: Further reduced from 53px */
+width: 300px; 
+height: 40px; 
 background: rgba(255,255,255,1);
 opacity: 1;
 position: absolute;
-/* ADJUSTED: Repositioned from top: 690px, left: 200px */
 top: 355px;
 left: 100px;
 border: 1px solid rgba(0,0,0,0.45);
 border-radius: 15px;
-padding: 12px; /* ADJUSTED: Further reduced from 17px */
+padding: 12px; 
 font-family: Poppins;
-font-size: 12px; /* ADJUSTED: Further reduced from 15px */
+font-size: 12px; 
 outline: none;
 box-sizing: border-box;
 }
 
-/* ADJUSTED: Further reduced placeholder font size from 20px to 10px */
 .v128_67::placeholder,
 .v128_70::placeholder {
 color: rgba(51,51,51,0.5);
 font-family: Poppins;
 font-weight: 500;
-font-size: 10px; /* ADJUSTED: Further reduced from 13px */
+font-size: 10px; 
 }
 
 /* Button container */
-/* ADJUSTED: Further repositioned button container for smaller form */
 .button-container {
 position: absolute;
-bottom: 20px; /* ADJUSTED: Further reduced from 27px */
-left: 60px; /* ADJUSTED: Further reduced from 80px */
-right: 60px; /* ADJUSTED: Further reduced from 80px */
+bottom: 20px; 
+left: 60px; 
+right: 60px; 
 display: flex;
 justify-content: space-between;
 align-items: center;
 }
 
 /* Previous and Next buttons */
-/* ADJUSTED: Further reduced button size from 232px×84px to 116px×42px */
 .v128_79, .v128_77 {
-width: 116px; /* ADJUSTED: Further reduced from 155px */
-height: 42px; /* ADJUSTED: Further reduced from 56px */
+width: 116px; 
+height: 42px; 
 background: rgba(255,193,7,1);
-padding: 13px 37px; /* ADJUSTED: Further reduced from 18px 49px */
+padding: 13px 37px; 
 border-radius: 10px;
 box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
 display: flex;
@@ -338,18 +309,15 @@ overflow: hidden;
 transform: scale(1.05);
 }
 
-/* ADJUSTED: Further reduced button text size from 30px to 15px */
 .v128_78, .v128_80 {
 color: rgba(255,255,255,1);
 font-family: Poppins;
 font-weight: 400;
-font-size: 15px; /* ADJUSTED: Further reduced from 20px */
+font-size: 15px;
 text-align: center;
 }
 
-/* ===== ENHANCED ANIMATIONS AND TRANSITIONS ===== */
-
-/* Enhanced animations and transitions */
+/* ===== ANIMATIONS AND TRANSITIONS ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -375,7 +343,6 @@ text-align: center;
   100% { background-position: 200% 0; }
 }
 
-/* Apply animations to elements */
 .v128_50 {
   animation: fadeIn 0.6s ease-out;
   border: 1px solid rgba(18, 45, 105, 0.1);
@@ -392,7 +359,6 @@ text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Enhanced input focus effects */
 .v128_67:focus, .v128_70:focus {
   border: 2px solid rgba(255, 193, 7, 1) !important;
   box-shadow: 0 0 15px rgba(255, 193, 7, 0.3) !important;
@@ -413,12 +379,10 @@ text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Enhanced labels */
 .v128_63, .v128_64 {
   transition: color 0.3s ease;
 }
 
-/* Enhanced button effects */
 .v128_79:active, .v128_77:active {
   transform: scale(0.95) !important;
 }
@@ -427,7 +391,6 @@ text-align: center;
   font-weight: 600 !important;
 }
 
-/* Add subtle gradient overlay to form container */
 .v128_50::before {
   content: "";
   position: absolute;
@@ -440,12 +403,10 @@ text-align: center;
   pointer-events: none;
 }
 
-/* Progress bar animations */
 .v128_52, .v128_53, .v128_54, .v128_55 {
   transition: all 0.3s ease;
 }
 
-/* Input validation styling - ensure both inputs have same styling */
 .v128_67:valid, .v128_70:valid {
   border-color: rgba(76, 175, 80, 0.5);
 }
@@ -455,13 +416,11 @@ text-align: center;
   border-color: rgba(244, 67, 54, 0.5);
 }
 
-/* Ensure default border matches for both inputs */
 .v128_67:not(:focus):not(:hover):not(:valid):not(:invalid:not(:placeholder-shown)),
 .v128_70:not(:focus):not(:hover):not(:valid):not(:invalid:not(:placeholder-shown)) {
   border: 1px solid rgba(0,0,0,0.45);
 }
 
-/* Add decorative elements */
 .v128_63::before, .v128_64::before {
   content: "";
   position: absolute;
@@ -481,7 +440,6 @@ text-align: center;
   opacity: 1;
 }
 
-/* Better centered phone icon */
 .v128_75::before {
   position: absolute;
   top: 50%;
@@ -492,7 +450,6 @@ text-align: center;
   justify-content: center;
 }
 
-/* Add shimmer effect to buttons */
 .v128_79, .v128_77 {
   position: relative !important;
   overflow: hidden !important;
@@ -517,12 +474,9 @@ text-align: center;
   border-radius: 10px;
 }
 
-/* Smooth page load */
 body {
   animation: fadeIn 0.4s ease-out;
 }
-
-/* ===== ERROR MODAL STYLING ===== */
 
 /* Error message modal */
 .error-modal {
@@ -628,4 +582,297 @@ body {
   }
 }
 
+@media screen and (min-width: 800px) and (max-width: 1200px) {
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center; 
+    align-items: center;    
+    overflow: hidden;
+    position: relative;
+  }
 
+  /* Main container */
+  .v128_49 {
+    width: 95vw;
+    height: 85vh;
+    background: rgba(255,255,255,1);
+    opacity: 1;
+    position: relative;
+    overflow: visible;
+    transform: translateY(-5%);
+  }
+
+  /* Form container */
+  .v128_50 {
+    width: 90%;
+    height: 80%;
+    background: rgba(255,255,255,1);
+    opacity: 1;
+    position: absolute;
+    top: 16%;
+    left: 5%;
+    border: 1px solid rgba(0,0,0,1);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+  }
+
+  /* Progress bar container  */
+  .v128_51 {
+    width: 85%;
+    height: 40px;
+    background: url("../images/v93_72.png"); 
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: 1;
+    position: absolute;
+    top: 2%; 
+    left: 7.5%;
+    overflow: hidden;
+    z-index: 5;
+  }
+
+  /* Progress bar steps  */
+  .v128_52, .v128_53, .v128_54, .v128_55 {
+    width: 40px;
+    height: 40px;
+    background: rgba(217,217,217,1);
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .v128_52 { left: 0%; background: rgba(18,45,105,1); }
+  .v128_53 { left: 33.33%; background: rgba(217,217,217,1); transform: translateX(-50%); }
+  .v128_54 { left: 66.66%; transform: translateX(-50%); }
+  .v128_55 { left: 100%; transform: translateX(-100%); }
+
+  .v128_52::before {
+    content: "1";
+    color: white;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  /* Progress bar lines */
+  .v128_56 {
+    width: 95%;
+    height: 6px;
+    background: rgba(217,217,217,1);
+    position: absolute;
+    top: 17px;
+    left: 2.5%;
+    z-index: 1;
+  }
+
+  .v128_56-fill {
+    width: 33.33%;
+    height: 6px;
+    background: rgba(18,45,105,1);
+    position: absolute;
+    top: 17px;
+    left: 2.5%;
+    z-index: 2;
+  }
+
+  /* Progress Labels  */
+  .v128_58 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%; 
+    left: 10%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v128_59 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 36%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v128_60 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 64%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v128_61 {
+    width: 100px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 90%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  /* Phone Icon  */
+  .v128_75 {
+    width: 50px;
+    height: 50px;
+    background: rgba(18,45,105,1);
+    opacity: 1;
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .v128_75::before {
+    content: "📞";
+    font-size: 25px;
+    color: white;
+  }
+
+  /* Main Heading */
+  .v128_62 {
+    width: 80%;
+    color: rgba(0,0,0,0.7);
+    position: absolute;
+    top: 29%;
+    left: 10%;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 36px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  /* Form Labels  */
+  .v128_63 {
+    width: 150px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 36%;
+    left: 10%;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 24px;
+    opacity: 1;
+    text-align: left;
+  }
+
+  .v128_64 {
+    width: 300px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 54%;
+    left: 10%;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 24px;
+    opacity: 1;
+    text-align: left;
+  }
+
+  /* Input Fields */
+  .v128_67 {
+    width: 80%;
+    height: 70px;
+    background: rgba(255,255,255,1);
+    opacity: 1;
+    position: absolute;
+    top: 42%;
+    left: 10%;
+    border: 1px solid rgba(0,0,0,0.45);
+    border-radius: 15px;
+    padding: 20px;
+    font-family: Poppins;
+    font-size: 18px;
+    outline: none;
+  }
+
+  .v128_70 {
+    width: 80%;
+    height: 70px;
+    background: rgba(255,255,255,1);
+    opacity: 1;
+    position: absolute;
+    top: 60%;
+    left: 10%;
+    border: 1px solid rgba(0,0,0,0.45);
+    border-radius: 15px;
+    padding: 20px;
+    font-family: Poppins;
+    font-size: 18px;
+    outline: none;
+  }
+
+  .v128_67::placeholder,
+  .v128_70::placeholder {
+    color: rgba(51,51,51,0.5);
+    font-family: Poppins;
+    font-weight: 500;
+    font-size: 16px;
+  }
+
+  /* Button container  */
+  .button-container {
+    position: absolute;
+    bottom: 8%;
+    left: 10%;
+    right: 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Previous and Next buttons */
+  .v128_79, .v128_77 {
+    width: 200px;
+    height: 70px;
+    background: rgba(255,193,7,1);
+    padding: 20px 50px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+}
