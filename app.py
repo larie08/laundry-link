@@ -1078,6 +1078,11 @@ def admin_order_report():
     end_date = request.args.get('end_date', '').strip()
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
+    
+    # Sales report filter parameters
+    sales_view = request.args.get('sales_view', 'daily')
+    sales_date = request.args.get('sales_date', '')
+    sales_month = request.args.get('sales_month', '')
 
     # Get all orders
     all_orders = dbhelper.get_all_orders_with_priority()
@@ -1132,6 +1137,106 @@ def admin_order_report():
     # Attach orderitem data to each order
     for order in paginated_orders:
         order['orderitem_data'] = orderitems_map.get(order.get('ORDERITEM_ID'))
+    
+    # === SALES REPORT SECTION (Completed Orders Only) ===
+    now = datetime.now()
+    
+    # Calculate date range for sales report based on view
+    if sales_view == 'daily':
+        if sales_date:
+            try:
+                selected_dt = datetime.strptime(sales_date, '%Y-%m-%d')
+                sales_start = selected_dt.replace(hour=0, minute=0, second=0)
+                sales_end = selected_dt.replace(hour=23, minute=59, second=59)
+                sales_period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
+            except:
+                sales_start = now.replace(hour=0, minute=0, second=0)
+                sales_end = now.replace(hour=23, minute=59, second=59)
+                sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+                sales_date = now.strftime('%Y-%m-%d')
+        else:
+            sales_start = now.replace(hour=0, minute=0, second=0)
+            sales_end = now.replace(hour=23, minute=59, second=59)
+            sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+            sales_date = now.strftime('%Y-%m-%d')
+    elif sales_view == 'weekly':
+        sales_start = now - timedelta(days=7)
+        sales_end = now
+        sales_period_label = f"Week of {sales_start.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    elif sales_view == 'monthly':
+        if sales_month:
+            try:
+                year, month = map(int, sales_month.split('-'))
+                sales_start = datetime(year, month, 1)
+                if month == 12:
+                    sales_end = datetime(year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    sales_end = datetime(year, month + 1, 1) - timedelta(days=1)
+                sales_end = sales_end.replace(hour=23, minute=59, second=59)
+                sales_period_label = f"Month of {sales_start.strftime('%B %Y')}"
+            except:
+                sales_start = now.replace(day=1)
+                sales_end = now
+                sales_period_label = f"Month of {now.strftime('%B %Y')}"
+        else:
+            sales_start = now.replace(day=1)
+            sales_end = now
+            sales_period_label = f"Month of {now.strftime('%B %Y')}"
+    elif sales_view == 'yearly':
+        sales_start = now.replace(month=1, day=1)
+        sales_end = now
+        sales_period_label = f"Year {now.year}"
+    else:
+        sales_start = now.replace(hour=0, minute=0, second=0)
+        sales_end = now.replace(hour=23, minute=59, second=59)
+        sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+    
+    # Get customers for lookup
+    customers = dbhelper.get_all_customers()
+    customer_lookup = {c['CUSTOMER_ID']: c for c in customers}
+    
+    # Filter completed orders for sales report
+    sales_completed_orders = []
+    for order in all_orders:
+        order_status = (order.get('ORDER_STATUS') or '').lower()
+        if order_status != 'completed':
+            continue
+        
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            if hasattr(order_date, 'replace'):
+                order_datetime = order_date
+            else:
+                continue
+            
+            # Make naive for comparison
+            if hasattr(order_datetime, 'tzinfo') and order_datetime.tzinfo:
+                order_datetime = order_datetime.replace(tzinfo=None)
+            
+            if sales_view == 'daily' or (sales_view == 'monthly' and sales_month):
+                in_range = sales_start <= order_datetime <= sales_end
+            else:
+                in_range = order_datetime.date() >= sales_start.date()
+            
+            if in_range:
+                cust_id = order.get('CUSTOMER_ID')
+                customer_info = customer_lookup.get(cust_id, {})
+                revenue = float(order.get('TOTAL_PRICE', 0) or 0)
+                sales_completed_orders.append({
+                    'ORDER_ID': order.get('ORDER_ID'),
+                    'CUSTOMER_NAME': customer_info.get('FULLNAME', 'N/A'),
+                    'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
+                    'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
+                    'Revenue': revenue,
+                    'COGS': revenue * 0.3,
+                    'Net': revenue * 0.7
+                })
+    
+    # Calculate sales totals
+    sales_total_orders = len(sales_completed_orders)
+    sales_total_revenue = sum(o['Revenue'] for o in sales_completed_orders)
+    sales_total_cogs = sum(o['COGS'] for o in sales_completed_orders)
+    sales_total_net = sum(o['Net'] for o in sales_completed_orders)
 
     return render_template('admin_order_report.html',
                            paginated_orders=paginated_orders,
@@ -1141,7 +1246,17 @@ def admin_order_report():
                            completed_count=len(completed_orders),
                            page=page,
                            total_pages=total_pages,
-                           dbhelper=dbhelper
+                           dbhelper=dbhelper,
+                           # Sales report data
+                           sales_view=sales_view,
+                           sales_date=sales_date,
+                           sales_month=sales_month,
+                           sales_period_label=sales_period_label,
+                           sales_completed_orders=sales_completed_orders,
+                           sales_total_orders=sales_total_orders,
+                           sales_total_revenue=sales_total_revenue,
+                           sales_total_cogs=sales_total_cogs,
+                           sales_total_net=sales_total_net
     )
 # INVENTORY REPORT
 @app.route('/inventory_report')
@@ -1259,6 +1374,112 @@ def inventory_report():
         total_pages = 1
         page = 1
 
+    # === INVENTORY SALES REPORT SECTION (Completed Orders Only) ===
+    inv_sales_view = request.args.get('inv_sales_view', 'daily')
+    inv_sales_date = request.args.get('inv_sales_date', '')
+    inv_sales_month = request.args.get('inv_sales_month', '')
+    
+    now = datetime.now()
+    
+    # Calculate date range for inventory sales report based on view
+    if inv_sales_view == 'daily':
+        if inv_sales_date:
+            try:
+                selected_dt = datetime.strptime(inv_sales_date, '%Y-%m-%d')
+                inv_sales_start = selected_dt.replace(hour=0, minute=0, second=0)
+                inv_sales_end = selected_dt.replace(hour=23, minute=59, second=59)
+                inv_period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
+            except:
+                inv_sales_start = now.replace(hour=0, minute=0, second=0)
+                inv_sales_end = now.replace(hour=23, minute=59, second=59)
+                inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+                inv_sales_date = now.strftime('%Y-%m-%d')
+        else:
+            inv_sales_start = now.replace(hour=0, minute=0, second=0)
+            inv_sales_end = now.replace(hour=23, minute=59, second=59)
+            inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+            inv_sales_date = now.strftime('%Y-%m-%d')
+    elif inv_sales_view == 'weekly':
+        inv_sales_start = now - timedelta(days=7)
+        inv_sales_end = now
+        inv_period_label = f"Week of {inv_sales_start.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
+    elif inv_sales_view == 'monthly':
+        if inv_sales_month:
+            try:
+                year, month = map(int, inv_sales_month.split('-'))
+                inv_sales_start = datetime(year, month, 1)
+                if month == 12:
+                    inv_sales_end = datetime(year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    inv_sales_end = datetime(year, month + 1, 1) - timedelta(days=1)
+                inv_sales_end = inv_sales_end.replace(hour=23, minute=59, second=59)
+                inv_period_label = f"Month of {inv_sales_start.strftime('%B %Y')}"
+            except:
+                inv_sales_start = now.replace(day=1)
+                inv_sales_end = now
+                inv_period_label = f"Month of {now.strftime('%B %Y')}"
+        else:
+            inv_sales_start = now.replace(day=1)
+            inv_sales_end = now
+            inv_period_label = f"Month of {now.strftime('%B %Y')}"
+    elif inv_sales_view == 'yearly':
+        inv_sales_start = now.replace(month=1, day=1)
+        inv_sales_end = now
+        inv_period_label = f"Year {now.year}"
+    else:
+        inv_sales_start = now.replace(hour=0, minute=0, second=0)
+        inv_sales_end = now.replace(hour=23, minute=59, second=59)
+        inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
+    
+    # Get customers for lookup
+    customers_for_inv = dbhelper.get_all_customers()
+    customer_lookup_inv = {c['CUSTOMER_ID']: c for c in customers_for_inv}
+    
+    # Get all orders for inventory sales report
+    all_orders_inv = dbhelper.get_all_orders_with_priority()
+    
+    # Filter completed orders for inventory sales report
+    inv_completed_orders = []
+    for order in all_orders_inv:
+        order_status = (order.get('ORDER_STATUS') or '').lower()
+        if order_status != 'completed':
+            continue
+        
+        order_date = order.get('DATE_CREATED')
+        if order_date:
+            if hasattr(order_date, 'replace'):
+                order_datetime = order_date
+            else:
+                continue
+            
+            if hasattr(order_datetime, 'tzinfo') and order_datetime.tzinfo:
+                order_datetime = order_datetime.replace(tzinfo=None)
+            
+            if inv_sales_view == 'daily' or (inv_sales_view == 'monthly' and inv_sales_month):
+                in_range = inv_sales_start <= order_datetime <= inv_sales_end
+            else:
+                in_range = order_datetime.date() >= inv_sales_start.date()
+            
+            if in_range:
+                cust_id = order.get('CUSTOMER_ID')
+                customer_info = customer_lookup_inv.get(cust_id, {})
+                revenue = float(order.get('TOTAL_PRICE', 0) or 0)
+                inv_completed_orders.append({
+                    'ORDER_ID': order.get('ORDER_ID'),
+                    'CUSTOMER_NAME': customer_info.get('FULLNAME', 'N/A'),
+                    'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
+                    'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
+                    'Revenue': revenue,
+                    'COGS': revenue * 0.3,
+                    'Net': revenue * 0.7
+                })
+    
+    # Calculate inventory sales totals
+    inv_total_orders = len(inv_completed_orders)
+    inv_total_revenue = sum(o['Revenue'] for o in inv_completed_orders)
+    inv_total_cogs = sum(o['COGS'] for o in inv_completed_orders)
+    inv_total_net = sum(o['Net'] for o in inv_completed_orders)
+
     return render_template(
         'admin_inventory_report.html',
         all_detergents=all_detergents,
@@ -1266,7 +1487,16 @@ def inventory_report():
         detergents=paginated_detergents,
         fabric_conditioners=paginated_fabcons,
         current_page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        inv_sales_view=inv_sales_view,
+        inv_sales_date=inv_sales_date,
+        inv_sales_month=inv_sales_month,
+        inv_period_label=inv_period_label,
+        inv_completed_orders=inv_completed_orders,
+        inv_total_orders=inv_total_orders,
+        inv_total_revenue=inv_total_revenue,
+        inv_total_cogs=inv_total_cogs,
+        inv_total_net=inv_total_net
     )
 
 @app.route('/download_order_report/<format>')
@@ -2001,10 +2231,11 @@ def income_statement():
         return redirect(url_for('admin_login'))
     
     # Get filter parameters
-    view = request.args.get('view', 'weekly')
+    view = request.args.get('view', 'daily')
     customer_id = request.args.get('customer_id', type=int)
     tax_rate = float(request.args.get('tax_rate', 0.12))
     selected_month = request.args.get('month', '')  # Format: YYYY-MM
+    selected_date = request.args.get('selected_date', '')  # Format: YYYY-MM-DD
     
     # Pagination parameters
     customer_page = request.args.get('customer_page', 1, type=int)
@@ -2012,10 +2243,6 @@ def income_statement():
     per_page = 15  # 15 items per page (between 10-20)
     
     # Expense inputs
-    detergents_consumables = float(request.args.get('detergents_consumables', 0.0))
-    utilities_direct = float(request.args.get('utilities_direct', 0.0))
-    salaries_wages = float(request.args.get('salaries_wages', 0.0))
-    rent_utilities = float(request.args.get('rent_utilities', 0.0))
     maintenance_repairs = float(request.args.get('maintenance_repairs', 0.0))
     
     # Get all orders
@@ -2033,7 +2260,25 @@ def income_statement():
     
     # Calculate date range based on view
     now = datetime.now()
-    if view == 'weekly':
+    if view == 'daily':
+        if selected_date:
+            # Parse selected date (YYYY-MM-DD format)
+            try:
+                selected_dt = datetime.strptime(selected_date, '%Y-%m-%d')
+                start_date = selected_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = selected_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+                period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
+            except (ValueError, AttributeError):
+                start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+                period_label = f"Today: {now.strftime('%B %d, %Y')}"
+                selected_date = now.strftime('%Y-%m-%d')
+        else:
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            period_label = f"Today: {now.strftime('%B %d, %Y')}"
+            selected_date = now.strftime('%Y-%m-%d')
+    elif view == 'weekly':
         start_date = now - timedelta(days=7)
         end_date = now
         period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
@@ -2104,7 +2349,7 @@ def income_statement():
             
             # Check if order is within date range
             in_range = False
-            if view == 'monthly' and selected_month:
+            if view == 'daily' or (view == 'monthly' and selected_month):
                 in_range = start_date_naive <= order_datetime <= end_date_naive
             else:
                 in_range = order_date_only >= start_date_only
@@ -2151,17 +2396,17 @@ def income_statement():
             
             # Check if order is within date range
             in_range = False
-            if view == 'monthly' and selected_month:
-                # For monthly with specific month, check if order is within that month
+            if view == 'daily' or (view == 'monthly' and selected_month):
+                # For daily or monthly with specific month, check if order is within that range
                 in_range = start_date_naive <= order_datetime <= end_date_naive
             else:
                 # For other views, check if order is after start date
                 in_range = order_date_only >= start_date_only
             
             if in_range:
-                # Only include completed orders
+                # Include pick-up and completed orders (processed orders)
                 order_status = (order.get('ORDER_STATUS') or '').lower()
-                if order_status == 'completed':
+                if order_status in ['pick-up', 'pickup', 'completed']:
                     # Check customer filter
                     if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
                         filtered_orders.append(order)
@@ -2234,29 +2479,41 @@ def income_statement():
     best_selling_detergent = 'N/A'
     slowest_selling_detergent = 'N/A'
     if detergent_counts:
+        # Use order data if available
         sorted_detergents = sorted(detergent_counts.items(), key=lambda x: x[1], reverse=True)
         if len(sorted_detergents) > 0:
             best_selling_detergent = sorted_detergents[0][0]
-        if len(sorted_detergents) > 1:
-            sorted_detergents_asc = sorted(detergent_counts.items(), key=lambda x: x[1], reverse=False)
-            slowest_selling_detergent = sorted_detergents_asc[0][0]
+            slowest_selling_detergent = sorted_detergents[-1][0]  # Last item is slowest
+    elif all_detergents:
+        # Fallback: Use inventory stock levels (lowest stock = best selling assumption)
+        sorted_by_stock = sorted(all_detergents, key=lambda x: x.get('QTY', 0))
+        if len(sorted_by_stock) > 0:
+            best_selling_detergent = sorted_by_stock[0].get('DETERGENT_NAME', 'N/A')
+            slowest_selling_detergent = sorted_by_stock[-1].get('DETERGENT_NAME', 'N/A')
     
     # Determine best and slowest selling fabric conditioners
     best_selling_fabcon = 'N/A'
     slowest_selling_fabcon = 'N/A'
     if fabcon_counts:
+        # Use order data if available
         sorted_fabcons = sorted(fabcon_counts.items(), key=lambda x: x[1], reverse=True)
         if len(sorted_fabcons) > 0:
             best_selling_fabcon = sorted_fabcons[0][0]
-        if len(sorted_fabcons) > 1:
-            sorted_fabcons_asc = sorted(fabcon_counts.items(), key=lambda x: x[1], reverse=False)
-            slowest_selling_fabcon = sorted_fabcons_asc[0][0]
+            slowest_selling_fabcon = sorted_fabcons[-1][0]  # Last item is slowest
+    elif all_fabric_conditioners:
+        # Fallback: Use inventory stock levels (lowest stock = best selling assumption)
+        sorted_by_stock = sorted(all_fabric_conditioners, key=lambda x: x.get('QTY', 0))
+        if len(sorted_by_stock) > 0:
+            best_selling_fabcon = sorted_by_stock[0].get('FABCON_NAME', 'N/A')
+            slowest_selling_fabcon = sorted_by_stock[-1].get('FABCON_NAME', 'N/A')
     
     net_sales = service_sales + other_sales
     
+    # Calculate COGS from orders (30% of revenue - cost of detergents, fabcons, utilities)
+    total_cogs = net_sales * 0.30
+    
     # Calculate expenses
-    total_cogs = detergents_consumables + utilities_direct
-    total_opex = salaries_wages + rent_utilities + maintenance_repairs
+    total_opex = maintenance_repairs
     gross_profit = net_sales - total_cogs
     operating_income = gross_profit - total_opex
     income_before_tax = operating_income
@@ -2302,16 +2559,36 @@ def income_statement():
     end_customer_idx = start_customer_idx + per_page
     customers_breakdown = all_customers_breakdown[start_customer_idx:end_customer_idx]
     
-    # Orders breakdown - prepare all orders (without customer names)
+    # Create customer lookup dictionary for quick access
+    customer_lookup = {c['CUSTOMER_ID']: c for c in customers}
+    
+    # Orders breakdown - prepare only completed orders with customer information
     all_orders_breakdown = []
     for order in filtered_orders:
+        # Only include completed orders in the Order Details table
+        order_status = (order.get('ORDER_STATUS') or '').lower()
+        if order_status != 'completed':
+            continue
+        
+        cust_id = order.get('CUSTOMER_ID')
+        customer_info = customer_lookup.get(cust_id, {})
         all_orders_breakdown.append({
             'ORDER_ID': order.get('ORDER_ID'),
-            'CUSTOMER_ID': order.get('CUSTOMER_ID'),
+            'CUSTOMER_ID': cust_id,
+            'CUSTOMER_NAME': customer_info.get('FULLNAME', 'N/A'),
+            'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
+            'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
+            'ORDER_STATUS': order.get('ORDER_STATUS', 'N/A'),
             'Revenue': float(order.get('TOTAL_PRICE', 0) or 0),
             'COGS': float(order.get('TOTAL_PRICE', 0) or 0) * 0.3,
             'Net': float(order.get('TOTAL_PRICE', 0) or 0) * 0.7
         })
+    
+    # Calculate completed orders summary totals
+    completed_total_revenue = sum(o['Revenue'] for o in all_orders_breakdown)
+    completed_total_cogs = sum(o['COGS'] for o in all_orders_breakdown)
+    completed_total_net = sum(o['Net'] for o in all_orders_breakdown)
+    completed_orders_count = len(all_orders_breakdown)
     
     # Paginate orders breakdown
     total_order_pages = (len(all_orders_breakdown) + per_page - 1) // per_page if all_orders_breakdown else 1
@@ -2326,14 +2603,11 @@ def income_statement():
         start='',
         end='',
         selected_month=selected_month,
+        selected_date=selected_date,
         customer_id=customer_id,
         customers=customers,
         tax_rate=tax_rate,
         max=max,
-        detergents_consumables=detergents_consumables,
-        utilities_direct=utilities_direct,
-        salaries_wages=salaries_wages,
-        rent_utilities=rent_utilities,
         maintenance_repairs=maintenance_repairs,
         period_label=period_label,
         service_sales=service_sales,
@@ -2351,6 +2625,10 @@ def income_statement():
         customers_breakdown=customers_breakdown,
         all_customers_breakdown=all_customers_breakdown,  # For modals
         orders_breakdown=orders_breakdown,
+        completed_total_revenue=completed_total_revenue,
+        completed_total_cogs=completed_total_cogs,
+        completed_total_net=completed_total_net,
+        completed_orders_total=completed_orders_count,
         customer_page=customer_page,
         order_page=order_page,
         total_customer_pages=total_customer_pages,
@@ -2381,16 +2659,13 @@ def download_income_statement(format):
         return redirect(url_for('admin_login'))
     
     # Get filter parameters (same as income_statement route)
-    view = request.args.get('view', 'weekly')
+    view = request.args.get('view', 'daily')
     customer_id = request.args.get('customer_id', type=int)
     tax_rate = float(request.args.get('tax_rate', 0.12))
     selected_month = request.args.get('month', '')
+    selected_date = request.args.get('selected_date', '')  # Format: YYYY-MM-DD
     
     # Expense inputs
-    detergents_consumables = float(request.args.get('detergents_consumables', 0.0))
-    utilities_direct = float(request.args.get('utilities_direct', 0.0))
-    salaries_wages = float(request.args.get('salaries_wages', 0.0))
-    rent_utilities = float(request.args.get('rent_utilities', 0.0))
     maintenance_repairs = float(request.args.get('maintenance_repairs', 0.0))
     
     # Get all orders
@@ -2404,7 +2679,22 @@ def download_income_statement(format):
     
     # Calculate date range based on view
     now = datetime.now()
-    if view == 'weekly':
+    if view == 'daily':
+        if selected_date:
+            try:
+                selected_dt = datetime.strptime(selected_date, '%Y-%m-%d')
+                start_date = selected_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = selected_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+                period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
+            except (ValueError, AttributeError):
+                start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+                period_label = f"Today: {now.strftime('%B %d, %Y')}"
+        else:
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            period_label = f"Today: {now.strftime('%B %d, %Y')}"
+    elif view == 'weekly':
         start_date = now - timedelta(days=7)
         end_date = now
         period_label = f"Week of {start_date.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
@@ -2472,14 +2762,15 @@ def download_income_statement(format):
             end_date_naive = make_naive_dt(end_date)
             
             in_range = False
-            if view == 'monthly' and selected_month:
+            if view == 'daily' or (view == 'monthly' and selected_month):
                 in_range = start_date_naive <= order_datetime <= end_date_naive
             else:
                 in_range = order_date_only >= start_date_only
             
             if in_range:
+                # Include pick-up and completed orders (processed orders)
                 order_status = (order.get('ORDER_STATUS') or '').lower()
-                if order_status == 'completed':
+                if order_status in ['pick-up', 'pickup', 'completed']:
                     if customer_id is None or order.get('CUSTOMER_ID') == customer_id:
                         filtered_orders.append(order)
     
@@ -2560,7 +2851,7 @@ def download_income_statement(format):
             end_date_naive = make_naive_dt(end_date)
             
             in_range = False
-            if view == 'monthly' and selected_month:
+            if view == 'daily' or (view == 'monthly' and selected_month):
                 in_range = start_date_naive <= order_datetime <= end_date_naive
             else:
                 in_range = order_date_only >= start_date_only
@@ -2571,15 +2862,41 @@ def download_income_statement(format):
     
     total_orders_count = len(all_orders_for_report)
     
-    # Calculate expenses
-    total_cogs = detergents_consumables + utilities_direct
-    total_opex = salaries_wages + rent_utilities + maintenance_repairs
+    # Calculate COGS from orders (30% of revenue - cost of detergents, fabcons, utilities)
     net_sales = total_sales
+    total_cogs = net_sales * 0.30
+    
+    # Calculate expenses
+    total_opex = maintenance_repairs
     gross_profit = net_sales - total_cogs
     operating_income = gross_profit - total_opex
     income_before_tax = operating_income
     income_tax_amount = income_before_tax * tax_rate if income_before_tax > 0 else 0
     net_income = income_before_tax - income_tax_amount
+    
+    # Get customers for lookup
+    customers = dbhelper.get_all_customers()
+    customer_lookup = {c['CUSTOMER_ID']: c for c in customers}
+    
+    # Prepare completed orders data for export
+    completed_orders_data = []
+    for order in filtered_orders:
+        order_status = (order.get('ORDER_STATUS') or '').lower()
+        if order_status == 'completed':
+            cust_id = order.get('CUSTOMER_ID')
+            customer_info = customer_lookup.get(cust_id, {})
+            revenue = float(order.get('TOTAL_PRICE', 0) or 0)
+            completed_orders_data.append({
+                'Order #': f"LL-{order.get('ORDER_ID')}",
+                'Customer Name': customer_info.get('FULLNAME', 'N/A'),
+                'Phone Number': customer_info.get('PHONE_NUMBER', 'N/A'),
+                'Order Type': order.get('ORDER_TYPE', 'N/A'),
+                'Revenue': revenue,
+                'COGS': revenue * 0.3,
+                'Net': revenue * 0.7
+            })
+    
+    orders_df = pd.DataFrame(completed_orders_data)
     
     # Prepare data for export
     data = [{
@@ -2608,12 +2925,20 @@ def download_income_statement(format):
     if format == 'excel':
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Income Statement', index=False)
+            df.to_excel(writer, sheet_name='Summary', index=False)
+            if not orders_df.empty:
+                orders_df.to_excel(writer, sheet_name='Completed Orders', index=False)
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     elif format == 'csv':
         output = io.StringIO()
+        output.write("=== SUMMARY ===\n")
         df.to_csv(output, index=False)
+        output.write("\n\n=== COMPLETED ORDERS ===\n")
+        if not orders_df.empty:
+            orders_df.to_csv(output, index=False)
+        else:
+            output.write("No completed orders for this period\n")
         output.seek(0)
         return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}.csv"})
     elif format == 'pdf':
@@ -2657,17 +2982,70 @@ def download_income_statement(format):
                 pdf.cell(col_widths[1], 7, str(row['Value']), border=1, align='R', fill=True)
                 pdf.ln()
         
+        def add_orders_table(orders_df):
+            if orders_df.empty:
+                pdf.set_text_color(100, 100, 100)
+                pdf.set_font('Arial', 'I', 10)
+                pdf.cell(0, 10, 'No completed orders for this period', ln=True, align='C')
+                return
+            
+            pdf.set_font('Arial', 'B', 8)
+            pdf.set_fill_color(245, 247, 250)
+            pdf.set_text_color(35, 56, 114)
+            available_width = pdf.w - 2 * pdf.l_margin
+            # Column widths for orders table
+            col_widths = [available_width * 0.10, available_width * 0.22, available_width * 0.18, 
+                         available_width * 0.14, available_width * 0.12, available_width * 0.12, available_width * 0.12]
+            headers = ['Order #', 'Customer', 'Phone', 'Type', 'Revenue', 'COGS', 'Net']
+            
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 6, header, border=1, align='C', fill=True)
+            pdf.ln()
+            
+            pdf.set_font('Arial', '', 7)
+            for row_idx, row in orders_df.iterrows():
+                if row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)
+                else:
+                    pdf.set_fill_color(255, 255, 255)
+                pdf.set_text_color(0, 0, 0)
+                pdf.cell(col_widths[0], 6, str(row['Order #']), border=1, align='C', fill=True)
+                pdf.cell(col_widths[1], 6, str(row['Customer Name'])[:20], border=1, align='L', fill=True)
+                pdf.cell(col_widths[2], 6, str(row['Phone Number'])[:15], border=1, align='L', fill=True)
+                pdf.cell(col_widths[3], 6, str(row['Order Type'])[:12], border=1, align='C', fill=True)
+                pdf.cell(col_widths[4], 6, f"{row['Revenue']:,.2f}", border=1, align='R', fill=True)
+                pdf.cell(col_widths[5], 6, f"{row['COGS']:,.2f}", border=1, align='R', fill=True)
+                pdf.cell(col_widths[6], 6, f"{row['Net']:,.2f}", border=1, align='R', fill=True)
+                pdf.ln()
+        
         pdf.add_page()
         add_title_bar('Income Statement Report')
         pdf.set_font('Arial', '', 10)
         pdf.set_text_color(0, 0, 0)
         pdf.cell(0, 7, f"Period: {period_label}", ln=True, align='L')
         pdf.ln(2)
-        add_table(df)
+        pdf_df = df.copy()
+        if 'Value' in pdf_df.columns:
+            pdf_df['Value'] = pdf_df['Value'].apply(lambda v: str(v).replace('₱', 'PHP'))
+        add_table(pdf_df)
         
-        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        # Add Completed Orders section
+        pdf.ln(8)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(18, 45, 105)
+        pdf.cell(0, 8, 'Completed Orders', ln=True, align='L')
+        pdf.ln(2)
+        add_orders_table(orders_df)
+        
+        # Handle PDF output - fpdf2 returns bytes, fpdf returns string
+        pdf_output = pdf.output(dest='S')
+        if isinstance(pdf_output, str):
+            pdf_bytes = pdf_output.encode('latin1')
+        else:
+            pdf_bytes = pdf_output
+        output = io.BytesIO(pdf_bytes)
         output.seek(0)
-        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True, mimetype='application/pdf')
     else:
         return "Invalid format", 400
 

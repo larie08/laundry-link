@@ -72,7 +72,7 @@
                 <div class="section-title w3-padding w3-text-gray">Reports</div>
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('admin_order_report')}}">
+                        <a href="{{ url_for('admin_order_report') }}">
                             <span>Order Reports</span>
                         </a>
                     </li>
@@ -84,7 +84,7 @@
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="#">
+                        <a href="{{ url_for('income_statement') }}">
                             <span>Sales Report</span>
                         </a>
                     </li>
@@ -330,6 +330,102 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- INVENTORY SALES REPORT SECTION (Completed Orders Only) -->
+                <div class="sales-report-section">
+                    <h2 class="section-header"><i class="fas fa-chart-bar"></i> Inventory Sales Report</h2>
+                    
+                    <!-- Sales Filter -->
+                    <form class="sales-filter-form" method="get" action="{{ url_for('inventory_report') }}">
+                        <input type="hidden" name="type" value="{{ request.args.get('type', 'detergent') }}">
+                        <div class="sales-filter-row">
+                            <div class="sales-filter-field">
+                                <label>View</label>
+                                <select name="inv_sales_view" id="invSalesViewSelect" onchange="toggleInvSalesDateSelector()">
+                                    <option value="daily" {{ 'selected' if inv_sales_view=='daily' else '' }}>Daily</option>
+                                    <option value="weekly" {{ 'selected' if inv_sales_view=='weekly' else '' }}>Weekly</option>
+                                    <option value="monthly" {{ 'selected' if inv_sales_view=='monthly' else '' }}>Monthly</option>
+                                    <option value="yearly" {{ 'selected' if inv_sales_view=='yearly' else '' }}>Yearly</option>
+                                </select>
+                            </div>
+                            <div class="sales-filter-field" id="invSalesDayField" {% if inv_sales_view != 'daily' %}style="display: none;"{% endif %}>
+                                <label>Date</label>
+                                <input type="date" name="inv_sales_date" value="{{ inv_sales_date if inv_sales_date else '' }}" />
+                            </div>
+                            <div class="sales-filter-field" id="invSalesMonthField" {% if inv_sales_view != 'monthly' %}style="display: none;"{% endif %}>
+                                <label>Month</label>
+                                <input type="month" name="inv_sales_month" value="{{ inv_sales_month if inv_sales_month else '' }}" />
+                            </div>
+                            <div class="sales-filter-actions">
+                                <button class="w3-button w3-blue rounded-btn" type="submit">View Report</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="sales-period-label">Period: {{ inv_period_label }}</div>
+
+                    <!-- Completed Orders Table -->
+                    <div class="table-container">
+                        <h3>Completed Orders</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Order Type</th>
+                                        <th class="right">Revenue</th>
+                                        <th class="right">COGS</th>
+                                        <th class="right">Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if inv_completed_orders %}
+                                    {% for o in inv_completed_orders %}
+                                    <tr>
+                                        <td>LL-{{ o.ORDER_ID }}</td>
+                                        <td>{{ o.CUSTOMER_NAME }}</td>
+                                        <td>{{ o.PHONE_NUMBER }}</td>
+                                        <td>{{ o.ORDER_TYPE }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(o.Revenue) }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(o.COGS) }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(o.Net) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; color: #6b7aa8; padding: 20px;">No completed orders for this period</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Sales Summary -->
+                        <div class="sales-summary-container">
+                            <div class="sales-summary-box">
+                                <div class="sales-summary-title">Sales Summary ({{ inv_period_label }})</div>
+                                <div class="sales-summary-row">
+                                    <span class="sales-summary-label">Total Orders:</span>
+                                    <span class="sales-summary-value">{{ inv_total_orders }}</span>
+                                </div>
+                                <div class="sales-summary-row">
+                                    <span class="sales-summary-label">Total Revenue:</span>
+                                    <span class="sales-summary-value revenue">₱{{ '{:,.2f}'.format(inv_total_revenue) }}</span>
+                                </div>
+                                <div class="sales-summary-row">
+                                    <span class="sales-summary-label">Total COGS:</span>
+                                    <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_cogs) }}</span>
+                                </div>
+                                <div class="sales-summary-row total">
+                                    <span class="sales-summary-label">Net Profit:</span>
+                                    <span class="sales-summary-value net">₱{{ '{:,.2f}'.format(inv_total_net) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -450,7 +546,28 @@
                 }
                 window.location.href = url;
             });
+            
+            // Initialize inventory sales date selector
+            toggleInvSalesDateSelector();
         });
+        
+        // Toggle inventory sales date selector based on view
+        function toggleInvSalesDateSelector() {
+            const viewSelect = document.getElementById('invSalesViewSelect');
+            const dayField = document.getElementById('invSalesDayField');
+            const monthField = document.getElementById('invSalesMonthField');
+            
+            if (dayField) dayField.style.display = 'none';
+            if (monthField) monthField.style.display = 'none';
+            
+            if (viewSelect) {
+                if (viewSelect.value === 'daily') {
+                    if (dayField) dayField.style.display = 'block';
+                } else if (viewSelect.value === 'monthly') {
+                    if (monthField) monthField.style.display = 'block';
+                }
+            }
+        }
     </script>
 </body>
 </html>
