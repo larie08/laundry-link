@@ -344,10 +344,193 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- INVENTORY SALES REPORT SECTION (Completed Orders Only) -->
+                <div class="sales-report-section">
+                    <h2 class="section-header"><i class="fas fa-chart-bar"></i> Inventory Sales Report</h2>
+                    
+                    <!-- Sales Filter -->
+                    <form class="sales-filter-form" method="get" action="{{ url_for('inventory_report') }}">
+                        <input type="hidden" name="type" value="{{ request.args.get('type', 'detergent') }}">
+                        <div class="sales-filter-row">
+                            <div class="sales-filter-field">
+                                <label>View</label>
+                                <select name="inv_sales_view" id="invSalesViewSelect" onchange="toggleInvSalesDateSelector()">
+                                    <option value="daily" {{ 'selected' if inv_sales_view=='daily' else '' }}>Daily</option>
+                                    <option value="weekly" {{ 'selected' if inv_sales_view=='weekly' else '' }}>Weekly</option>
+                                    <option value="monthly" {{ 'selected' if inv_sales_view=='monthly' else '' }}>Monthly</option>
+                                    <option value="yearly" {{ 'selected' if inv_sales_view=='yearly' else '' }}>Yearly</option>
+                                </select>
+                            </div>
+                            <div class="sales-filter-field" id="invSalesDayField" {% if inv_sales_view != 'daily' %}style="display: none;"{% endif %}>
+                                <label>Date</label>
+                                <input type="date" name="inv_sales_date" value="{{ inv_sales_date if inv_sales_date else '' }}" />
+                            </div>
+                            <div class="sales-filter-field" id="invSalesMonthField" {% if inv_sales_view != 'monthly' %}style="display: none;"{% endif %}>
+                                <label>Month</label>
+                                <input type="month" name="inv_sales_month" value="{{ inv_sales_month if inv_sales_month else '' }}" />
+                            </div>
+                            <div class="sales-filter-actions">
+                                <button class="w3-button w3-blue rounded-btn" type="submit">View Report</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="sales-period-label">Period: {{ inv_period_label }}</div>
+                    
+                    <!-- Consumed Detergents Table -->
+                    <div class="table-container" style="margin-bottom: 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3><i class="fas fa-soap" style="color:#233872;"></i> Consumed Detergents</h3>
+                            <div class="download-btns" style="display:flex; gap:10px;">
+                                <a href="{{ url_for('download_inventory_sales_report', format='excel') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                                <a href="{{ url_for('download_inventory_sales_report', format='csv') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                                <a href="{{ url_for('download_inventory_sales_report', format='pdf') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item ID</th>
+                                        <th>Item Name</th>
+                                        <th class="right">Unit Price</th>
+                                        <th class="right">Quantity</th>
+                                        <th class="right">Total Cost</th>
+                                        <th>Order ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if inv_consumed_detergents %}
+                                    {% for d in inv_consumed_detergents %}
+                                    <tr>
+                                        <td>{{ d.ITEM_ID }}</td>
+                                        <td>{{ d.ITEM_NAME }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(d.UNIT_PRICE) }}</td>
+                                        <td class="right">{{ d.QUANTITY }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(d.TOTAL_VALUE) }}</td>
+                                        <td>{{ d.ORDER_ID }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No detergents consumed for this period</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if inv_consumed_detergents %}
+                        <div style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                            <div style="font-weight: 600; font-size: 1rem;">
+                                Subtotal: <span style="color: #233872;">{{ inv_total_detergent_qty }} items</span> | 
+                                <span style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_detergent_cost) }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Consumed Fabric Conditioners Table -->
+                    <div class="table-container" style="margin-bottom: 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3><i class="fas fa-water" style="color:#233872;"></i> Consumed Fabric Conditioners</h3>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item ID</th>
+                                        <th>Item Name</th>
+                                        <th class="right">Unit Price</th>
+                                        <th class="right">Quantity</th>
+                                        <th class="right">Total Cost</th>
+                                        <th>Order ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if inv_consumed_fabcons %}
+                                    {% for f in inv_consumed_fabcons %}
+                                    <tr>
+                                        <td>{{ f.ITEM_ID }}</td>
+                                        <td>{{ f.ITEM_NAME }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(f.UNIT_PRICE) }}</td>
+                                        <td class="right">{{ f.QUANTITY }}</td>
+                                        <td class="right">₱{{ '{:,.2f}'.format(f.TOTAL_VALUE) }}</td>
+                                        <td>{{ f.ORDER_ID }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No fabric conditioners consumed for this period</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if inv_consumed_fabcons %}
+                        <div style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                            <div style="font-weight: 600; font-size: 1rem;">
+                                Subtotal: <span style="color: #233872;">{{ inv_total_fabcon_qty }} items</span> | 
+                                <span style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_fabcon_cost) }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Inventory Summary -->
+                    <div class="sales-summary-container">
+                        <div class="sales-summary-box" style="min-width: 350px;">
+                            <div class="sales-summary-title">Inventory Consumption Summary ({{ inv_period_label }})</div>
+                            <div class="sales-summary-row">
+                                <span class="sales-summary-label">Detergents Consumed:</span>
+                                <span class="sales-summary-value">{{ inv_total_detergent_qty }} pcs ({{ inv_total_detergent_items }} transactions)</span>
+                            </div>
+                            <div class="sales-summary-row">
+                                <span class="sales-summary-label">Detergent Cost:</span>
+                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_detergent_cost) }}</span>
+                            </div>
+                            <div class="sales-summary-row">
+                                <span class="sales-summary-label">Fabric Conditioners Consumed:</span>
+                                <span class="sales-summary-value">{{ inv_total_fabcon_qty }} pcs ({{ inv_total_fabcon_items }} transactions)</span>
+                            </div>
+                            <div class="sales-summary-row">
+                                <span class="sales-summary-label">Fabric Conditioner Cost:</span>
+                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_fabcon_cost) }}</span>
+                            </div>
+                            <div class="sales-summary-row total" style="border-top: 2px solid #233872; margin-top: 8px; padding-top: 12px;">
+                                <span class="sales-summary-label">Total Items Consumed:</span>
+                                <span class="sales-summary-value" style="color: #233872; font-size: 1.1rem;">{{ inv_total_qty }} pcs</span>
+                            </div>
+                            <div class="sales-summary-row total">
+                                <span class="sales-summary-label">Total Inventory Cost:</span>
+                                <span class="sales-summary-value net" style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_cost) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
     <script>
+        // Toggle Inventory Sales Date Selector
+        function toggleInvSalesDateSelector() {
+            var view = document.getElementById('invSalesViewSelect').value;
+            var dayField = document.getElementById('invSalesDayField');
+            var monthField = document.getElementById('invSalesMonthField');
+            
+            // Hide all fields first
+            dayField.style.display = 'none';
+            monthField.style.display = 'none';
+            
+            // Show appropriate field based on view
+            if (view === 'daily') {
+                dayField.style.display = '';
+            } else if (view === 'monthly') {
+                monthField.style.display = '';
+            }
+        }
+
         // Toggle table sections and search forms
         document.addEventListener('DOMContentLoaded', function() {
             const detergentBtn = document.getElementById('showDetergentBtn');

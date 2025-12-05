@@ -1429,6 +1429,130 @@ def inventory_report():
         total_pages = 1
         page = 1
 
+    # ========== INVENTORY SALES REPORT SECTION (Completed Orders Only) ==========
+    from datetime import date, timedelta
+    
+    # Get sales report filter parameters
+    inv_sales_view = request.args.get('inv_sales_view', 'daily')
+    inv_sales_date = request.args.get('inv_sales_date', '')
+    inv_sales_month = request.args.get('inv_sales_month', '')
+    
+    # Determine date range based on view
+    today = date.today()
+    if inv_sales_view == 'daily':
+        if inv_sales_date:
+            try:
+                selected_date = datetime.strptime(inv_sales_date, '%Y-%m-%d').date()
+            except:
+                selected_date = today
+        else:
+            selected_date = today
+        inv_start_date = datetime.combine(selected_date, datetime.min.time())
+        inv_end_date = datetime.combine(selected_date, datetime.max.time())
+        inv_period_label = selected_date.strftime('%B %d, %Y')
+    elif inv_sales_view == 'weekly':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        inv_start_date = datetime.combine(start_of_week, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_week, datetime.max.time())
+        inv_period_label = f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d, %Y')}"
+    elif inv_sales_view == 'monthly':
+        if inv_sales_month:
+            try:
+                year, month = map(int, inv_sales_month.split('-'))
+            except:
+                year, month = today.year, today.month
+        else:
+            year, month = today.year, today.month
+        start_of_month = date(year, month, 1)
+        if month == 12:
+            end_of_month = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_of_month = date(year, month + 1, 1) - timedelta(days=1)
+        inv_start_date = datetime.combine(start_of_month, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_month, datetime.max.time())
+        inv_period_label = start_of_month.strftime('%B %Y')
+    elif inv_sales_view == 'yearly':
+        start_of_year = date(today.year, 1, 1)
+        end_of_year = date(today.year, 12, 31)
+        inv_start_date = datetime.combine(start_of_year, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_year, datetime.max.time())
+        inv_period_label = str(today.year)
+    else:
+        inv_start_date = datetime.combine(today, datetime.min.time())
+        inv_end_date = datetime.combine(today, datetime.max.time())
+        inv_period_label = today.strftime('%B %d, %Y')
+    
+    # Helper function to parse dates for consumed inventory
+    def parse_consumed_date(item):
+        date_val = item.get('DATE_CREATED')
+        if date_val is None:
+            return None
+        if isinstance(date_val, datetime):
+            if date_val.tzinfo is not None:
+                return date_val.replace(tzinfo=None)
+            return date_val
+        if isinstance(date_val, str):
+            try:
+                parsed = datetime.fromisoformat(date_val.replace('Z', '+00:00'))
+                if parsed.tzinfo is not None:
+                    return parsed.replace(tzinfo=None)
+                return parsed
+            except:
+                try:
+                    return datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
+                except:
+                    return None
+        return None
+    
+    # Filter consumed detergents within date range
+    inv_consumed_detergents = []
+    for d in consumed_detergents_all:
+        item_date = parse_consumed_date(d)
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_detergents.append({
+                'ITEM_ID': d.get('DETERGENT_ID'),
+                'ITEM_NAME': d.get('DETERGENT_NAME'),
+                'ITEM_TYPE': 'Detergent',
+                'UNIT_PRICE': float(d.get('UNIT_PRICE', 0)),
+                'QUANTITY': int(d.get('QUANTITY', 0)),
+                'TOTAL_VALUE': float(d.get('TOTAL_VALUE', 0)),
+                'ORDER_ID': d.get('ORDER_ID'),
+                'DATE_CONSUMED': item_date
+            })
+    
+    # Filter consumed fabric conditioners within date range
+    inv_consumed_fabcons = []
+    for f in consumed_fabcons_all:
+        item_date = parse_consumed_date(f)
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_fabcons.append({
+                'ITEM_ID': f.get('FABCON_ID'),
+                'ITEM_NAME': f.get('FABCON_NAME'),
+                'ITEM_TYPE': 'Fabric Conditioner',
+                'UNIT_PRICE': float(f.get('UNIT_PRICE', 0)),
+                'QUANTITY': int(f.get('QUANTITY', 0)),
+                'TOTAL_VALUE': float(f.get('TOTAL_VALUE', 0)),
+                'ORDER_ID': f.get('ORDER_ID'),
+                'DATE_CONSUMED': item_date
+            })
+    
+    # Combine all consumed items
+    inv_consumed_items = inv_consumed_detergents + inv_consumed_fabcons
+    
+    # Calculate totals
+    inv_total_detergent_items = len(inv_consumed_detergents)
+    inv_total_detergent_qty = sum(d['QUANTITY'] for d in inv_consumed_detergents)
+    inv_total_detergent_cost = sum(d['TOTAL_VALUE'] for d in inv_consumed_detergents)
+    
+    inv_total_fabcon_items = len(inv_consumed_fabcons)
+    inv_total_fabcon_qty = sum(f['QUANTITY'] for f in inv_consumed_fabcons)
+    inv_total_fabcon_cost = sum(f['TOTAL_VALUE'] for f in inv_consumed_fabcons)
+    
+    inv_total_items = inv_total_detergent_items + inv_total_fabcon_items
+    inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
+    inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
+
     return render_template(
         'admin_inventory_report.html',
         consumed_detergents=paginated_detergents,
@@ -1440,7 +1564,24 @@ def inventory_report():
         all_detergents=all_detergents,
         all_fabric_conditioners=all_fabric_conditioners,
         current_page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        # Inventory Sales Report variables
+        inv_sales_view=inv_sales_view,
+        inv_sales_date=inv_sales_date,
+        inv_sales_month=inv_sales_month,
+        inv_period_label=inv_period_label,
+        inv_consumed_detergents=inv_consumed_detergents,
+        inv_consumed_fabcons=inv_consumed_fabcons,
+        inv_consumed_items=inv_consumed_items,
+        inv_total_detergent_items=inv_total_detergent_items,
+        inv_total_detergent_qty=inv_total_detergent_qty,
+        inv_total_detergent_cost=inv_total_detergent_cost,
+        inv_total_fabcon_items=inv_total_fabcon_items,
+        inv_total_fabcon_qty=inv_total_fabcon_qty,
+        inv_total_fabcon_cost=inv_total_fabcon_cost,
+        inv_total_items=inv_total_items,
+        inv_total_qty=inv_total_qty,
+        inv_total_cost=inv_total_cost
     )
 
 @app.route('/download_order_report/<format>')
@@ -1940,6 +2081,301 @@ def download_inventory_report(format):
                 zf.writestr('fabric_conditioners.csv', fabcon_csv)
             zip_buffer.seek(0)
             return send_file(zip_buffer, download_name=f"{filename}.zip", as_attachment=True, mimetype='application/zip')
+    else:
+        return "Invalid format", 400
+
+@app.route('/download_inventory_sales_report/<format>')
+def download_inventory_sales_report(format):
+    """Download inventory consumption report (consumed detergents and fabric conditioners) as Excel, CSV, or PDF."""
+    # Check if user is admin
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    from datetime import date, timedelta
+    
+    # Get filter parameters
+    inv_sales_view = request.args.get('inv_sales_view', 'daily')
+    inv_sales_date = request.args.get('inv_sales_date', '')
+    inv_sales_month = request.args.get('inv_sales_month', '')
+    
+    # Determine date range based on view
+    today = date.today()
+    if inv_sales_view == 'daily':
+        if inv_sales_date:
+            try:
+                selected_date = datetime.strptime(inv_sales_date, '%Y-%m-%d').date()
+            except:
+                selected_date = today
+        else:
+            selected_date = today
+        inv_start_date = datetime.combine(selected_date, datetime.min.time())
+        inv_end_date = datetime.combine(selected_date, datetime.max.time())
+        inv_period_label = selected_date.strftime('%B %d, %Y')
+    elif inv_sales_view == 'weekly':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        inv_start_date = datetime.combine(start_of_week, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_week, datetime.max.time())
+        inv_period_label = f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d, %Y')}"
+    elif inv_sales_view == 'monthly':
+        if inv_sales_month:
+            try:
+                year, month = map(int, inv_sales_month.split('-'))
+            except:
+                year, month = today.year, today.month
+        else:
+            year, month = today.year, today.month
+        start_of_month = date(year, month, 1)
+        if month == 12:
+            end_of_month = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_of_month = date(year, month + 1, 1) - timedelta(days=1)
+        inv_start_date = datetime.combine(start_of_month, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_month, datetime.max.time())
+        inv_period_label = start_of_month.strftime('%B %Y')
+    elif inv_sales_view == 'yearly':
+        start_of_year = date(today.year, 1, 1)
+        end_of_year = date(today.year, 12, 31)
+        inv_start_date = datetime.combine(start_of_year, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_year, datetime.max.time())
+        inv_period_label = str(today.year)
+    else:
+        inv_start_date = datetime.combine(today, datetime.min.time())
+        inv_end_date = datetime.combine(today, datetime.max.time())
+        inv_period_label = today.strftime('%B %d, %Y')
+    
+    # Get consumed inventory data
+    consumed_detergents_all = dbhelper.get_consumed_detergents_report()
+    consumed_fabcons_all = dbhelper.get_consumed_fabcons_report()
+    
+    # Helper function to parse dates
+    def parse_consumed_date(item):
+        date_val = item.get('DATE_CREATED')
+        if date_val is None:
+            return None
+        if isinstance(date_val, datetime):
+            if date_val.tzinfo is not None:
+                return date_val.replace(tzinfo=None)
+            return date_val
+        if isinstance(date_val, str):
+            try:
+                parsed = datetime.fromisoformat(date_val.replace('Z', '+00:00'))
+                if parsed.tzinfo is not None:
+                    return parsed.replace(tzinfo=None)
+                return parsed
+            except:
+                try:
+                    return datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
+                except:
+                    return None
+        return None
+    
+    # Filter consumed detergents within date range
+    inv_consumed_detergents = []
+    for d in consumed_detergents_all:
+        item_date = parse_consumed_date(d)
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_detergents.append({
+                'Item ID': d.get('DETERGENT_ID'),
+                'Item Name': d.get('DETERGENT_NAME'),
+                'Type': 'Detergent',
+                'Unit Price': float(d.get('UNIT_PRICE', 0)),
+                'Quantity': int(d.get('QUANTITY', 0)),
+                'Total Cost': float(d.get('TOTAL_VALUE', 0)),
+                'Order ID': d.get('ORDER_ID')
+            })
+    
+    # Filter consumed fabric conditioners within date range
+    inv_consumed_fabcons = []
+    for f in consumed_fabcons_all:
+        item_date = parse_consumed_date(f)
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_fabcons.append({
+                'Item ID': f.get('FABCON_ID'),
+                'Item Name': f.get('FABCON_NAME'),
+                'Type': 'Fabric Conditioner',
+                'Unit Price': float(f.get('UNIT_PRICE', 0)),
+                'Quantity': int(f.get('QUANTITY', 0)),
+                'Total Cost': float(f.get('TOTAL_VALUE', 0)),
+                'Order ID': f.get('ORDER_ID')
+            })
+    
+    # Calculate totals
+    inv_total_detergent_qty = sum(d['Quantity'] for d in inv_consumed_detergents)
+    inv_total_detergent_cost = sum(d['Total Cost'] for d in inv_consumed_detergents)
+    inv_total_fabcon_qty = sum(f['Quantity'] for f in inv_consumed_fabcons)
+    inv_total_fabcon_cost = sum(f['Total Cost'] for f in inv_consumed_fabcons)
+    inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
+    inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
+    
+    # Create DataFrames
+    det_df = pd.DataFrame(inv_consumed_detergents)
+    fabcon_df = pd.DataFrame(inv_consumed_fabcons)
+    
+    # Add total rows
+    if not det_df.empty:
+        det_total_row = pd.DataFrame([{
+            'Item ID': 'SUBTOTAL',
+            'Item Name': '',
+            'Type': '',
+            'Unit Price': '',
+            'Quantity': inv_total_detergent_qty,
+            'Total Cost': inv_total_detergent_cost,
+            'Order ID': ''
+        }])
+        det_df = pd.concat([det_df, det_total_row], ignore_index=True)
+    
+    if not fabcon_df.empty:
+        fabcon_total_row = pd.DataFrame([{
+            'Item ID': 'SUBTOTAL',
+            'Item Name': '',
+            'Type': '',
+            'Unit Price': '',
+            'Quantity': inv_total_fabcon_qty,
+            'Total Cost': inv_total_fabcon_cost,
+            'Order ID': ''
+        }])
+        fabcon_df = pd.concat([fabcon_df, fabcon_total_row], ignore_index=True)
+    
+    filename = f'inventory_consumption_report_{inv_sales_view}'
+    
+    if format == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            # Write detergents sheet
+            if not det_df.empty:
+                det_df.to_excel(writer, sheet_name='Consumed Detergents', index=False)
+                worksheet = writer.sheets['Consumed Detergents']
+                for i, col in enumerate(det_df.columns):
+                    max_len = max(det_df[col].astype(str).apply(len).max(), len(col)) + 2
+                    worksheet.set_column(i, i, max_len)
+            
+            # Write fabric conditioners sheet
+            if not fabcon_df.empty:
+                fabcon_df.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
+                worksheet = writer.sheets['Consumed Fabric Conditioners']
+                for i, col in enumerate(fabcon_df.columns):
+                    max_len = max(fabcon_df[col].astype(str).apply(len).max(), len(col)) + 2
+                    worksheet.set_column(i, i, max_len)
+            
+            # Write summary sheet
+            summary_data = [
+                {'Category': 'Detergents', 'Items Consumed': inv_total_detergent_qty, 'Total Cost': inv_total_detergent_cost},
+                {'Category': 'Fabric Conditioners', 'Items Consumed': inv_total_fabcon_qty, 'Total Cost': inv_total_fabcon_cost},
+                {'Category': 'TOTAL', 'Items Consumed': inv_total_qty, 'Total Cost': inv_total_cost}
+            ]
+            summary_df = pd.DataFrame(summary_data)
+            summary_df.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False)
+            worksheet = writer.sheets[f'Summary ({inv_period_label})']
+            for i, col in enumerate(summary_df.columns):
+                max_len = max(summary_df[col].astype(str).apply(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, max_len)
+        
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
+    
+    elif format == 'csv':
+        # Combine both into one CSV with a separator
+        output = io.StringIO()
+        output.write(f"Inventory Consumption Report - {inv_period_label}\n\n")
+        output.write("=== CONSUMED DETERGENTS ===\n")
+        if not det_df.empty:
+            det_df.to_csv(output, index=False)
+        else:
+            output.write("No detergents consumed\n")
+        output.write("\n=== CONSUMED FABRIC CONDITIONERS ===\n")
+        if not fabcon_df.empty:
+            fabcon_df.to_csv(output, index=False)
+        else:
+            output.write("No fabric conditioners consumed\n")
+        output.write(f"\n=== SUMMARY ===\n")
+        output.write(f"Total Detergents: {inv_total_detergent_qty} pcs, Cost: {inv_total_detergent_cost:.2f}\n")
+        output.write(f"Total Fabric Conditioners: {inv_total_fabcon_qty} pcs, Cost: {inv_total_fabcon_cost:.2f}\n")
+        output.write(f"TOTAL: {inv_total_qty} pcs, Cost: {inv_total_cost:.2f}\n")
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), download_name=f"{filename}.csv", as_attachment=True, mimetype='text/csv')
+    
+    elif format == 'pdf':
+        pdf = FPDF(orientation='L', unit='mm', format='legal')
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        def add_title_bar(title):
+            pdf.set_fill_color(18, 45, 105)  # #122D69
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 12, title, ln=True, align='C', fill=True)
+            pdf.ln(3)
+        
+        def add_table(df, columns_config):
+            if df.empty:
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_font('Arial', '', 10)
+                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                return
+            
+            pdf.set_font('Arial', 'B', 8)
+            pdf.set_fill_color(245, 247, 250)
+            pdf.set_text_color(35, 56, 114)
+            
+            available_width = pdf.w - 2 * pdf.l_margin
+            col_widths = [available_width * w for w in columns_config]
+            
+            columns = list(df.columns)
+            for i, col in enumerate(columns):
+                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+            pdf.ln()
+            
+            pdf.set_font('Arial', '', 8)
+            for row_idx, row in df.iterrows():
+                if str(row.iloc[0]) == 'SUBTOTAL':
+                    pdf.set_fill_color(230, 236, 250)
+                    pdf.set_font('Arial', 'B', 8)
+                elif row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)
+                else:
+                    pdf.set_fill_color(255, 255, 255)
+                
+                pdf.set_text_color(0, 0, 0)
+                for i, item in enumerate(row):
+                    if columns[i] in ['Unit Price', 'Total Cost'] and isinstance(item, (int, float)):
+                        item = f"P{item:,.2f}"
+                    pdf.cell(col_widths[i], 6, str(item), border=1, align='C', fill=True)
+                pdf.ln()
+                
+                if str(row.iloc[0]) == 'SUBTOTAL':
+                    pdf.set_font('Arial', '', 8)
+        
+        # Page 1: Consumed Detergents
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.set_text_color(35, 56, 114)
+        pdf.cell(0, 10, f'Inventory Consumption Report - {inv_period_label}', ln=True, align='C')
+        pdf.ln(5)
+        
+        add_title_bar('Consumed Detergents')
+        col_config = [0.10, 0.25, 0.12, 0.12, 0.10, 0.15, 0.10]
+        add_table(det_df, col_config)
+        
+        # Page 2: Consumed Fabric Conditioners
+        pdf.add_page()
+        add_title_bar('Consumed Fabric Conditioners')
+        add_table(fabcon_df, col_config)
+        
+        # Summary section
+        pdf.ln(10)
+        add_title_bar('Inventory Consumption Summary')
+        pdf.set_font('Arial', '', 11)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 8, f"Detergents Consumed: {inv_total_detergent_qty} pcs | Cost: P{inv_total_detergent_cost:,.2f}", ln=True)
+        pdf.cell(0, 8, f"Fabric Conditioners Consumed: {inv_total_fabcon_qty} pcs | Cost: P{inv_total_fabcon_cost:,.2f}", ln=True)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(35, 56, 114)
+        pdf.cell(0, 10, f"TOTAL: {inv_total_qty} pcs | Total Cost: P{inv_total_cost:,.2f}", ln=True)
+        
+        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+    
     else:
         return "Invalid format", 400
 
