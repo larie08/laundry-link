@@ -1258,6 +1258,7 @@ def admin_order_report():
                            sales_total_cogs=sales_total_cogs,
                            sales_total_net=sales_total_net
     )
+
 # INVENTORY REPORT
 @app.route('/inventory_report')
 def inventory_report():
@@ -1270,12 +1271,40 @@ def inventory_report():
     inv_type = request.args.get('type', 'detergent')
     if inv_type not in ['detergent', 'fabcon']:
         inv_type = 'detergent'
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
+    period = request.args.get('period', '')
     
-    # Always get the full lists for summary cards
-    all_detergents = get_all_detergents()
-    all_fabric_conditioners = get_all_fabric_conditioners()
+    # Get consumed inventory data
+    consumed_detergents_all = dbhelper.get_consumed_detergents_report()
+    consumed_fabcons_all = dbhelper.get_consumed_fabcons_report()
+    
+    # Get master inventory data for low stock items
+    all_detergents = dbhelper.get_all_detergents()
+    all_fabric_conditioners = dbhelper.get_all_fabric_conditioners()
+    
+    # Helper function to convert date for sorting
+    def get_sort_date(item):
+        date_val = item.get('DATE_CREATED')
+        if date_val is None:
+            return datetime.min
+        if isinstance(date_val, datetime):
+            return date_val
+        if isinstance(date_val, str):
+            try:
+                return datetime.fromisoformat(date_val)
+            except:
+                try:
+                    return datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
+                except:
+                    return datetime.min
+        return datetime.min
+    
+    # Sort by DATE_CREATED (ascending - oldest first, newest last)
+    consumed_detergents_all = sorted(consumed_detergents_all, 
+                                     key=get_sort_date, 
+                                     reverse=False)
+    consumed_fabcons_all = sorted(consumed_fabcons_all, 
+                                 key=get_sort_date, 
+                                 reverse=False)
     
     # Initialize filtered data
     detergents = []
@@ -1284,64 +1313,90 @@ def inventory_report():
     # Get filtered data based on inventory type and search query
     if inv_type == 'detergent':
         if search_query:
-            detergents = search_detergents(search_query)
+            # Filter consumed detergents by name or ID
+            search_lower = search_query.lower()
+            detergents = [d for d in consumed_detergents_all 
+                         if search_lower in d.get('DETERGENT_NAME', '').lower() 
+                         or search_lower in str(d.get('DETERGENT_ID', ''))]
         else:
-            detergents = all_detergents.copy()
+            detergents = consumed_detergents_all.copy()
         fabric_conditioners = []
     elif inv_type == 'fabcon':
         if search_query:
-            fabric_conditioners = search_fabric_conditioners(search_query)
+            # Filter consumed fabric conditioners by name or ID
+            search_lower = search_query.lower()
+            fabric_conditioners = [f for f in consumed_fabcons_all 
+                                  if search_lower in f.get('FABCON_NAME', '').lower() 
+                                  or search_lower in str(f.get('FABCON_ID', ''))]
         else:
-            fabric_conditioners = all_fabric_conditioners.copy()
+            fabric_conditioners = consumed_fabcons_all.copy()
         detergents = []
     
-    # Apply date filtering if dates are provided
-    if start_date or end_date:
-        # Convert string dates to datetime objects
+    # Sort filtered data by DATE_CREATED (ascending - oldest first, newest last)
+    detergents = sorted(detergents, key=get_sort_date, reverse=False)
+    fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
+    
+    # Apply period filtering if period is provided
+    if period:
+        from datetime import date, timedelta
+        today = date.today()
         start_date_obj = None
         end_date_obj = None
         
-        if start_date:
-            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-        if end_date:
-            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-            end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
+        if period == 'daily':
+            start_date_obj = datetime.combine(today, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'weekly':
+            start_of_week = today - timedelta(days=today.weekday())
+            start_date_obj = datetime.combine(start_of_week, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'monthly':
+            start_of_month = date(today.year, today.month, 1)
+            start_date_obj = datetime.combine(start_of_month, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'yearly':
+            start_of_year = date(today.year, 1, 1)
+            start_date_obj = datetime.combine(start_of_year, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
         
-        # Filter detergents by date
+        # Filter detergents by period
         if inv_type == 'detergent':
             filtered_detergents = []
             for item in detergents:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
+                # Remove timezone info (convert to naive) for comparison
+                if item_date.tzinfo is not None:
+                    item_date = item_date.replace(tzinfo=None)
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_detergents.append(item)
             detergents = filtered_detergents
-        # Filter fabric conditioners by date
+        # Filter fabric conditioners by period
         elif inv_type == 'fabcon':
             filtered_fabcons = []
             for item in fabric_conditioners:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
+                # Remove timezone info (convert to naive) for comparison
+                if item_date.tzinfo is not None:
+                    item_date = item_date.replace(tzinfo=None)
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_fabcons.append(item)
             fabric_conditioners = filtered_fabcons
-    elif inv_type == 'both':
-        # For both, combine and filter by date
-        combined_inventory = all_detergents + all_fabric_conditioners
-        filtered_combined = []
-        for item in combined_inventory:
-            item_date = item['DATE_CREATED']
-            if not isinstance(item_date, datetime):
-                item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
-            if (not start_date_obj or item_date >= start_date_obj) and \
-               (not end_date_obj or item_date <= end_date_obj):
-                filtered_combined.append(item)
-        detergents = filtered_combined
-        fabric_conditioners = filtered_combined
+    
+    # Re-sort all filtered data by DATE_CREATED (ascending - oldest first, newest last)
+    detergents = sorted(detergents, key=get_sort_date, reverse=False)
+    fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
     
     # PAGINATION LOGIC
     items_per_page = 10
@@ -1374,129 +1429,18 @@ def inventory_report():
         total_pages = 1
         page = 1
 
-    # === INVENTORY SALES REPORT SECTION (Completed Orders Only) ===
-    inv_sales_view = request.args.get('inv_sales_view', 'daily')
-    inv_sales_date = request.args.get('inv_sales_date', '')
-    inv_sales_month = request.args.get('inv_sales_month', '')
-    
-    now = datetime.now()
-    
-    # Calculate date range for inventory sales report based on view
-    if inv_sales_view == 'daily':
-        if inv_sales_date:
-            try:
-                selected_dt = datetime.strptime(inv_sales_date, '%Y-%m-%d')
-                inv_sales_start = selected_dt.replace(hour=0, minute=0, second=0)
-                inv_sales_end = selected_dt.replace(hour=23, minute=59, second=59)
-                inv_period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
-            except:
-                inv_sales_start = now.replace(hour=0, minute=0, second=0)
-                inv_sales_end = now.replace(hour=23, minute=59, second=59)
-                inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-                inv_sales_date = now.strftime('%Y-%m-%d')
-        else:
-            inv_sales_start = now.replace(hour=0, minute=0, second=0)
-            inv_sales_end = now.replace(hour=23, minute=59, second=59)
-            inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-            inv_sales_date = now.strftime('%Y-%m-%d')
-    elif inv_sales_view == 'weekly':
-        inv_sales_start = now - timedelta(days=7)
-        inv_sales_end = now
-        inv_period_label = f"Week of {inv_sales_start.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
-    elif inv_sales_view == 'monthly':
-        if inv_sales_month:
-            try:
-                year, month = map(int, inv_sales_month.split('-'))
-                inv_sales_start = datetime(year, month, 1)
-                if month == 12:
-                    inv_sales_end = datetime(year + 1, 1, 1) - timedelta(days=1)
-                else:
-                    inv_sales_end = datetime(year, month + 1, 1) - timedelta(days=1)
-                inv_sales_end = inv_sales_end.replace(hour=23, minute=59, second=59)
-                inv_period_label = f"Month of {inv_sales_start.strftime('%B %Y')}"
-            except:
-                inv_sales_start = now.replace(day=1)
-                inv_sales_end = now
-                inv_period_label = f"Month of {now.strftime('%B %Y')}"
-        else:
-            inv_sales_start = now.replace(day=1)
-            inv_sales_end = now
-            inv_period_label = f"Month of {now.strftime('%B %Y')}"
-    elif inv_sales_view == 'yearly':
-        inv_sales_start = now.replace(month=1, day=1)
-        inv_sales_end = now
-        inv_period_label = f"Year {now.year}"
-    else:
-        inv_sales_start = now.replace(hour=0, minute=0, second=0)
-        inv_sales_end = now.replace(hour=23, minute=59, second=59)
-        inv_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-    
-    # Get customers for lookup
-    customers_for_inv = dbhelper.get_all_customers()
-    customer_lookup_inv = {c['CUSTOMER_ID']: c for c in customers_for_inv}
-    
-    # Get all orders for inventory sales report
-    all_orders_inv = dbhelper.get_all_orders_with_priority()
-    
-    # Filter completed orders for inventory sales report
-    inv_completed_orders = []
-    for order in all_orders_inv:
-        order_status = (order.get('ORDER_STATUS') or '').lower()
-        if order_status != 'completed':
-            continue
-        
-        order_date = order.get('DATE_CREATED')
-        if order_date:
-            if hasattr(order_date, 'replace'):
-                order_datetime = order_date
-            else:
-                continue
-            
-            if hasattr(order_datetime, 'tzinfo') and order_datetime.tzinfo:
-                order_datetime = order_datetime.replace(tzinfo=None)
-            
-            if inv_sales_view == 'daily' or (inv_sales_view == 'monthly' and inv_sales_month):
-                in_range = inv_sales_start <= order_datetime <= inv_sales_end
-            else:
-                in_range = order_datetime.date() >= inv_sales_start.date()
-            
-            if in_range:
-                cust_id = order.get('CUSTOMER_ID')
-                customer_info = customer_lookup_inv.get(cust_id, {})
-                revenue = float(order.get('TOTAL_PRICE', 0) or 0)
-                inv_completed_orders.append({
-                    'ORDER_ID': order.get('ORDER_ID'),
-                    'CUSTOMER_NAME': customer_info.get('FULLNAME', 'N/A'),
-                    'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
-                    'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
-                    'Revenue': revenue,
-                    'COGS': revenue * 0.3,
-                    'Net': revenue * 0.7
-                })
-    
-    # Calculate inventory sales totals
-    inv_total_orders = len(inv_completed_orders)
-    inv_total_revenue = sum(o['Revenue'] for o in inv_completed_orders)
-    inv_total_cogs = sum(o['COGS'] for o in inv_completed_orders)
-    inv_total_net = sum(o['Net'] for o in inv_completed_orders)
-
     return render_template(
         'admin_inventory_report.html',
-        all_detergents=all_detergents,
-        all_fabric_conditioners=all_fabric_conditioners,
+        consumed_detergents=paginated_detergents,
+        consumed_fabric_conditioners=paginated_fabcons,
+        all_consumed_detergents=consumed_detergents_all,
+        all_consumed_fabcons=consumed_fabcons_all,
         detergents=paginated_detergents,
         fabric_conditioners=paginated_fabcons,
+        all_detergents=all_detergents,
+        all_fabric_conditioners=all_fabric_conditioners,
         current_page=page,
-        total_pages=total_pages,
-        inv_sales_view=inv_sales_view,
-        inv_sales_date=inv_sales_date,
-        inv_sales_month=inv_sales_month,
-        inv_period_label=inv_period_label,
-        inv_completed_orders=inv_completed_orders,
-        inv_total_orders=inv_total_orders,
-        inv_total_revenue=inv_total_revenue,
-        inv_total_cogs=inv_total_cogs,
-        inv_total_net=inv_total_net
+        total_pages=total_pages
     )
 
 @app.route('/download_order_report/<format>')
@@ -1689,68 +1633,80 @@ def download_inventory_report(format):
     # Get query parameters
     inv_type = request.args.get('type')
     search_query = request.args.get('q', '').strip()
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
+    period = request.args.get('period', '')
     
-    # Get data based on inventory type
+    # Get consumed data based on inventory type
     if inv_type == 'detergent':
         if search_query:
-            data = search_detergents(search_query)
+            # Filter consumed detergents by name or ID
+            search_lower = search_query.lower()
+            data = [d for d in dbhelper.get_consumed_detergents_report() 
+                   if search_lower in d.get('DETERGENT_NAME', '').lower() 
+                   or search_lower in str(d.get('DETERGENT_ID', ''))]
         else:
-            data = get_all_detergents()
-        # Add Total Value column
-        for item in data:
-            item['Total_Value'] = item['DETERGENT_PRICE'] * item['QTY']
-        sheet_name = 'Detergents'
+            data = dbhelper.get_consumed_detergents_report()
+        sheet_name = 'Consumed Detergents'
         filename = 'detergent_inventory_report'
     elif inv_type == 'fabcon':
         if search_query:
-            data = search_fabric_conditioners(search_query)
+            # Filter consumed fabric conditioners by name or ID
+            search_lower = search_query.lower()
+            data = [f for f in dbhelper.get_consumed_fabcons_report() 
+                   if search_lower in f.get('FABCON_NAME', '').lower() 
+                   or search_lower in str(f.get('FABCON_ID', ''))]
         else:
-            data = get_all_fabric_conditioners()
-        # Add Total Value column
-        for item in data:
-            item['Total_Value'] = item['FABCON_PRICE'] * item['QTY']
-        sheet_name = 'Fabric Conditioners'
+            data = dbhelper.get_consumed_fabcons_report()
+        sheet_name = 'Consumed Fabric Conditioners'
         filename = 'fabcon_inventory_report'
     else:
-        # Get both detergent and fabric conditioner data
+        # Get both detergent and fabric conditioner consumed data
         if search_query:
-            det_data = search_detergents(search_query)
-            fabcon_data = search_fabric_conditioners(search_query)
+            search_lower = search_query.lower()
+            det_data = [d for d in dbhelper.get_consumed_detergents_report() 
+                       if search_lower in d.get('DETERGENT_NAME', '').lower() 
+                       or search_lower in str(d.get('DETERGENT_ID', ''))]
+            fabcon_data = [f for f in dbhelper.get_consumed_fabcons_report() 
+                          if search_lower in f.get('FABCON_NAME', '').lower() 
+                          or search_lower in str(f.get('FABCON_ID', ''))]
         else:
-            det_data = get_all_detergents()
-            fabcon_data = get_all_fabric_conditioners()
-        
-        # Add Total Value column to detergents
-        for item in det_data:
-            item['Total_Value'] = item['DETERGENT_PRICE'] * item['QTY']
-        
-        # Add Total Value column to fabric conditioners
-        for item in fabcon_data:
-            item['Total_Value'] = item['FABCON_PRICE'] * item['QTY']
+            det_data = dbhelper.get_consumed_detergents_report()
+            fabcon_data = dbhelper.get_consumed_fabcons_report()
         
         filename = 'inventory_report'
     
     # Apply date filtering if dates are provided
-    if start_date or end_date:
-        # Convert string dates to datetime objects
+    if period:
+        from datetime import date, timedelta
+        today = date.today()
         start_date_obj = None
         end_date_obj = None
         
-        if start_date:
-            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-        if end_date:
-            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-            end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
+        if period == 'daily':
+            start_date_obj = datetime.combine(today, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'weekly':
+            start_of_week = today - timedelta(days=today.weekday())
+            start_date_obj = datetime.combine(start_of_week, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'monthly':
+            start_of_month = date(today.year, today.month, 1)
+            start_date_obj = datetime.combine(start_of_month, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'yearly':
+            start_of_year = date(today.year, 1, 1)
+            start_date_obj = datetime.combine(start_of_year, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
         
-        # Filter data by date
+        # Filter data by period
         if inv_type == 'detergent':
             filtered_detergents = []
             for item in data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_detergents.append(item)
@@ -1760,7 +1716,10 @@ def download_inventory_report(format):
             for item in data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_fabcons.append(item)
@@ -1771,7 +1730,10 @@ def download_inventory_report(format):
             for item in det_data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_det_data.append(item)
@@ -1782,24 +1744,87 @@ def download_inventory_report(format):
             for item in fabcon_data:
                 item_date = item['DATE_CREATED']
                 if not isinstance(item_date, datetime):
-                    item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    try:
+                        item_date = datetime.strptime(item_date, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        continue
                 if (not start_date_obj or item_date >= start_date_obj) and \
                    (not end_date_obj or item_date <= end_date_obj):
                     filtered_fabcon_data.append(item)
             fabcon_data = filtered_fabcon_data
     
+    # Format DATE_CREATED to mm/dd/yyyy hh:mm:ss before creating DataFrames
+    def format_date_for_export(data_list):
+        for item in data_list:
+            if 'DATE_CREATED' in item:
+                date_val = item['DATE_CREATED']
+                if date_val:
+                    if isinstance(date_val, datetime):
+                        item['DATE_CREATED'] = date_val.strftime('%m/%d/%Y %H:%M:%S')
+                    elif isinstance(date_val, str):
+                        try:
+                            parsed_date = datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
+                            item['DATE_CREATED'] = parsed_date.strftime('%m/%d/%Y %H:%M:%S')
+                        except:
+                            try:
+                                parsed_date = datetime.fromisoformat(date_val)
+                                item['DATE_CREATED'] = parsed_date.strftime('%m/%d/%Y %H:%M:%S')
+                            except:
+                                pass
+        return data_list
+    
+    if inv_type == 'detergent':
+        data = format_date_for_export(data)
+    elif inv_type == 'fabcon':
+        data = format_date_for_export(data)
+    else:
+        det_data = format_date_for_export(det_data)
+        fabcon_data = format_date_for_export(fabcon_data)
+    
     # Create DataFrames
     if inv_type in ['detergent', 'fabcon']:
         df = pd.DataFrame(data)
-        if 'IMAGE_FILENAME' in df.columns:
-            df = df.drop(columns=['IMAGE_FILENAME'])
+        # Add total row
+        if not df.empty:
+            total_value = df['TOTAL_VALUE'].astype(float).sum()
+            total_row = pd.DataFrame([{
+                'DETERGENT_ID' if inv_type == 'detergent' else 'FABCON_ID': 'TOTAL',
+                'DETERGENT_NAME' if inv_type == 'detergent' else 'FABCON_NAME': '',
+                'UNIT_PRICE': '',
+                'QUANTITY': '',
+                'TOTAL_VALUE': total_value,
+                'DATE_CREATED': '',
+                'ORDER_ID': ''
+            }])
+            df = pd.concat([df, total_row], ignore_index=True)
     else:
         det_df = pd.DataFrame(det_data)
         fabcon_df = pd.DataFrame(fabcon_data)
-        if 'IMAGE_FILENAME' in det_df.columns:
-            det_df = det_df.drop(columns=['IMAGE_FILENAME'])
-        if 'IMAGE_FILENAME' in fabcon_df.columns:
-            fabcon_df = fabcon_df.drop(columns=['IMAGE_FILENAME'])
+        # Add total rows
+        if not det_df.empty:
+            det_total_value = det_df['TOTAL_VALUE'].astype(float).sum()
+            det_total_row = pd.DataFrame([{
+                'DETERGENT_ID': 'TOTAL',
+                'DETERGENT_NAME': '',
+                'UNIT_PRICE': '',
+                'QUANTITY': '',
+                'TOTAL_VALUE': det_total_value,
+                'DATE_CREATED': '',
+                'ORDER_ID': ''
+            }])
+            det_df = pd.concat([det_df, det_total_row], ignore_index=True)
+        if not fabcon_df.empty:
+            fabcon_total_value = fabcon_df['TOTAL_VALUE'].astype(float).sum()
+            fabcon_total_row = pd.DataFrame([{
+                'FABCON_ID': 'TOTAL',
+                'FABCON_NAME': '',
+                'UNIT_PRICE': '',
+                'QUANTITY': '',
+                'TOTAL_VALUE': fabcon_total_value,
+                'DATE_CREATED': '',
+                'ORDER_ID': ''
+            }])
+            fabcon_df = pd.concat([fabcon_df, fabcon_total_row], ignore_index=True)
 
     if format == 'excel':
         output = io.BytesIO()
@@ -1823,8 +1848,8 @@ def download_inventory_report(format):
             det_df = make_excel_safe(det_df)
             fabcon_df = make_excel_safe(fabcon_df)
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                det_df.to_excel(writer, sheet_name='Detergents', index=False)
-                fabcon_df.to_excel(writer, sheet_name='Fabric Conditioners', index=False)
+                det_df.to_excel(writer, sheet_name='Consumed Detergents', index=False)
+                fabcon_df.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     elif format == 'pdf':
@@ -1854,7 +1879,7 @@ def download_inventory_report(format):
             for col in columns:
                 if 'NAME' in col or 'Value' in col:
                     col_widths.append(available_width * 0.18)
-                elif 'ID' in col:
+                elif 'ID' in col or 'ORDER' in col:
                     col_widths.append(available_width * 0.10)
                 elif 'DATE' in col:
                     col_widths.append(available_width * 0.18)
@@ -1882,18 +1907,18 @@ def download_inventory_report(format):
 
         if inv_type == 'detergent':
             pdf.add_page()
-            add_title_bar('Detergent Inventory')
+            add_title_bar('Consumed Detergent Report')
             add_table(df)
         elif inv_type == 'fabcon':
             pdf.add_page()
-            add_title_bar('Fabric Conditioner Inventory')
+            add_title_bar('Consumed Fabric Conditioner Report')
             add_table(df)
         else:
             pdf.add_page()
-            add_title_bar('Detergent Inventory')
+            add_title_bar('Consumed Detergent Report')
             add_table(det_df)
             pdf.add_page()
-            add_title_bar('Fabric Conditioner Inventory')
+            add_title_bar('Consumed Fabric Conditioner Report')
             add_table(fabcon_df)
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
         output.seek(0)
