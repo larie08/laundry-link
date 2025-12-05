@@ -913,6 +913,112 @@ def add_customer_log(user_id: int, action: str, customer_id: int, fullname: str,
         'DATE': _now(),
     })
 
+##################################################
+# CONSUMED INVENTORY REPORT FUNCTIONS
+# - get_consumed_detergents_report(): get consumed detergents with total value
+# - get_consumed_fabcons_report(): get consumed fabric conditioners with total value
+##################################################
+def get_consumed_detergents_report() -> list:
+    """
+    Get all consumed detergents from ORDERITEM_DETERGENT junction table.
+    Joins with ORDER_ITEM, ORDER, DETERGENT to get full details.
+    Returns: List of dicts with detergent consumption data and total cost.
+    """
+    _require_db()
+    
+    # Get all ORDERITEM_DETERGENT records
+    orderitem_det_docs = db.collection('ORDERITEM_DETERGENT').get()
+    out = []
+    
+    for doc in orderitem_det_docs:
+        oid_det = doc.to_dict()
+        orderitem_id = oid_det.get('ORDERITEM_ID')
+        detergent_id = oid_det.get('DETERGENT_ID')
+        quantity = int(oid_det.get('QUANTITY', 0))
+        unit_price = float(oid_det.get('UNIT_PRICE', 0))
+        total_value = quantity * unit_price
+        
+        # Get ORDER_ITEM to link to ORDER
+        orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not orderitem_docs:
+            continue
+        
+        # Get ORDER to get date and order details
+        order_docs = db.collection('ORDER').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not order_docs:
+            continue
+        
+        order = order_docs[0].to_dict()
+        date_created = order.get('DATE_CREATED')
+        
+        # Get DETERGENT to get name
+        detergent_docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+        detergent_name = 'Unknown'
+        if detergent_docs:
+            detergent_name = detergent_docs[0].to_dict().get('DETERGENT_NAME', 'Unknown')
+        
+        out.append({
+            'DETERGENT_ID': detergent_id,
+            'DETERGENT_NAME': detergent_name,
+            'QUANTITY': quantity,
+            'UNIT_PRICE': unit_price,
+            'TOTAL_VALUE': total_value,
+            'DATE_CREATED': date_created,
+            'ORDER_ID': order.get('ORDER_ID'),
+        })
+    
+    return out
+
+def get_consumed_fabcons_report() -> list:
+    """
+    Get all consumed fabric conditioners from ORDERITEM_FABCON junction table.
+    Joins with ORDER_ITEM, ORDER, FABCON to get full details.
+    Returns: List of dicts with fabric conditioner consumption data and total cost.
+    """
+    _require_db()
+    
+    # Get all ORDERITEM_FABCON records
+    orderitem_fab_docs = db.collection('ORDERITEM_FABCON').get()
+    out = []
+    
+    for doc in orderitem_fab_docs:
+        oid_fab = doc.to_dict()
+        orderitem_id = oid_fab.get('ORDERITEM_ID')
+        fabcon_id = oid_fab.get('FABCON_ID')
+        quantity = int(oid_fab.get('QUANTITY', 0))
+        unit_price = float(oid_fab.get('UNIT_PRICE', 0))
+        total_value = quantity * unit_price
+        
+        # Get ORDER_ITEM to link to ORDER
+        orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not orderitem_docs:
+            continue
+        
+        # Get ORDER to get date and order details
+        order_docs = db.collection('ORDER').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not order_docs:
+            continue
+        
+        order = order_docs[0].to_dict()
+        date_created = order.get('DATE_CREATED')
+        
+        # Get FABCON to get name
+        fabcon_docs = db.collection('FABCON').where('FABCON_ID', '==', fabcon_id).limit(1).get()
+        fabcon_name = 'Unknown'
+        if fabcon_docs:
+            fabcon_name = fabcon_docs[0].to_dict().get('FABCON_NAME', 'Unknown')
+        
+        out.append({
+            'FABCON_ID': fabcon_id,
+            'FABCON_NAME': fabcon_name,
+            'QUANTITY': quantity,
+            'UNIT_PRICE': unit_price,
+            'TOTAL_VALUE': total_value,
+            'DATE_CREATED': date_created,
+            'ORDER_ID': order.get('ORDER_ID'),
+        })
+    
+    return out
     
 if __name__ == "__main__":
     initialize_database()
