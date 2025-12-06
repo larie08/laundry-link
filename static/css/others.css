@@ -209,6 +209,7 @@ body {
   box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   padding: 40px 20px 20px 20px;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .v100_95 {
@@ -222,6 +223,7 @@ body {
   font-size: 20px;
   opacity: 1;
   text-align: left;
+  animation: slideInFromTop 0.8s ease-out 0.2s both;
 }
 .v100_161 {
   width: 67px;
@@ -234,6 +236,7 @@ body {
   font-size: 20px;
   opacity: 1;
   text-align: left;
+  animation: slideInFromTop 0.8s ease-out 0.3s both;
 }
 /* OPTIONS Section - Row 1: Detergent & Fabcon */
 .v100_133 {
@@ -844,9 +847,9 @@ button.v244_290 {
 /* Button container*/
 .button-container {
   position: absolute;
-  bottom: 40px;
-  left: 90px;
-  right: 90px;
+  bottom: 20px;
+  left: 60px;
+  right: 60px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -915,6 +918,8 @@ button.v100_97, .v100_99 {
   border-radius: 10px;
   width: 425px;
   max-width: 95%;
+  z-index: 1000;
+  justify-content: center;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
   font-family: Poppins, sans-serif;
   position: relative;
@@ -1442,27 +1447,49 @@ button.v245_298:hover {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInFromTop {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @keyframes slideDown {
-  from {
+  from { 
+    transform: translateY(-50px);
     opacity: 0;
-    transform: translateY(-30px);
   }
-  to {
-    opacity: 1;
+  to { 
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
-@media (min-width: 768px) {
+/* ============================================
+   RESPONSIVE SCALING - TABLET OPTIMIZED
+   Based on contact.css structure
+   ============================================ */
 
+/* Tablet Devices (800px - 1200px) - Optimized for tablets */
+@media screen and (min-width: 800px) and (max-width: 1200px) {
+  
   html, body {
     margin: 0;
     padding: 0;
@@ -1475,72 +1502,831 @@ button.v245_298:hover {
     position: relative;
   }
 
-  .v128_49 {
+  /* Main container */
+  .v100_93 {
     width: 95vw;
     height: 85vh;
     background: rgba(255,255,255,1);
+    opacity: 1;
     position: relative;
     overflow: visible;
     transform: translateY(-5%);
   }
 
-  .v128_50 {
+  /* Progress bar container */
+  .v100_100 {
+    width: 85%;
+    height: 40px;
+    background: url("../images/v100_100.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: 1;
+    position: absolute;
+    top: 2%;
+    left: 7.5%;
+    overflow: hidden;
+    z-index: 5;
+  }
+
+  /* Progress dots */
+  .v100_101,
+  .v100_102,
+  .v100_103,
+  .v100_104 {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: Poppins;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .v100_101 {
+    left: 0%;
+    background: rgba(18,45,105,1);
+  }
+
+  .v100_102 {
+    left: 33.33%;
+    background: rgba(18,45,105,1);
+    transform: translateX(-50%);
+  }
+
+  .v100_103 {
+    left: 66.66%;
+    background: rgba(18,45,105,1);
+    transform: translateX(-50%);
+  }
+
+  .v100_104 {
+    left: 100%;
+    background: rgba(217,217,217,1);
+    transform: translateX(-100%);
+  }
+
+  /* Progress lines */
+  .v100_105 {
+    width: 95%;
+    height: 6px;
+    background: rgba(217,217,217,1);
+    position: absolute;
+    top: 17px;
+    left: 2.5%;
+    z-index: 1;
+  }
+
+  .v100_106 {
+    width: 33.33%;
+    height: 6px;
+    background: rgba(18,45,105,1);
+    position: absolute;
+    top: 17px;
+    left: 2.5%;
+    z-index: 2;
+  }
+
+  .v100_107 {
+    width: 33.33%;
+    height: 6px;
+    background: rgba(18,45,105,1);
+    position: absolute;
+    top: 17px;
+    left: calc(2.5% + 33.33%);
+    z-index: 2;
+  }
+
+  /* Icons inside progress dots */
+  .v100_108 {
+    width: 24px;
+    height: 24px;
+    background: url("../images/v100_108.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 1;
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    margin-left: 20px;
+    overflow: hidden;
+    z-index: 11;
+    pointer-events: none;
+  }
+
+  .v100_109 {
+    width: 24px;
+    height: 24px;
+    background: url("../images/v100_109.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 1;
+    position: absolute;
+    top: 50%;
+    left: 33.33%;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    z-index: 11;
+    pointer-events: none;
+  }
+
+  /* Number "3" inside third progress dot */
+  .v100_110 {
+    width: auto;
+    color: rgba(255,255,255,1);
+    position: absolute;
+    top: 50%;
+    left: 66.66%;
+    transform: translate(-50%, -50%);
+    font-family: Inter;
+    font-weight: Bold;
+    font-size: 18px;
+    opacity: 1;
+    text-align: center;
+    z-index: 11;
+    pointer-events: none;
+  }
+
+  /* Step labels */
+  .v100_111 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 10%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v100_112 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 36%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v100_113 {
+    width: 80px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 64%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  .v100_114 {
+    width: 100px;
+    color: rgba(18,45,105,1);
+    position: absolute;
+    top: 8%;
+    left: 90%;
+    transform: translateX(-50%);
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  /* Main content container */
+  .v100_94 {
     width: 90%;
     height: 80%;
     background: rgba(255,255,255,1);
+    opacity: 1;
     position: absolute;
     top: 16%;
     left: 5%;
     border: 1px solid rgba(0,0,0,1);
-    box-shadow: 0px 0px 15px rgba(0,0,0,0.25);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
+    padding: 60px 40px 100px 40px;
+    overflow-y: auto;
   }
 
-  .contact-form {
-    width: 45%;
-    float: left;
-    padding: 40px;
+  /* Section titles */
+  .v100_95 {
+    width: auto;
+    color: rgba(0,0,0,0.5);
+    position: absolute;
+    top: 20%;
+    left: 11%;
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 32px;
+    opacity: 1;
+    text-align: left;
   }
 
-  .preview-form {
-    width: 45%;
-    float: right;
-    padding: 40px;
-    border-left: 1px solid #ccc;
+  .v100_161 {
+    width: auto;
+    color: rgba(0,0,0,0.5);
+    position: absolute;
+    top: 48%;
+    left: 11%;
+    font-family: Poppins;
+    font-weight: Bold;
+    font-size: 32px;
+    opacity: 1;
+    text-align: left;
   }
 
-  input[type="text"],
-  input[type="number"],
-  input[type="tel"] {
-    width: 90%;
-    padding: 12px;
-    margin: 10px 0 20px;
-    border: 1px solid #777;
-    border-radius: 5px;
-    font-size: 15px;
+  /* OPTIONS Section boxes - Row 1: Detergent & Fabcon */
+  .v100_133 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 25%;
+    left: 11%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  h2 {
+  .v100_138 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 25%;
+    left: 51%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* OPTIONS Section boxes - Row 2: Own Detergent & Own Fabcon */
+  .v100_140 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 36%;
+    left: 11%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .v100_151 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 36%;
+    left: 51%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* OTHER Section boxes - Iron & Fold */
+  .v100_163 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 53%;
+    left: 11%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .v100_165 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 53%;
+    left: 51%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Priority Order & Schedule Pickup */
+  .v244_284 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 64%;
+    left: 11%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .v245_297 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 64%;
+    left: 51%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Add Note */
+  .v244_285 {
+    width: 38%;
+    height: 90px;
+    position: absolute;
+    top: 75%;
+    left: 11%;
+    border-radius: 12px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Icons for OPTIONS section */
+  .v100_157 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(25% + 20px);
+    left: calc(11% + 20px);
+    z-index: 1;
+  }
+
+  .v100_159 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(25% + 20px);
+    left: calc(51% + 20px);
+    z-index: 1;
+  }
+
+  .v100_158 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(36% + 20px);
+    left: calc(11% + 20px);
+    z-index: 1;
+  }
+
+  .v100_160 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(36% + 20px);
+    left: calc(51% + 20px);
+    z-index: 1;
+  }
+
+  /* Icons for OTHER section */
+  .v100_176 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(53% + 20px);
+    left: calc(11% + 20px);
+    z-index: 1;
+  }
+
+  .v100_177 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(53% + 20px);
+    left: calc(51% + 20px);
+    z-index: 1;
+  }
+
+  .v245_301 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(64% + 20px);
+    left: calc(11% + 20px);
+    z-index: 1;
+  }
+
+  .v245_304 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(64% + 20px);
+    left: calc(51% + 20px);
+    z-index: 1;
+  }
+
+  .v245_296 {
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    top: calc(75% + 20px);
+    left: calc(11% + 20px);
+    z-index: 1;
+  }
+
+  /* Buttons */
+  button.v100_145 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(25% + 18px);
+    left: calc(11% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v100_147 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(25% + 18px);
+    left: calc(51% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v100_149 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(36% + 35px);
+    left: calc(11% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v100_154 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(36% + 35px);
+    left: calc(51% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v100_167 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(53% + 18px);
+    left: calc(11% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v100_173 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(53% + 18px);
+    left: calc(51% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v244_288 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(64% + 18px);
+    left: calc(11% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v245_298 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(64% + 35px);
+    left: calc(51% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  button.v244_290 {
+    width: auto;
+    max-width: 200px;
+    position: absolute;
+    top: calc(75% + 35px);
+    left: calc(11% + 80px);
+    font-size: 18px;
+    line-height: 1.3;
+    z-index: 2;
+  }
+
+  /* Price labels */
+  .v100_269 {
+    width: auto;
+    position: absolute;
+    top: calc(25% + 43px);
+    left: calc(11% + 80px);
+    font-size: 14px;
+  }
+
+  .v100_273 {
+    width: auto;
+    position: absolute;
+    top: calc(25% + 43px);
+    left: calc(51% + 80px);
+    font-size: 14px;
+  }
+
+  .v100_265 {
+    width: auto;
+    position: absolute;
+    top: calc(53% + 43px);
+    left: calc(11% + 80px);
+    font-size: 14px;
+  }
+
+  .v100_267 {
+    width: auto;
+    position: absolute;
+    top: calc(53% + 43px);
+    left: calc(51% + 80px);
+    font-size: 14px;
+  }
+
+  .v244_289 {
+    width: auto;
+    position: absolute;
+    top: calc(64% + 43px);
+    left: calc(11% + 80px);
+    font-size: 14px;
+  }
+
+  /* Button container */
+  .button-container {
+    position: absolute;
+    bottom: 8%;
+    left: 10%;
+    right: 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+  }
+
+  /* Previous and Next buttons */
+  .v100_98,
+  .v100_96 {
+    width: 200px;
+    height: 70px;
+    background: rgba(255,193,7,1);
+    padding: 20px 50px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  button.v100_97,
+  .v100_99 {
+    color: rgba(255,255,255,1);
+    font-family: Poppins;
+    font-weight: SemiBold;
+    font-size: 24px;
+    opacity: 1;
+    text-align: center;
+  }
+
+  /* Modal adjustments - BIGGER for tablet */
+  .modal-content {
+    width: 750px;
+    max-width: 90%;
+    padding: 50px;
+  }
+
+  .modal-content h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+  }
+
+  /* Detergent & Fabcon Modal */
+  #detergentModal .modal-content,
+  #fabconModal .modal-content {
+    width: 750px;
+    max-width: 90%;
+    padding: 50px;
+  }
+
+  #detergentModal .modal-content h2,
+  #fabconModal .modal-content h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+  }
+
+  .close {
+    font-size: 32px;
+    right: 25px;
+    top: 20px;
+  }
+
+  .detergent-option,
+  #fabconModal .detergent-option {
+    margin-bottom: 25px;
+    gap: 20px;
+  }
+
+  .detergent-option input[type="checkbox"],
+  #fabconModal .detergent-option input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+  }
+
+  .detergent-option img,
+  #fabconModal .detergent-option img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .details strong,
+  #fabconModal .details strong {
+    font-size: 20px;
+    margin-bottom: 5px;
+  }
+
+  .details span,
+  #fabconModal .details span {
+    font-size: 18px;
+  }
+
+  .quantity input,
+  #fabconModal .quantity input {
+    width: 70px;
+    height: 50px;
+    font-size: 22px;
+  }
+
+  .quantity button,
+  #fabconModal .quantity button {
+    min-width: 50px;
+    height: 50px;
+    font-size: 24px;
+    padding: 8px 14px;
+  }
+
+  .modal-buttons {
+    margin-top: 35px;
+    gap: 20px;
+  }
+
+  .modal-buttons .submit,
+  .modal-buttons .cancel {
+    font-size: 22px;
+    padding: 16px 40px;
+    border-radius: 8px;
+  }
+
+  /* Fabcon Modal Buttons - ensure consistency in tablet view */
+  #fabconModal .modal-buttons .submit,
+  #fabconModal .modal-buttons .cancel {
+    font-size: 22px;
+    padding: 16px 40px;
+    border-radius: 8px;
+  }
+
+  /* Schedule Pickup Modal */
+  .note {
+    font-size: 16px;
+    margin-bottom: 25px;
+  }
+
+  label {
     font-size: 20px;
     margin-bottom: 10px;
   }
 
-  .btn-prev, .btn-next {
-    padding: 12px 20px;
+  input[type="date"],
+  input[type="time"] {
+    padding: 16px 30px 16px 18px;
+    font-size: 18px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+  }
+
+  /* Add Note Modal */
+  .note-modal {
+    width: 750px;
+    max-width: 90%;
+    padding: 50px;
+  }
+
+  .note-modal h2 {
+    font-size: 32px;
+    margin-bottom: 25px;
+  }
+
+  .note-text-area {
+    margin-bottom: 30px;
+  }
+
+  .note-text-area textarea {
+    height: 200px;
+    padding: 18px;
+    font-size: 18px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    min-height: 180px;
+  }
+
+  .note-text-area textarea::placeholder {
     font-size: 16px;
-    width: auto;
   }
 
-  .progress-bar {
-    width: 60%;
-    height: 10px;
-    margin: 30px auto;
-    transform: scale(1);
+  /* Error modal - tablet */
+  .error-content {
+    max-width: 600px;
+    width: 80%;
+    padding: 50px 40px;
+    border-radius: 20px;
   }
 
-  .progress-fill {
-    height: 100%;
-    border-radius: 10px;
+  .error-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 30px;
+  }
+
+  .error-icon::before {
+    font-size: 60px;
+  }
+
+  .error-title {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+
+  .error-message {
+    font-size: 24px;
+    margin-bottom: 35px;
+  }
+
+  .error-button {
+    font-size: 22px;
+    padding: 18px 60px;
+    border-radius: 12px;
+  }
+}
+
+/* Mobile Devices (up to 480px) */
+@media only screen and (max-width: 480px) {
+  .v100_93 {
+    transform: scale(0.7);
+    transform-origin: top center;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Small Mobile to Small Tablet (481px - 799px) */
+@media only screen and (min-width: 481px) and (max-width: 799px) {
+  .v100_93 {
+    transform: scale(0.9);
+    transform-origin: top center;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Desktop (1201px - 1439px) */
+@media only screen and (min-width: 1201px) and (max-width: 1439px) {
+  .v100_93 {
+    transform: scale(1.05);
+    transform-origin: center center;
+  }
+}
+
+/* Large Desktop (1440px and above) */
+@media only screen and (min-width: 1440px) {
+  .v100_93 {
+    transform: scale(1.2);
+    transform-origin: center center;
   }
 }
 

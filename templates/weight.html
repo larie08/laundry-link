@@ -40,7 +40,7 @@
                     <form method="POST" action="{{ url_for('weight_laundry') }}" id="weightForm">
                         <div class="weight-info">
                             <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" data-translate-placeholder="weight_placeholder" placeholder="Waiting for weight (kg)..." required readonly>
-                            <input type="text" id="total_load" class="v95_36" name="total_load" data-translate-placeholder="load_placeholder" placeholder="Total load (auto)" readonly>
+                            <input type="text" id="total_load" class="v95_36" name="total_load" data-translate-placeholder="load_placeholder" placeholder="Load(s): 0" readonly>
                         </div>
                         <div class="button-container">
                             <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
@@ -205,7 +205,10 @@
                         weightInput.value = weight > 0 ? weight.toFixed(2) : '';
                         
                         const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
-                        document.getElementById('total_load').value = totalLoad;
+                        const totalLoadInput = document.getElementById('total_load');
+                        const totalLoadLabel = `Load(s): ${totalLoad}`;
+                        totalLoadInput.value = weight > 0 ? totalLoadLabel : '';
+                        totalLoadInput.placeholder = totalLoadLabel;
                         
                         weightInput.classList.toggle('stable-weight', data.is_stable);
                     });
