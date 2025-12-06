@@ -209,8 +209,8 @@ body {
   background-size: contain;
   opacity: 1;
   position: absolute;
-  top: 50px;
-  left: 50%;
+  top: 80px;
+  left: 15%;
   transform: translateX(-50%);
   overflow: hidden;
   aspect-ratio: 302 / 205;
