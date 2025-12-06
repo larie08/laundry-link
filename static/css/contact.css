@@ -852,6 +852,7 @@ body {
   }
 
   /* Button container  */
+  /* Button container */
   .button-container {
     position: absolute;
     bottom: 8%;
@@ -874,5 +875,16 @@ body {
     align-items: center;
     justify-content: center;
     text-decoration: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .v128_78, .v128_80 {
+    color: rgba(255,255,255,1);
+    font-family: Poppins;
+    font-weight: SemiBold;
+    font-size: 24px;
+    opacity: 1;
+    text-align: center;
   }
 }
