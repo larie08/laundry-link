@@ -1785,7 +1785,7 @@ input[type="number"] {
 /* Large Desktop (1440px and above) */
 @media only screen and (min-width: 1440px) {
   .v100_1 {
-    transform: scale(1.2);
+    transform: scale(1);
     transform-origin: center center;
   }
 }
