@@ -149,6 +149,11 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <div style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                        <div style="font-weight: 600; font-size: 1.1rem;">
+                            Total Revenue for Page: <span style="color: #233872;">₱{{ "%.2f"|format(transactions|map(attribute='TOTAL_PRICE')|map('float')|sum) }}</span>
+                        </div>
+                    </div>
                 </div>
                 <!-- PAGINATION BUTTONS -->
                 <div class="pagination">

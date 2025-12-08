@@ -824,6 +824,32 @@ def get_monthly_customer_data():
         'counts': counts
     }
 
+def get_daily_customer_counts():
+    """Get customer counts by day for the last 30 days."""
+    _require_db()
+    
+    daily_counts = {}
+    
+    # Get all customers
+    customers = db.collection('CUSTOMER').get()
+    
+    # Count customers added each day
+    for doc in customers:
+        customer = doc.to_dict()
+        if customer.get('DATE_CREATED'):
+            date_created = customer['DATE_CREATED']
+            # Convert to date only (remove time)
+            if hasattr(date_created, 'date'):
+                date_key = date_created.date()
+            else:
+                date_key = date_created
+            
+            if date_key not in daily_counts:
+                daily_counts[date_key] = 0
+            daily_counts[date_key] += 1
+    
+    return daily_counts
+
 def get_all_orders_with_priority():
     """Return all orders with priority info and customer name."""
     _require_db()
@@ -870,6 +896,7 @@ def get_all_orders_with_priority():
         customer = customer_map.get(order.get('CUSTOMER_ID'))
         out.append({
             'ORDER_ID': order.get('ORDER_ID'),
+            'ORDERITEM_ID': order.get('ORDERITEM_ID'),
             'CUSTOMER_ID': order.get('CUSTOMER_ID'),
             'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
             'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
@@ -877,6 +904,7 @@ def get_all_orders_with_priority():
             'PRIORITY': 'Priority' if orderitem and orderitem.get('PRIORITIZE_ORDER') else 'Normal',
             'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
             'ORDER_STATUS': order.get('ORDER_STATUS'),
+            'DATE_UPDATED': order.get('DATE_UPDATED'),
             'DATE_CREATED': order.get('DATE_CREATED'),
             'TOTAL_LOAD': order.get('TOTAL_LOAD'),
             'TOTAL_PRICE': order.get('TOTAL_PRICE'),

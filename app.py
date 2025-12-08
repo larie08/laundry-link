@@ -288,7 +288,7 @@ def payments():
             pickup_schedule=order_data['pickup_schedule'],
             order_status='Pending',
             payment_method=payment_method,
-            payment_status='PAID'
+            payment_status='Pending'
         )
         
         # Generate QR code
@@ -300,73 +300,54 @@ def payments():
         qr_code_path = f"qr/{qr_filename}"
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
-        # Receipt printing for cash payments
-        if payment_method and payment_method.lower() == 'cash':
+        # Receipt printing for all payment methods
+        if payment_method and payment_method.lower() in ['cash', 'gcash', 'maya']:
             try:
                 from escpos.printer import Usb
+                from PIL import Image, ImageDraw, ImageFont
                 p = Usb(0x0483, 0x5743, encoding='GB18030')
 
                 order = dbhelper.get_order_by_id(order_id)
-                orderitem = dbhelper.get_orderitem_by_id(orderitem_id)
-                orderitem_detergents = []
-                if not order_data['own_detergent']:
-                    orderitem_detergents = dbhelper.get_orderitem_detergents(orderitem_id)
-                orderitem_fabcons = []
-                if not order_data['own_fabcon']:
-                    orderitem_fabcons = dbhelper.get_orderitem_fabcons(orderitem_id)
 
-                lines = []
-                lines.append("Laundry Link Receipt\n")
-                lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
-                lines.append(f"Customer: {latest_customer.get('FULLNAME')}\n")
-                lines.append(f"Phone: {latest_customer.get('PHONE_NUMBER')}\n")
-                lines.append(f"Order Type: {order.get('ORDER_TYPE')}\n")
-                lines.append(f"Status: {order.get('ORDER_STATUS')}\n")
-                lines.append(f"Payment: {order.get('PAYMENT_STATUS')}\n")
-                lines.append(f"Payment Method: {order.get('PAYMENT_METHOD')}\n")
-                lines.append(f"Date Created: {datetime.now().strftime('%Y-%m-%d')}\n")
-                lines.append(f"Pickup Schedule: {order.get('PICKUP_SCHEDULE')}\n")
-                lines.append(f"Total Weight: {order.get('TOTAL_WEIGHT')} kg\n")
-                lines.append(f"Order Notes: {order.get('ORDER_NOTE') or 'None'}\n")
-                lines.append("-" * 32 + "\n")
-                # Load
-                if order.get('TOTAL_LOAD'):
-                    lines.append(f"Total Load: {order.get('TOTAL_LOAD')} Loads\n")
-                    lines.append(f"Load Price: ₱{order.get('TOTAL_LOAD') * 50:.2f}\n")
-                # Priority
-                if order_data['priority']:
-                    lines.append("Priority: ₱50.00\n")
-                # Iron
-                if order_data['iron']:
-                    lines.append("Ironing: ₱50.00\n")
-                # Fold
-                if order_data['fold']:
-                    lines.append("Folding: ₱70.00\n")
-                # Detergents
-                if orderitem_detergents:
-                    for det in orderitem_detergents:
-                        lines.append(f"Detergent: {det['DETERGENT_NAME']} (₱{det['UNIT_PRICE']}) x{det['QUANTITY']} = ₱{det['total_price']}\n")
+                # Create a custom image with logo and Order ID side-by-side
+                logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
+                if os.path.exists(logo_path):
+                    # Open logo image
+                    logo_img = Image.open(logo_path)
+                    logo_img = logo_img.resize((150, 150))  # Resize logo
+                    
+                    # Create new image for receipt with logo and Order ID
+                    receipt_width = 400
+                    receipt_height = 180
+                    receipt_img = Image.new('RGB', (receipt_width, receipt_height), 'white')
+                    
+                    # Paste logo on left side
+                    receipt_img.paste(logo_img, (10, 15))
+                    
+                    # Add Order ID text on right side with larger font
+                    draw = ImageDraw.Draw(receipt_img)
+                    try:
+                        # Try to use a larger bold font
+                        font = ImageFont.truetype("arialbd.ttf", 40)
+                    except:
+                        try:
+                            # Fallback to regular arial
+                            font = ImageFont.truetype("arial.ttf", 40)
+                        except:
+                            # Fallback to default font
+                            font = ImageFont.load_default()
+                    
+                    order_id_text = f"Order ID:\n{order.get('ORDER_ID')}"
+                    draw.text((170, 40), order_id_text, fill='black', font=font)
+                    
+                    # Print the combined image
+                    p.image(receipt_img)
+                    p.text("\n")
                 else:
-                    lines.append("Detergent: Own\n")
-                # Fabcons
-                if orderitem_fabcons:
-                    for fab in orderitem_fabcons:
-                        lines.append(f"FabCon: {fab['FABCON_NAME']} (₱{fab['UNIT_PRICE']}) x{fab['QUANTITY']} = ₱{fab['total_price']}\n")
-                else:
-                    lines.append("FabCon: Own\n")
-                lines.append("-" * 32 + "\n")
-                lines.append(f"Total Price: ₱{order.get('TOTAL_PRICE'):.2f}\n")
-                lines.append("\nThank you!\n")
-
-                receipt_text = "".join(lines)
-                p.text(receipt_text)
-
-                # Print QR code if available
-                if qr_code_path:
-                    qr_full_path = os.path.join(app.static_folder, qr_code_path)
-                    if os.path.exists(qr_full_path):
-                        p.image(qr_full_path)
-                        p.text("\n")  # Space after QR
+                    # Fallback: print Order ID with large font if logo not found
+                    p.set(height=2, width=2)  # Large font
+                    p.text(f"Order ID: {order.get('ORDER_ID')}\n")
+                    p.set(height=1, width=1)  # Reset font
 
                 p.cut()
             except Exception as e:
@@ -1055,6 +1036,127 @@ def order_details(order_id):
         'BREAKDOWN': breakdown
     })
 
+@app.route('/mark_order_as_paid', methods=['POST'])
+def mark_order_as_paid():
+    """Mark an order as paid and print the full receipt."""
+    data = request.get_json()
+    order_id = data.get('order_id')
+    
+    if not order_id:
+        return jsonify({'success': False, 'error': 'Order ID is required'}), 400
+    
+    try:
+        # Update order payment status to PAID
+        order = dbhelper.get_order_by_id(order_id)
+        if not order:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+        
+        # Update the payment status
+        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
+        
+        # Get updated order details
+        order = dbhelper.get_order_by_id(order_id)
+        customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+        orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+        detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+        fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+        
+        # Print the full receipt (twice - second one without QR)
+        try:
+            from escpos.printer import Usb
+            from PIL import Image, ImageDraw, ImageFont
+            p = Usb(0x0483, 0x5743, encoding='GB18030')
+
+            # Create receipt lines
+            lines = []
+            lines.append("========== LAUNDRY LINK ==========\n")
+            lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
+            lines.append(f"Customer: {customer.get('FULLNAME') if customer else 'N/A'}\n")
+            lines.append(f"Phone: {customer.get('PHONE_NUMBER') if customer else 'N/A'}\n")
+            lines.append(f"Order Type: {order.get('ORDER_TYPE')}\n")
+            lines.append(f"Status: {order.get('ORDER_STATUS')}\n")
+            lines.append(f"Payment: {order.get('PAYMENT_STATUS')}\n")
+            lines.append(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+            lines.append("-" * 32 + "\n")
+            
+            # Load
+            if order.get('TOTAL_LOAD'):
+                lines.append(f"Loads: {order.get('TOTAL_LOAD')} x Php50 = Php{order.get('TOTAL_LOAD') * 50:.2f}\n")
+            
+            # Priority
+            if orderitem and orderitem.get('PRIORITIZE_ORDER'):
+                lines.append("Priority: Php50.00\n")
+            
+            # Iron
+            if orderitem and orderitem.get('IRON'):
+                lines.append("Ironing: Php50.00\n")
+            
+            # Fold
+            if orderitem and orderitem.get('FOLD_CLOTHES'):
+                lines.append("Folding: Php70.00\n")
+            
+            # Detergents
+            if detergents:
+                for det in detergents:
+                    lines.append(f"Detergent: {det['DETERGENT_NAME']}\n")
+                    lines.append(f"  Qty: {det['QUANTITY']} x Php{det['UNIT_PRICE']} = Php{det['total_price']}\n")
+            else:
+                lines.append("Detergent: Own\n")
+            
+            # Fabcons
+            if fabcons:
+                for fab in fabcons:
+                    lines.append(f"FabCon: {fab['FABCON_NAME']}\n")
+                    lines.append(f"  Qty: {fab['QUANTITY']} x Php{fab['UNIT_PRICE']} = Php{fab['total_price']}\n")
+            else:
+                lines.append("FabCon: Own\n")
+            
+            lines.append("-" * 32 + "\n")
+            lines.append(f"Total Price: Php{order.get('TOTAL_PRICE'):.2f}\n")
+            lines.append("\nThank you!\n")
+            lines.append("==================================\n")
+
+            receipt_text = "".join(lines)
+            
+            # FIRST RECEIPT WITH QR CODE
+            # Print logo at top middle
+            logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
+            if os.path.exists(logo_path):
+                p.image(logo_path)
+                p.text("\n")
+            
+            p.text(receipt_text)
+            
+            # Print QR code
+            qr_code_path = order.get('QR_CODE_PATH')
+            if qr_code_path:
+                qr_full_path = os.path.join(app.static_folder, qr_code_path)
+                if os.path.exists(qr_full_path):
+                    p.image(qr_full_path)
+                    p.text("\n")
+
+            p.cut()
+            
+            # SECOND RECEIPT WITHOUT QR CODE
+            # Print logo at top middle
+            if os.path.exists(logo_path):
+                p.image(logo_path)
+                p.text("\n")
+            
+            p.text(receipt_text)
+            
+            # No QR code on second receipt
+            p.cut()
+            
+        except Exception as e:
+            print("Printer error:", e)
+        
+        return jsonify({'success': True, 'message': 'Order marked as paid and receipt printed'}), 200
+        
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 #LOGOUT
 @app.route('/logout')
 def logout():
@@ -1132,11 +1234,25 @@ def admin_order_report():
     # Remove duplicates and None
     orderitem_ids = list({oid for oid in orderitem_ids if oid is not None})
     for oid in orderitem_ids:
-        orderitems_map[oid] = dbhelper.get_orderitem_by_id(oid)
+        orderitem = dbhelper.get_orderitem_by_id(oid)
+        if orderitem:
+            # Fetch detergent details for this order item
+            detergents = dbhelper.get_orderitem_detergents(oid)
+            orderitem['detergents'] = detergents if detergents else []
+            # Fetch fabric conditioner details for this order item
+            fabcons = dbhelper.get_orderitem_fabcons(oid)
+            orderitem['fabcons'] = fabcons if fabcons else []
+        else:
+            orderitem = {'detergents': [], 'fabcons': []}
+        orderitems_map[oid] = orderitem
     
     # Attach orderitem data to each order
     for order in paginated_orders:
-        order['orderitem_data'] = orderitems_map.get(order.get('ORDERITEM_ID'))
+        oid = order.get('ORDERITEM_ID')
+        if oid:
+            order['orderitem_data'] = orderitems_map.get(oid)
+        else:
+            order['orderitem_data'] = {'detergents': [], 'fabcons': []}
     
     # === SALES REPORT SECTION (Completed Orders Only) ===
     now = datetime.now()
@@ -1429,130 +1545,6 @@ def inventory_report():
         total_pages = 1
         page = 1
 
-    # ========== INVENTORY SALES REPORT SECTION (Completed Orders Only) ==========
-    from datetime import date, timedelta
-    
-    # Get sales report filter parameters
-    inv_sales_view = request.args.get('inv_sales_view', 'daily')
-    inv_sales_date = request.args.get('inv_sales_date', '')
-    inv_sales_month = request.args.get('inv_sales_month', '')
-    
-    # Determine date range based on view
-    today = date.today()
-    if inv_sales_view == 'daily':
-        if inv_sales_date:
-            try:
-                selected_date = datetime.strptime(inv_sales_date, '%Y-%m-%d').date()
-            except:
-                selected_date = today
-        else:
-            selected_date = today
-        inv_start_date = datetime.combine(selected_date, datetime.min.time())
-        inv_end_date = datetime.combine(selected_date, datetime.max.time())
-        inv_period_label = selected_date.strftime('%B %d, %Y')
-    elif inv_sales_view == 'weekly':
-        start_of_week = today - timedelta(days=today.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        inv_start_date = datetime.combine(start_of_week, datetime.min.time())
-        inv_end_date = datetime.combine(end_of_week, datetime.max.time())
-        inv_period_label = f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d, %Y')}"
-    elif inv_sales_view == 'monthly':
-        if inv_sales_month:
-            try:
-                year, month = map(int, inv_sales_month.split('-'))
-            except:
-                year, month = today.year, today.month
-        else:
-            year, month = today.year, today.month
-        start_of_month = date(year, month, 1)
-        if month == 12:
-            end_of_month = date(year + 1, 1, 1) - timedelta(days=1)
-        else:
-            end_of_month = date(year, month + 1, 1) - timedelta(days=1)
-        inv_start_date = datetime.combine(start_of_month, datetime.min.time())
-        inv_end_date = datetime.combine(end_of_month, datetime.max.time())
-        inv_period_label = start_of_month.strftime('%B %Y')
-    elif inv_sales_view == 'yearly':
-        start_of_year = date(today.year, 1, 1)
-        end_of_year = date(today.year, 12, 31)
-        inv_start_date = datetime.combine(start_of_year, datetime.min.time())
-        inv_end_date = datetime.combine(end_of_year, datetime.max.time())
-        inv_period_label = str(today.year)
-    else:
-        inv_start_date = datetime.combine(today, datetime.min.time())
-        inv_end_date = datetime.combine(today, datetime.max.time())
-        inv_period_label = today.strftime('%B %d, %Y')
-    
-    # Helper function to parse dates for consumed inventory
-    def parse_consumed_date(item):
-        date_val = item.get('DATE_CREATED')
-        if date_val is None:
-            return None
-        if isinstance(date_val, datetime):
-            if date_val.tzinfo is not None:
-                return date_val.replace(tzinfo=None)
-            return date_val
-        if isinstance(date_val, str):
-            try:
-                parsed = datetime.fromisoformat(date_val.replace('Z', '+00:00'))
-                if parsed.tzinfo is not None:
-                    return parsed.replace(tzinfo=None)
-                return parsed
-            except:
-                try:
-                    return datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
-                except:
-                    return None
-        return None
-    
-    # Filter consumed detergents within date range
-    inv_consumed_detergents = []
-    for d in consumed_detergents_all:
-        item_date = parse_consumed_date(d)
-        if item_date and inv_start_date <= item_date <= inv_end_date:
-            inv_consumed_detergents.append({
-                'ITEM_ID': d.get('DETERGENT_ID'),
-                'ITEM_NAME': d.get('DETERGENT_NAME'),
-                'ITEM_TYPE': 'Detergent',
-                'UNIT_PRICE': float(d.get('UNIT_PRICE', 0)),
-                'QUANTITY': int(d.get('QUANTITY', 0)),
-                'TOTAL_VALUE': float(d.get('TOTAL_VALUE', 0)),
-                'ORDER_ID': d.get('ORDER_ID'),
-                'DATE_CONSUMED': item_date
-            })
-    
-    # Filter consumed fabric conditioners within date range
-    inv_consumed_fabcons = []
-    for f in consumed_fabcons_all:
-        item_date = parse_consumed_date(f)
-        if item_date and inv_start_date <= item_date <= inv_end_date:
-            inv_consumed_fabcons.append({
-                'ITEM_ID': f.get('FABCON_ID'),
-                'ITEM_NAME': f.get('FABCON_NAME'),
-                'ITEM_TYPE': 'Fabric Conditioner',
-                'UNIT_PRICE': float(f.get('UNIT_PRICE', 0)),
-                'QUANTITY': int(f.get('QUANTITY', 0)),
-                'TOTAL_VALUE': float(f.get('TOTAL_VALUE', 0)),
-                'ORDER_ID': f.get('ORDER_ID'),
-                'DATE_CONSUMED': item_date
-            })
-    
-    # Combine all consumed items
-    inv_consumed_items = inv_consumed_detergents + inv_consumed_fabcons
-    
-    # Calculate totals
-    inv_total_detergent_items = len(inv_consumed_detergents)
-    inv_total_detergent_qty = sum(d['QUANTITY'] for d in inv_consumed_detergents)
-    inv_total_detergent_cost = sum(d['TOTAL_VALUE'] for d in inv_consumed_detergents)
-    
-    inv_total_fabcon_items = len(inv_consumed_fabcons)
-    inv_total_fabcon_qty = sum(f['QUANTITY'] for f in inv_consumed_fabcons)
-    inv_total_fabcon_cost = sum(f['TOTAL_VALUE'] for f in inv_consumed_fabcons)
-    
-    inv_total_items = inv_total_detergent_items + inv_total_fabcon_items
-    inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
-    inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
-
     return render_template(
         'admin_inventory_report.html',
         consumed_detergents=paginated_detergents,
@@ -1564,24 +1556,7 @@ def inventory_report():
         all_detergents=all_detergents,
         all_fabric_conditioners=all_fabric_conditioners,
         current_page=page,
-        total_pages=total_pages,
-        # Inventory Sales Report variables
-        inv_sales_view=inv_sales_view,
-        inv_sales_date=inv_sales_date,
-        inv_sales_month=inv_sales_month,
-        inv_period_label=inv_period_label,
-        inv_consumed_detergents=inv_consumed_detergents,
-        inv_consumed_fabcons=inv_consumed_fabcons,
-        inv_consumed_items=inv_consumed_items,
-        inv_total_detergent_items=inv_total_detergent_items,
-        inv_total_detergent_qty=inv_total_detergent_qty,
-        inv_total_detergent_cost=inv_total_detergent_cost,
-        inv_total_fabcon_items=inv_total_fabcon_items,
-        inv_total_fabcon_qty=inv_total_fabcon_qty,
-        inv_total_fabcon_cost=inv_total_fabcon_cost,
-        inv_total_items=inv_total_items,
-        inv_total_qty=inv_total_qty,
-        inv_total_cost=inv_total_cost
+        total_pages=total_pages
     )
 
 @app.route('/download_order_report/<format>')
@@ -1652,10 +1627,70 @@ def download_order_report(format):
         if match:
             filtered_orders.append(order)
 
+    # Fetch detergent, fabric conditioner, and order item data for export
+    for order in filtered_orders:
+        orderitem_id = order.get('ORDERITEM_ID')
+        if orderitem_id:
+            orderitem = dbhelper.get_orderitem_by_id(orderitem_id)
+            if orderitem:
+                # Get detergent details
+                detergents = dbhelper.get_orderitem_detergents(orderitem_id)
+                detergent_list = []
+                if detergents and len(detergents) > 0:
+                    for det in detergents:
+                        detergent_list.append(f"{det.get('DETERGENT_NAME')} (x{det.get('QUANTITY')})")
+                    order['Detergent'] = ', '.join(detergent_list)
+                elif orderitem.get('CUSTOMER_OWN_DETERGENT'):
+                    order['Detergent'] = 'Own'
+                else:
+                    order['Detergent'] = 'N/A'
+                
+                # Get fabric conditioner details
+                fabcons = dbhelper.get_orderitem_fabcons(orderitem_id)
+                fabcon_list = []
+                if fabcons and len(fabcons) > 0:
+                    for fc in fabcons:
+                        fabcon_list.append(f"{fc.get('FABCON_NAME')} (x{fc.get('QUANTITY')})")
+                    order['Fabric Conditioner'] = ', '.join(fabcon_list)
+                elif orderitem.get('CUSTOMER_OWN_FABCON'):
+                    order['Fabric Conditioner'] = 'Own'
+                else:
+                    order['Fabric Conditioner'] = 'N/A'
+                
+                # Get other services
+                services = []
+                if orderitem.get('IRON'):
+                    services.append('Iron')
+                if orderitem.get('FOLD_CLOTHES'):
+                    services.append('Fold')
+                if orderitem.get('PRIORITIZE_ORDER'):
+                    services.append('Priority')
+                order['Others'] = ', '.join(services) if services else 'None'
+            else:
+                order['Detergent'] = 'N/A'
+                order['Fabric Conditioner'] = 'N/A'
+                order['Others'] = 'N/A'
+        else:
+            order['Detergent'] = 'N/A'
+            order['Fabric Conditioner'] = 'N/A'
+            order['Others'] = 'N/A'
+
     # Convert to DataFrame
     df = pd.DataFrame(filtered_orders)
-    # Remove columns not needed (e.g., images, etc.)
-    for col in ['IMAGE_FILENAME', 'QR_CODE']:
+    
+    # Select and reorder columns to match table
+    columns_to_keep = [
+        'ORDER_ID', 'CUSTOMER_NAME', 'ORDER_TYPE', 'ORDER_STATUS', 'PAYMENT_STATUS',
+        'TOTAL_PRICE', 'TOTAL_LOAD', 'TOTAL_WEIGHT', 'Detergent', 'Fabric Conditioner',
+        'Others', 'PICKUP_SCHEDULE', 'DATE_CREATED', 'DATE_UPDATED'
+    ]
+    
+    # Keep only existing columns
+    available_columns = [col for col in columns_to_keep if col in df.columns]
+    df = df[available_columns]
+    
+    # Remove any columns not in our list
+    for col in ['IMAGE_FILENAME', 'QR_CODE', 'ORDERITEM_ID', 'CUSTOMER_ID', 'PHONE_NUMBER', 'PRIORITY']:
         if col in df.columns:
             df = df.drop(columns=[col])
 
@@ -1686,79 +1721,138 @@ def download_order_report(format):
         output.seek(0)
         return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}.csv"})
     elif format == 'pdf':
-        # Styled PDF export (same as inventory/customer report)
+        # Styled PDF export - use landscape with better layout
         from fpdf import FPDF
-        pdf = FPDF(orientation='L', unit='mm', format='legal')  # <-- use legal size for long bondpaper
-        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf = FPDF(orientation='L', unit='mm', format='a4')  # Use A4 landscape
+        pdf.set_auto_page_break(auto=True, margin=10)
+        
         def add_title_bar(title):
             pdf.set_fill_color(18, 45, 105)  # #122D69
             pdf.set_text_color(255, 255, 255)
-            pdf.set_font('Arial', 'B', 16)
-            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 10, title, ln=True, align='C', fill=True)
             pdf.ln(2)
+        
         def add_table(df):
             if df.empty:
                 pdf.set_text_color(200, 0, 0)
                 pdf.set_font('Arial', '', 10)
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
-            # Decrease header font size here
-            pdf.set_font('Arial', 'B', 7)  # <-- changed from 8 to 7
+            
+            pdf.set_font('Arial', 'B', 8)
             pdf.set_fill_color(245, 247, 250)  # #f5f7fa
             pdf.set_text_color(35, 56, 114)    # #233872
+            
             available_width = pdf.w - 2 * pdf.l_margin
             columns = list(df.columns)
-            # Assign custom widths: wider for name/value, narrower for ID/dates
-            col_widths = []
-            for col in columns:
-                if 'NAME' in col or 'Value' in col:
-                    col_widths.append(available_width * 0.18)
-                elif 'ID' in col:
-                    col_widths.append(available_width * 0.10)
-                elif 'DATE' in col:
-                    col_widths.append(available_width * 0.18)
-                else:
-                    col_widths.append(available_width * 0.12)
+            
+            # Define column widths with specific sizes for each column
+            col_width_map = {
+                'ORDER_ID': 10,
+                'CUSTOMER_NAME': 20,
+                'ORDER_TYPE': 15,
+                'ORDER_STATUS': 15,
+                'PAYMENT_STATUS': 15,
+                'TOTAL_PRICE': 12,
+                'TOTAL_LOAD': 10,
+                'TOTAL_WEIGHT': 12,
+                'Detergent': 30,
+                'Fabric Conditioner': 30,
+                'Others': 20,
+                'PICKUP_SCHEDULE': 20,
+                'DATE_CREATED': 22,
+                'DATE_UPDATED': 22,
+            }
+            
+            col_widths = [col_width_map.get(col, 15) for col in columns]
             total_width = sum(col_widths)
+            
+            # Scale if needed
             if total_width > available_width:
-                col_widths = [w * available_width / total_width for w in col_widths]
-            # Header
+                scale_factor = available_width / total_width
+                col_widths = [w * scale_factor for w in col_widths]
+            
+            # Header row
             for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+                pdf.cell(col_widths[i], 8, str(col), border=1, align='C', fill=True)
             pdf.ln()
-            # Table rows
-            pdf.set_font('Arial', '', 9)
+            
+            # Data rows
+            pdf.set_font('Arial', '', 7)
+            pdf.set_text_color(0, 0, 0)
+            
             for row_idx, row in df.iterrows():
+                # Set alternating row colors
                 if row_idx % 2 == 0:
                     pdf.set_fill_color(248, 250, 252)  # #f8fafc
                 else:
                     pdf.set_fill_color(255, 255, 255)  # white
-                pdf.set_text_color(0, 0, 0)
-                for i, item in enumerate(row):
-                    pdf.cell(col_widths[i], 7, str(item), border=1, align='C', fill=True)
-                pdf.ln()
+                
+                max_height = 8
+                current_y = pdf.get_y()
+                
+                # Print each cell with wrapped text
+                for i, (col_width, item) in enumerate(zip(col_widths, row)):
+                    pdf.set_xy(pdf.get_x(), current_y)
+                    
+                    # Convert item to string and limit length for long text
+                    item_str = str(item) if item is not None else ''
+                    
+                    # Use multi_cell for text wrapping but track height
+                    x = pdf.get_x()
+                    y = pdf.get_y()
+                    
+                    # For cells with long content, create a compact display
+                    if len(item_str) > 25:
+                        item_str = item_str[:25] + '...'
+                    
+                    pdf.cell(col_width, 8, item_str, border=1, align='L', fill=True)
+                
+                pdf.ln(8)
+        
         pdf.add_page()
+        
+        # Add logo at the top left
+        try:
+            pdf.image('static/images/pdfheader.jpg', x=10, y=10, w=50)
+            pdf.ln(20)  # Move down after logo
+        except:
+            pass  # Skip logo if not found
+        
         add_title_bar('Order Report')
-        # Optionally show date range if filtered
+        
+        # Show date range if filtered
         if start_date or end_date:
-            pdf.set_font('Arial', '', 10)
+            pdf.set_font('Arial', '', 9)
             pdf.set_text_color(0, 0, 0)
             date_range = "Date Range: "
             if start_date:
                 date_range += f"From {start_date} "
             if end_date:
                 date_range += f"To {end_date}"
-            pdf.cell(0, 7, date_range, ln=True, align='L')
+            pdf.cell(0, 6, date_range, ln=True, align='L')
             pdf.ln(2)
-        # Prepare DataFrame for table
-        df = df.copy()
-        # Optionally reorder columns for better layout
-        preferred_cols = [
-            'ORDER_ID', 'CUSTOMER_ID', 'CUSTOMER_NAME', 'ORDER_TYPE', 'PRIORITY',
-            'PAYMENT_STATUS', 'ORDER_STATUS', 'DATE_CREATED', 'DATE_UPDATED', 'TOTAL_LOAD', 'TOTAL_PRICE', 'PICKUP_SCHEDULE'
-        ]
-        df = df[[col for col in preferred_cols if col in df.columns] + [col for col in df.columns if col not in preferred_cols]]
-        add_table(df)
+        
+        # Format dataframe for display
+        df_display = df.copy()
+        
+        # Format date columns
+        for col in ['DATE_CREATED', 'DATE_UPDATED']:
+            if col in df_display.columns:
+                df_display[col] = df_display[col].apply(
+                    lambda x: x.strftime('%m/%d/%Y') if isinstance(x, (datetime, pd.Timestamp)) else str(x)
+                )
+        
+        # Truncate long strings
+        for col in df_display.columns:
+            if col in ['Detergent', 'Fabric Conditioner', 'Others', 'PICKUP_SCHEDULE']:
+                df_display[col] = df_display[col].apply(
+                    lambda x: (str(x)[:40] + '...') if len(str(x)) > 40 else str(x)
+                )
+        
+        add_table(df_display)
+        
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
         output.seek(0)
         return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
@@ -2084,6 +2178,325 @@ def download_inventory_report(format):
     else:
         return "Invalid format", 400
 
+@app.route('/customer_report')
+def customer_report():
+    # Check if admin is logged in
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    search_query = request.args.get('q', '').strip()
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    file_format = request.args.get('format')
+    customer_type = request.args.get('type', 'all')
+    
+    if file_format:
+        return redirect(url_for('download_customer_report', format=file_format, 
+                                type=customer_type, q=search_query, 
+                                date_from=date_from, date_to=date_to))
+    
+    # Get all customers with stats (batch)
+    customers = dbhelper.get_all_customers_with_order_stats()
+    
+    if search_query:
+        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
+                     search_query in str(c['CUSTOMER_ID']) or 
+                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
+    
+    # Apply date filtering
+    if date_from or date_to:
+        filtered_customers = []
+        for customer in customers:
+            include = True
+            if date_from and customer['DATE_CREATED']:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                if customer['DATE_CREATED'] < from_date:
+                    include = False
+            if date_to and customer['DATE_CREATED']:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                if customer['DATE_CREATED'] > to_date:
+                    include = False
+            if include:
+                filtered_customers.append(customer)
+        customers = filtered_customers
+    total_customers = len(customers)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    new_customers_list = [
+        c for c in customers
+        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
+    ]
+    
+    # Get daily customer counts and find the highest count for today/latest day
+    daily_counts = dbhelper.get_daily_customer_counts()
+    highest_daily_count = max(daily_counts.values()) if daily_counts else 0
+    
+    total_orders = sum(c.get('total_orders', 0) for c in customers)
+    # avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
+    # Get monthly growth from dbhelper
+    stats = dbhelper.get_customer_statistics()
+    monthly_growth = stats.get('monthly_growth', 0)
+
+    # PAGINATION LOGIC
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    total_items = len(customers)
+    total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
+    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_customers = customers[start_idx:end_idx]
+
+    return render_template('admin_customer_report.html', 
+                          transactions=paginated_customers,
+                          total_customers=total_customers,
+                          new_customers_count=highest_daily_count,
+                          total_orders=total_orders,
+                          customer_monthly_growth=monthly_growth,  # <-- changed variable name
+                          current_page=page,
+                          total_pages=total_pages,
+                          daily_customer_counts=daily_counts)
+
+@app.route('/download_customer_report/<format>')
+def download_customer_report(format):
+    # Check if user is admin
+    if 'user_id' not in session or session['role'] != 'admin':
+        return redirect(url_for('admin_login'))
+        
+    customer_type = request.args.get('type', 'all')
+    search_query = request.args.get('q', '').strip()
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    # Get all customers with stats (batch)
+    customers = dbhelper.get_all_customers_with_order_stats()
+    
+    # Apply search filter
+    if search_query:
+        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
+                     search_query in str(c['CUSTOMER_ID']) or 
+                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
+    
+    # Apply date filtering
+    if date_from or date_to:
+        filtered_customers = []
+        for customer in customers:
+            include = True
+            if date_from and customer['DATE_CREATED']:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                if customer['DATE_CREATED'] < from_date:
+                    include = False
+            if date_to and customer['DATE_CREATED']:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                if customer['DATE_CREATED'] > to_date:
+                    include = False
+            if include:
+                filtered_customers.append(customer)
+        customers = filtered_customers
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    new_customers_list = [
+        c for c in customers
+        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
+    ]
+    if customer_type == 'new':
+        customers_to_display = new_customers_list
+        filename = 'new_customer_report'
+        sheet_name = 'New Customers'
+    else:
+        customers_to_display = customers
+        filename = 'all_customer_report'
+        sheet_name = 'All Customers'
+    
+    if format == 'excel':
+        output = io.BytesIO()
+        
+        # Create DataFrame
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        
+        df = pd.DataFrame(data)
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            
+            # Add a header format
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'fg_color': '#122D69',
+                'font_color': 'white',
+                'border': 1
+            })
+            
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                
+            worksheet.set_column('A:A', 8)   # ID
+            worksheet.set_column('B:B', 20)  # Full Name
+            worksheet.set_column('C:C', 15)  # Phone Number
+            worksheet.set_column('D:D', 15)  # Date Created
+            worksheet.set_column('E:E', 10)  # Order ID
+            worksheet.set_column('F:F', 15)  # Status
+            worksheet.set_column('G:G', 15)  # Payment Status
+            
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
+    
+    elif format == 'pdf':
+        pdf = FPDF(orientation='L', unit='mm', format='legal')
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        def add_title_bar(title):
+            pdf.set_fill_color(18, 45, 105)  # #122D69
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_font('Arial', 'B', 16)
+            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
+            pdf.ln(2)
+
+        def add_table(df):
+            if df.empty:
+                pdf.set_text_color(200, 0, 0)
+                pdf.set_font('Arial', '', 10)
+                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                return
+                
+            pdf.set_font('Arial', 'B', 8)
+            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
+            pdf.set_text_color(35, 56, 114)    # #233872
+            
+            available_width = pdf.w - 2 * pdf.l_margin
+            columns = ['ID', 'Full Name', 'Phone Number', 'Date Created', 'Order ID', 'Status', 'Payment Status']
+            
+            col_widths = [
+                available_width * 0.10,  # ID
+                available_width * 0.20,  # Full Name
+                available_width * 0.15,  # Phone Number
+                available_width * 0.15,  # Date Created
+                available_width * 0.15,  # Order ID
+                available_width * 0.12,  # Status
+                available_width * 0.13   # Payment Status
+            ]
+            
+            # Header
+            for i, col in enumerate(columns):
+                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+            pdf.ln()
+            
+            pdf.set_font('Arial', '', 9)
+            for row_idx, customer in df.iterrows():
+                if row_idx % 2 == 0:
+                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
+                else:
+                    pdf.set_fill_color(255, 255, 255)  # white
+                pdf.set_text_color(0, 0, 0)
+                
+                date_created = customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A'
+                
+                pdf.cell(col_widths[0], 7, str(customer['CUSTOMER_ID']), border=1, align='C', fill=True)
+                pdf.cell(col_widths[1], 7, customer['FULLNAME'], border=1, align='C', fill=True)
+                pdf.cell(col_widths[2], 7, customer['PHONE_NUMBER'] or 'N/A', border=1, align='C', fill=True)
+                pdf.cell(col_widths[3], 7, date_created, border=1, align='C', fill=True)
+                pdf.cell(col_widths[4], 7, str(customer.get('ORDER_ID', 'N/A')), border=1, align='C', fill=True)
+                pdf.cell(col_widths[5], 7, customer.get('ORDER_STATUS', 'N/A'), border=1, align='C', fill=True)
+                pdf.cell(col_widths[6], 7, customer.get('PAYMENT_STATUS', 'N/A'), border=1, align='C', fill=True)
+                pdf.ln()
+
+        # Create DataFrame
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        df = pd.DataFrame(data)
+        
+        pdf.add_page()
+        
+        # Add logo at the top left
+        try:
+            pdf.image('static/images/pdfheader.jpg', x=10, y=10, w=50)
+            pdf.ln(20)  # Move down after logo
+        except:
+            pass  # Skip logo if not found
+        
+        add_title_bar(f"{sheet_name} Report")
+        
+        if date_from or date_to:
+            pdf.set_font('Arial', '', 10)
+            pdf.set_text_color(0, 0, 0)
+            date_range = "Date Range: "
+            if date_from:
+                date_range += f"From {date_from} "
+            if date_to:
+                date_range += f"To {date_to}"
+            pdf.cell(0, 7, date_range, ln=True, align='L')
+            pdf.ln(2)
+        
+        add_table(df)
+        
+        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
+        output.seek(0)
+        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
+    
+    elif format == 'csv':
+        output = io.StringIO()
+        
+        data = []
+        for customer in customers_to_display:
+            data.append({
+                'ID': customer['CUSTOMER_ID'],
+                'Full Name': customer['FULLNAME'],
+                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Order ID': customer.get('ORDER_ID', 'N/A'),
+                'Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+            })
+        
+        df = pd.DataFrame(data)
+        df.to_csv(output, index=False)
+        
+        response_data = output.getvalue()
+        output.close()
+        
+        return Response(
+            response_data,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment;filename={filename}.csv"}
+        )
+    else:
+        return "Invalid format", 400
+
 @app.route('/download_inventory_sales_report/<format>')
 def download_inventory_sales_report(format):
     """Download inventory consumption report (consumed detergents and fabric conditioners) as Excel, CSV, or PDF."""
@@ -2376,312 +2789,6 @@ def download_inventory_sales_report(format):
         output.seek(0)
         return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
     
-    else:
-        return "Invalid format", 400
-
-@app.route('/customer_report')
-def customer_report():
-    # Check if admin is logged in
-    if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('admin_login'))
-    
-    search_query = request.args.get('q', '').strip()
-    date_from = request.args.get('date_from')
-    date_to = request.args.get('date_to')
-    file_format = request.args.get('format')
-    customer_type = request.args.get('type', 'all')
-    
-    if file_format:
-        return redirect(url_for('download_customer_report', format=file_format, 
-                                type=customer_type, q=search_query, 
-                                date_from=date_from, date_to=date_to))
-    
-    # Get all customers with stats (batch)
-    customers = dbhelper.get_all_customers_with_order_stats()
-    
-    if search_query:
-        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
-                     search_query in str(c['CUSTOMER_ID']) or 
-                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
-    
-    # Apply date filtering
-    if date_from or date_to:
-        filtered_customers = []
-        for customer in customers:
-            include = True
-            if date_from and customer['DATE_CREATED']:
-                from_date = datetime.strptime(date_from, '%Y-%m-%d')
-                if customer['DATE_CREATED'] < from_date:
-                    include = False
-            if date_to and customer['DATE_CREATED']:
-                to_date = datetime.strptime(date_to, '%Y-%m-%d')
-                to_date = to_date.replace(hour=23, minute=59, second=59)
-                if customer['DATE_CREATED'] > to_date:
-                    include = False
-            if include:
-                filtered_customers.append(customer)
-        customers = filtered_customers
-    total_customers = len(customers)
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-    def make_naive(dt):
-        if dt is None:
-            return None
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-            return dt.replace(tzinfo=None)
-        return dt
-    new_customers_list = [
-        c for c in customers
-        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
-    ]
-    new_customers = len(new_customers_list)
-    total_orders = sum(c.get('total_orders', 0) for c in customers)
-    # avg_orders = round(total_orders / total_customers, 2) if total_customers > 0 else 0
-    # Get monthly growth from dbhelper
-    stats = dbhelper.get_customer_statistics()
-    monthly_growth = stats.get('monthly_growth', 0)
-
-    # PAGINATION LOGIC
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    total_items = len(customers)
-    total_pages = (total_items + per_page - 1) // per_page if total_items > 0 else 1
-    page = max(1, min(page, total_pages)) if total_pages > 0 else 1
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    paginated_customers = customers[start_idx:end_idx]
-
-    return render_template('admin_customer_report.html', 
-                          transactions=paginated_customers,
-                          total_customers=total_customers,
-                          new_customers_count=new_customers,
-                          total_orders=total_orders,
-                          customer_monthly_growth=monthly_growth,  # <-- changed variable name
-                          current_page=page,
-                          total_pages=total_pages)
-
-@app.route('/download_customer_report/<format>')
-def download_customer_report(format):
-    # Check if user is admin
-    if 'user_id' not in session or session['role'] != 'admin':
-        return redirect(url_for('admin_login'))
-        
-    customer_type = request.args.get('type', 'all')
-    search_query = request.args.get('q', '').strip()
-    date_from = request.args.get('date_from')
-    date_to = request.args.get('date_to')
-    
-    # Get all customers with stats (batch)
-    customers = dbhelper.get_all_customers_with_order_stats()
-    
-    # Apply search filter
-    if search_query:
-        customers = [c for c in customers if search_query.lower() in c['FULLNAME'].lower() or 
-                     search_query in str(c['CUSTOMER_ID']) or 
-                     (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
-    
-    # Apply date filtering
-    if date_from or date_to:
-        filtered_customers = []
-        for customer in customers:
-            include = True
-            if date_from and customer['DATE_CREATED']:
-                from_date = datetime.strptime(date_from, '%Y-%m-%d')
-                if customer['DATE_CREATED'] < from_date:
-                    include = False
-            if date_to and customer['DATE_CREATED']:
-                to_date = datetime.strptime(date_to, '%Y-%m-%d')
-                to_date = to_date.replace(hour=23, minute=59, second=59)
-                if customer['DATE_CREATED'] > to_date:
-                    include = False
-            if include:
-                filtered_customers.append(customer)
-        customers = filtered_customers
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-    def make_naive(dt):
-        if dt is None:
-            return None
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-            return dt.replace(tzinfo=None)
-        return dt
-    new_customers_list = [
-        c for c in customers
-        if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
-    ]
-    if customer_type == 'new':
-        customers_to_display = new_customers_list
-        filename = 'new_customer_report'
-        sheet_name = 'New Customers'
-    else:
-        customers_to_display = customers
-        filename = 'all_customer_report'
-        sheet_name = 'All Customers'
-    
-    if format == 'excel':
-        output = io.BytesIO()
-        
-        # Create DataFrame
-        data = []
-        for customer in customers_to_display:
-            data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
-                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
-                'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
-            })
-        
-        df = pd.DataFrame(data)
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-            
-            workbook = writer.book
-            worksheet = writer.sheets[sheet_name]
-            
-            # Add a header format
-            header_format = workbook.add_format({
-                'bold': True,
-                'text_wrap': True,
-                'valign': 'top',
-                'fg_color': '#122D69',
-                'font_color': 'white',
-                'border': 1
-            })
-            
-            for col_num, value in enumerate(df.columns.values):
-                worksheet.write(0, col_num, value, header_format)
-                
-            worksheet.set_column('A:A', 8)   # ID
-            worksheet.set_column('B:B', 20)  # Full Name
-            worksheet.set_column('C:C', 15)  # Phone Number
-            worksheet.set_column('D:D', 15)  # Date Created
-            worksheet.set_column('E:E', 10)  # Order ID
-            worksheet.set_column('F:F', 15)  # Status
-            worksheet.set_column('G:G', 15)  # Payment Status
-            
-        output.seek(0)
-        return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
-    
-    elif format == 'pdf':
-        pdf = FPDF(orientation='L', unit='mm', format='legal')
-        pdf.set_auto_page_break(auto=True, margin=15)
-        
-        def add_title_bar(title):
-            pdf.set_fill_color(18, 45, 105)  # #122D69
-            pdf.set_text_color(255, 255, 255)
-            pdf.set_font('Arial', 'B', 16)
-            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
-            pdf.ln(2)
-
-        def add_table(df):
-            if df.empty:
-                pdf.set_text_color(200, 0, 0)
-                pdf.set_font('Arial', '', 10)
-                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
-                return
-                
-            pdf.set_font('Arial', 'B', 8)
-            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
-            pdf.set_text_color(35, 56, 114)    # #233872
-            
-            available_width = pdf.w - 2 * pdf.l_margin
-            columns = ['ID', 'Full Name', 'Phone Number', 'Date Created', 'Order ID', 'Status', 'Payment Status']
-            
-            col_widths = [
-                available_width * 0.10,  # ID
-                available_width * 0.20,  # Full Name
-                available_width * 0.15,  # Phone Number
-                available_width * 0.15,  # Date Created
-                available_width * 0.15,  # Order ID
-                available_width * 0.12,  # Status
-                available_width * 0.13   # Payment Status
-            ]
-            
-            # Header
-            for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
-            pdf.ln()
-            
-            pdf.set_font('Arial', '', 9)
-            for row_idx, customer in df.iterrows():
-                if row_idx % 2 == 0:
-                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
-                else:
-                    pdf.set_fill_color(255, 255, 255)  # white
-                pdf.set_text_color(0, 0, 0)
-                
-                date_created = customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A'
-                
-                pdf.cell(col_widths[0], 7, str(customer['CUSTOMER_ID']), border=1, align='C', fill=True)
-                pdf.cell(col_widths[1], 7, customer['FULLNAME'], border=1, align='C', fill=True)
-                pdf.cell(col_widths[2], 7, customer['PHONE_NUMBER'] or 'N/A', border=1, align='C', fill=True)
-                pdf.cell(col_widths[3], 7, date_created, border=1, align='C', fill=True)
-                pdf.cell(col_widths[4], 7, str(customer.get('ORDER_ID', 'N/A')), border=1, align='C', fill=True)
-                pdf.cell(col_widths[5], 7, customer.get('ORDER_STATUS', 'N/A'), border=1, align='C', fill=True)
-                pdf.cell(col_widths[6], 7, customer.get('PAYMENT_STATUS', 'N/A'), border=1, align='C', fill=True)
-                pdf.ln()
-
-        # Create DataFrame
-        data = []
-        for customer in customers_to_display:
-            data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
-                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
-                'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
-            })
-        df = pd.DataFrame(data)
-        
-        pdf.add_page()
-        add_title_bar(f"{sheet_name} Report")
-        
-        if date_from or date_to:
-            pdf.set_font('Arial', '', 10)
-            pdf.set_text_color(0, 0, 0)
-            date_range = "Date Range: "
-            if date_from:
-                date_range += f"From {date_from} "
-            if date_to:
-                date_range += f"To {date_to}"
-            pdf.cell(0, 7, date_range, ln=True, align='L')
-            pdf.ln(2)
-        
-        add_table(df)
-        
-        output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
-        output.seek(0)
-        return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
-    
-    elif format == 'csv':
-        output = io.StringIO()
-        
-        data = []
-        for customer in customers_to_display:
-            data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
-                'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
-                'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
-            })
-        
-        df = pd.DataFrame(data)
-        df.to_csv(output, index=False)
-        
-        response_data = output.getvalue()
-        output.close()
-        
-        return Response(
-            response_data,
-            mimetype="text/csv",
-            headers={"Content-Disposition": f"attachment;filename={filename}.csv"}
-        )
     else:
         return "Invalid format", 400
 
@@ -3512,22 +3619,39 @@ def download_income_statement(format):
 
 # Store latest weight in a global variable
 latest_weight = 0.0
+weight_is_stable = False
+previous_weight = None
+stable_count = 0
 
 @app.route('/api/weight', methods=['POST'])
 def api_weight():
-    global latest_weight
+    global latest_weight, weight_is_stable, previous_weight, stable_count
     data = request.get_json()
     try:
         # Weight is now sent in kilograms from ESP32
-        latest_weight = float(data.get('weight', 0.0))
+        new_weight = float(data.get('weight', 0.0))
+        
+        # Check if weight is stable (within 0.1 kg tolerance)
+        if previous_weight is not None and abs(new_weight - previous_weight) < 0.1:
+            stable_count += 1
+            weight_is_stable = stable_count >= 3  # Stable after 3 consecutive reads within tolerance
+        else:
+            stable_count = 0
+            weight_is_stable = False
+        
+        latest_weight = new_weight
+        previous_weight = new_weight
     except Exception:
         latest_weight = 0.0
+        weight_is_stable = False
+        previous_weight = None
+        stable_count = 0
     return jsonify({"status": "ok"})
 
 @app.route('/get_latest_weight')
 def get_latest_weight():
-    global latest_weight
-    return jsonify({"weight": latest_weight})
+    global latest_weight, weight_is_stable
+    return jsonify({"weight": latest_weight, "is_stable": weight_is_stable})
 
 # Track if weight page is active
 weight_page_active = False

@@ -175,18 +175,19 @@
                         <thead>
                             <tr>
                                 <th>Order ID</th>
-                                <th>Customer ID</th>
+                                <th>Customer Name</th>
                                 <th>Order Type</th>
                                 <th>Order Status</th>
                                 <th>Payment Status</th>
                                 <th>Total Price</th>
                                 <th>Total Load</th>
                                 <th>Total Weight</th>
-                                <th>Order Note</th>
+                                <th>Detergent</th>
+                                <th>Fabric Conditioner</th>
+                                <th>Others</th>
                                 <th>Pickup Schedule</th>
                                 <th>Date Created</th>
                                 <th>Date Updated</th>
-                                <th>Order Item</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -194,7 +195,7 @@
         {% for order in paginated_orders %}
         <tr>
             <td>{{ order.ORDER_ID }}</td>
-            <td>{{ order.CUSTOMER_ID }}</td>
+            <td>{{ order.CUSTOMER_NAME }}</td>
             <td>{{ order.ORDER_TYPE }}</td>
             <td>
                 <span class="badge-table 
@@ -214,8 +215,51 @@
             <td>{{ order.TOTAL_LOAD }}</td>
             <td>{{ order.TOTAL_WEIGHT }}</td>
             <td>
-                {% if order.ORDER_NOTE %}
-                    {{ order.ORDER_NOTE }}
+                {% set orderitem = order.get('orderitem_data') %}
+                {% if orderitem %}
+                    {% set detergents = orderitem.get('detergents', []) %}
+                    {% if detergents and detergents|length > 0 %}
+                        {% for det in detergents %}
+                            {{ det.DETERGENT_NAME }} (x{{ det.QUANTITY }})<br>
+                        {% endfor %}
+                    {% elif orderitem.get('CUSTOMER_OWN_DETERGENT') %}
+                        Own
+                    {% else %}
+                        N/A
+                    {% endif %}
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>
+                {% set orderitem = order.get('orderitem_data') %}
+                {% if orderitem %}
+                    {% set fabcons = orderitem.get('fabcons', []) %}
+                    {% if fabcons and fabcons|length > 0 %}
+                        {% for fc in fabcons %}
+                            {{ fc.FABCON_NAME }} (x{{ fc.QUANTITY }})<br>
+                        {% endfor %}
+                    {% elif orderitem.get('CUSTOMER_OWN_FABCON') %}
+                        Own
+                    {% else %}
+                        N/A
+                    {% endif %}
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>
+                {% set orderitem = order.get('orderitem_data') %}
+                {% if orderitem %}
+                    {% set services = [] %}
+                    {% if orderitem.get('IRON') %}{% set _ = services.append('Iron') %}{% endif %}
+                    {% if orderitem.get('FOLD_CLOTHES') %}{% set _ = services.append('Fold') %}{% endif %}
+                    {% if orderitem.get('PRIORITIZE_ORDER') %}{% set _ = services.append('Priority') %}{% endif %}
+                    {% if services %}
+                        {{ services|join(', ') }}
+                    {% else %}
+                        None
+                    {% endif %}
                 {% else %}
                     N/A
                 {% endif %}
@@ -241,28 +285,20 @@
                     N/A
                 {% endif %}
             </td>
-            <td>
-                {% set orderitem = order.get('orderitem_data') %}
-                {% if orderitem %}
-                    ID: {{ orderitem['ORDERITEM_ID'] }}<br>
-                    Own Detergent: {{ 'Yes' if orderitem['CUSTOMER_OWN_DETERGENT'] else 'No' }}<br>
-                    Own Fabcon: {{ 'Yes' if orderitem['CUSTOMER_OWN_FABCON'] else 'No' }}<br>
-                    Iron: {{ 'Yes' if orderitem['IRON'] else 'No' }}<br>
-                    Fold: {{ 'Yes' if orderitem['FOLD_CLOTHES'] else 'No' }}<br>
-                    Priority: {{ 'Yes' if orderitem['PRIORITIZE_ORDER'] else 'No' }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
         </tr>
         {% endfor %}
     {% else %}
         <tr>
-            <td colspan="13" style="text-align: center; padding: 20px;">No orders found</td>
+            <td colspan="14" style="text-align: center; padding: 20px;">No orders found</td>
         </tr>
     {% endif %}
                         </tbody>
                     </table>
+                    <div style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                        <div style="font-weight: 600; font-size: 1.1rem;">
+                            Total Price for Page: <span style="color: #233872;">₱{{ "%.2f"|format(paginated_orders|map(attribute='TOTAL_PRICE')|map('float')|sum) }}</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pagination">
