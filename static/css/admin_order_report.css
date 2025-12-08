@@ -726,3 +726,28 @@ main {
     background: #fee2e2;
     color: #dc2626;
 }
+
+/* Total Price Summary */
+.total-price-summary {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 24px;
+    background: #f0f4f8;
+    border-top: 2px solid #e6ecff;
+    gap: 16px;
+    border-radius: 0 0 10px 10px;
+    margin: -8px 12px 8px 12px;
+}
+
+.total-price-label {
+    font-weight: 600;
+    color: #233872;
+    font-size: 1rem;
+}
+
+.total-price-value {
+    font-weight: 700;
+    color: #22c55e;
+    font-size: 1.2rem;
+}
