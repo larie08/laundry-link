@@ -568,9 +568,22 @@ def dashboard():
     
     # Calculate statistics
     total_orders = len(orders_with_details)
-    self_service_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'self-service'])
-    drop_off_count = len([o for o in orders_with_details if o.get('ORDER_TYPE', '').lower() == 'drop-off'])
-    
+    # Only count today's self-service and drop-off orders
+    today = datetime.now().date()
+    self_service_count = len([
+        o for o in orders_with_details
+        if o.get('ORDER_TYPE', '').lower() == 'self-service'
+        and o.get('DATE_CREATED') and (
+            o.get('DATE_CREATED').date() if hasattr(o.get('DATE_CREATED'), 'date') else o.get('DATE_CREATED')
+        ) == today
+    ])
+    drop_off_count = len([
+        o for o in orders_with_details
+        if o.get('ORDER_TYPE', '').lower() == 'drop-off'
+        and o.get('DATE_CREATED') and (
+            o.get('DATE_CREATED').date() if hasattr(o.get('DATE_CREATED'), 'date') else o.get('DATE_CREATED')
+        ) == today
+    ])
     pending_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pending'])
     pickup_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'pickup'])
     completed_count = len([o for o in orders_with_details if (o.get('ORDER_STATUS') or '').lower() == 'completed'])
@@ -1266,125 +1279,35 @@ def admin_order_report():
         else:
             order['orderitem_data'] = {'detergents': [], 'fabcons': []}
     
-    # === SALES REPORT SECTION (Completed Orders Only) ===
-    now = datetime.now()
-    
-    # Calculate date range for sales report based on view
-    if sales_view == 'daily':
-        if sales_date:
-            try:
-                selected_dt = datetime.strptime(sales_date, '%Y-%m-%d')
-                sales_start = selected_dt.replace(hour=0, minute=0, second=0)
-                sales_end = selected_dt.replace(hour=23, minute=59, second=59)
-                sales_period_label = f"Date: {selected_dt.strftime('%B %d, %Y')}"
-            except:
-                sales_start = now.replace(hour=0, minute=0, second=0)
-                sales_end = now.replace(hour=23, minute=59, second=59)
-                sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-                sales_date = now.strftime('%Y-%m-%d')
-        else:
-            sales_start = now.replace(hour=0, minute=0, second=0)
-            sales_end = now.replace(hour=23, minute=59, second=59)
-            sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-            sales_date = now.strftime('%Y-%m-%d')
-    elif sales_view == 'weekly':
-        sales_start = now - timedelta(days=7)
-        sales_end = now
-        sales_period_label = f"Week of {sales_start.strftime('%B %d')} - {now.strftime('%B %d, %Y')}"
-    elif sales_view == 'monthly':
-        if sales_month:
-            try:
-                year, month = map(int, sales_month.split('-'))
-                sales_start = datetime(year, month, 1)
-                if month == 12:
-                    sales_end = datetime(year + 1, 1, 1) - timedelta(days=1)
-                else:
-                    sales_end = datetime(year, month + 1, 1) - timedelta(days=1)
-                sales_end = sales_end.replace(hour=23, minute=59, second=59)
-                sales_period_label = f"Month of {sales_start.strftime('%B %Y')}"
-            except:
-                sales_start = now.replace(day=1)
-                sales_end = now
-                sales_period_label = f"Month of {now.strftime('%B %Y')}"
-        else:
-            sales_start = now.replace(day=1)
-            sales_end = now
-            sales_period_label = f"Month of {now.strftime('%B %Y')}"
-    elif sales_view == 'yearly':
-        sales_start = now.replace(month=1, day=1)
-        sales_end = now
-        sales_period_label = f"Year {now.year}"
-    else:
-        sales_start = now.replace(hour=0, minute=0, second=0)
-        sales_end = now.replace(hour=23, minute=59, second=59)
-        sales_period_label = f"Today: {now.strftime('%B %d, %Y')}"
-    
-    # Get customers for lookup
-    customers = dbhelper.get_all_customers()
-    customer_lookup = {c['CUSTOMER_ID']: c for c in customers}
-    
-    # Filter completed orders for sales report
-    sales_completed_orders = []
-    for order in all_orders:
+    # --- Add this block: prepare data for sales report section ---
+    # Sales report data (completed orders only)
+    sales_report_data = []
+    for order in filtered_orders:
         order_status = (order.get('ORDER_STATUS') or '').lower()
-        if order_status != 'completed':
-            continue
-        
-        order_date = order.get('DATE_CREATED')
-        if order_date:
-            if hasattr(order_date, 'replace'):
-                order_datetime = order_date
-            else:
-                continue
-            
-            # Make naive for comparison
-            if hasattr(order_datetime, 'tzinfo') and order_datetime.tzinfo:
-                order_datetime = order_datetime.replace(tzinfo=None)
-            
-            if sales_view == 'daily' or (sales_view == 'monthly' and sales_month):
-                in_range = sales_start <= order_datetime <= sales_end
-            else:
-                in_range = order_datetime.date() >= sales_start.date()
-            
-            if in_range:
-                cust_id = order.get('CUSTOMER_ID')
-                customer_info = customer_lookup.get(cust_id, {})
-                revenue = float(order.get('TOTAL_PRICE', 0) or 0)
-                sales_completed_orders.append({
-                    'ORDER_ID': order.get('ORDER_ID'),
-                    'CUSTOMER_NAME': customer_info.get('FULLNAME', 'N/A'),
-                    'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
-                    'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
-                    'Revenue': revenue,
-                    'COGS': revenue * 0.3,
-                    'Net': revenue * 0.7
-                })
+        if order_status == 'completed':
+            revenue = float(order.get('TOTAL_PRICE', 0) or 0)
+            sales_report_data.append({
+                'ORDER_ID': order.get('ORDER_ID'),
+                'CUSTOMER_NAME': order.get('CUSTOMER_NAME'),
+                'PHONE_NUMBER': order.get('PHONE_NUMBER'),
+                'ORDER_TYPE': order.get('ORDER_TYPE'),
+                'REVENUE': revenue,
+                'COGS': revenue * 0.3,
+                'NET': revenue * 0.7
+            })
     
-    # Calculate sales totals
-    sales_total_orders = len(sales_completed_orders)
-    sales_total_revenue = sum(o['Revenue'] for o in sales_completed_orders)
-    sales_total_cogs = sum(o['COGS'] for o in sales_completed_orders)
-    sales_total_net = sum(o['Net'] for o in sales_completed_orders)
+    sales_report_df = pd.DataFrame(sales_report_data)
+    # --- End of sales report data block ---
 
-    return render_template('admin_order_report.html',
-                           paginated_orders=paginated_orders,
-                           total_orders=total_orders,
-                           total_revenue=round(total_revenue, 2),
-                           pending_count=len(pending_orders),
-                           completed_count=len(completed_orders),
-                           page=page,
-                           total_pages=total_pages,
-                           dbhelper=dbhelper,
-                           # Sales report data
-                           sales_view=sales_view,
-                           sales_date=sales_date,
-                           sales_month=sales_month,
-                           sales_period_label=sales_period_label,
-                           sales_completed_orders=sales_completed_orders,
-                           sales_total_orders=sales_total_orders,
-                           sales_total_revenue=sales_total_revenue,
-                           sales_total_cogs=sales_total_cogs,
-                           sales_total_net=sales_total_net
+    # BASED ON ROLE
+    template_name = 'admin_order_report.html' if session['role'] == 'admin' else 'staff_order_report.html'
+    return render_template(template_name, 
+                         orders=paginated_orders, 
+                         stats=stats,
+                         current_page=page,
+                         total_pages=total_pages,
+                         total_orders=total_orders,
+                         sales_report_df=sales_report_df  # Pass sales report DataFrame to template
     )
 
 # INVENTORY REPORT
@@ -1404,6 +1327,83 @@ def inventory_report():
     # Get consumed inventory data
     consumed_detergents_all = dbhelper.get_consumed_detergents_report()
     consumed_fabcons_all = dbhelper.get_consumed_fabcons_report()
+    
+    # Get master inventory data for low stock items
+    all_detergents = dbhelper.get_all_detergents()
+    all_fabric_conditioners = dbhelper.get_all_fabric_conditioners()
+    
+    # Helper function to convert date for sorting
+    def get_sort_date(item):
+        date_val = item.get('DATE_CREATED')
+        if date_val is None:
+            return datetime.min
+        if isinstance(date_val, datetime):
+            return date_val
+        if isinstance(date_val, str):
+            try:
+                return datetime.fromisoformat(date_val)
+            except:
+                try:
+                    return datetime.strptime(date_val, '%Y-%m-%d %H:%M:%S')
+                except:
+                    return datetime.min
+        return datetime.min
+    
+    # Sort by DATE_CREATED (ascending - oldest first, newest last)
+    consumed_detergents_all = sorted(consumed_detergents_all, 
+                                     key=get_sort_date, 
+                                     reverse=False)
+    consumed_fabcons_all = sorted(consumed_fabcons_all, 
+                                 key=get_sort_date, 
+                                 reverse=False)
+    
+    # Initialize filtered data
+    detergents = []
+    fabric_conditioners = []
+    
+    # Get filtered data based on inventory type and search query
+    if inv_type == 'detergent':
+        if search_query:
+            # Filter consumed detergents by name or ID
+            search_lower = search_query.lower()
+            detergents = [d for d in consumed_detergents_all 
+                         if search_lower in d.get('DETERGENT_NAME', '').lower() 
+                         or search_lower in str(d.get('DETERGENT_ID', ''))]
+        else:
+            detergents = consumed_detergents_all.copy()
+        fabric_conditioners = []
+    elif inv_type == 'fabcon':
+        if search_query:
+            # Filter consumed fabric conditioners by name or ID
+            search_lower = search_query.lower()
+            fabric_conditioners = [f for f in consumed_fabcons_all 
+                                  if search_lower in f.get('FABCON_NAME', '').lower() 
+                                  or search_lower in str(f.get('FABCON_ID', ''))]
+        else:
+            fabric_conditioners = consumed_fabcons_all.copy()
+        detergents = []
+    
+    # Sort filtered data by DATE_CREATED (ascending - oldest first, newest last)
+    detergents = sorted(detergents, key=get_sort_date, reverse=False)
+    fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
+    
+    # Apply period filtering if period is provided
+    if period:
+        from datetime import date, timedelta
+        today = date.today()
+        start_date_obj = None
+        end_date_obj = None
+        
+        if period == 'daily':
+            start_date_obj = datetime.combine(today, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'weekly':
+            start_of_week = today - timedelta(days=today.weekday())
+            start_date_obj = datetime.combine(start_of_week, datetime.min.time())
+            end_date_obj = datetime.combine(today, datetime.max.time())
+        elif period == 'monthly':
+            start_of_month = date(today.year, today.month, 1)
+            start_date_obj = datetime.combine
     
     # Get master inventory data for low stock items
     all_detergents = dbhelper.get_all_detergents()
