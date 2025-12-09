@@ -1731,7 +1731,6 @@ input[type="number"] {
     font-size: 18px;
   }
 
-  /* Modal overlays - ensure full coverage */
   #paymentModal,
   .qr-modal,
   #gcashModal,
@@ -1750,7 +1749,6 @@ input[type="number"] {
   }
 }
 
-/* Mobile Devices (up to 480px) */
 @media only screen and (max-width: 480px) {
   .v100_1 {
     transform: scale(0.7);
@@ -1762,7 +1760,6 @@ input[type="number"] {
   }
 }
 
-/* Small Mobile to Small Tablet (481px - 799px) */
 @media only screen and (min-width: 481px) and (max-width: 799px) {
   .v100_1 {
     transform: scale(0.9);
@@ -1774,7 +1771,6 @@ input[type="number"] {
   }
 }
 
-/* Desktop (1201px - 1439px) */
 @media only screen and (min-width: 1201px) and (max-width: 1439px) {
   .v100_1 {
     transform: scale(1.05);
@@ -1782,7 +1778,6 @@ input[type="number"] {
   }
 }
 
-/* Large Desktop (1440px and above) */
 @media only screen and (min-width: 1440px) {
   .v100_1 {
     transform: scale(1);
