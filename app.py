@@ -602,6 +602,12 @@ def dashboard():
             if order_date.month == current_month and order_date.year == current_year:
                 monthly_earnings += order_price
 
+    # Build datasets for charts (order status/type counts + short-term trend)
+    order_stats = dbhelper.compute_order_stats(orders_with_details, days=7)
+    order_status_counts = order_stats.get('status_counts', {})
+    order_type_counts = order_stats.get('type_counts', {})
+    order_trend = order_stats.get('trend', {'labels': [], 'counts': []})
+
     # BASED ON ROLE
     template_name = 'admin_dashboard.html' if session['role'] == 'admin' else 'staff_dashboard.html'
 
@@ -617,7 +623,10 @@ def dashboard():
         pickup_count=pickup_count,
         completed_count=completed_count,
         todays_sales=todays_sales,
-        monthly_earnings=monthly_earnings
+        monthly_earnings=monthly_earnings,
+        order_status_counts=order_status_counts,
+        order_type_counts=order_type_counts,
+        order_trend=order_trend
     )
 
 # ADMIN AND STAFF

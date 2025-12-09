@@ -8,6 +8,7 @@
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Dashboard</title>
 </head>
 <body>
@@ -141,141 +142,48 @@
                         </div>
                     </div>
 
-                    <!-- MAIN CONTENT GRID -->
-                    <div class="dashboard-grid">
-                        <!-- LIST OF ORDERS -->
+                    <!-- MAIN CONTENT -->
+                    <div class="dashboard-row full-row">
+                        <!-- ORDERS STATISTICS -->
                         <div class="dashboard-card">
                             <div class="card-header">
-                                <h3><i class="fas fa-clock"></i> List of Orders</h3>
+                                <h3><i class="fas fa-chart-bar"></i> Orders Statistics</h3>
                                 <div class="order-stats">
                                     <span class="order-count">{{ total_orders }}</span>
                                     <span class="order-label">Total Orders</span>
                                 </div>
                             </div>
                             <div class="card-content">
-                                <div class="orders-overview">
-                                    <div class="order-summary">
-                                        <div class="summary-item">
-                                            <div class="summary-icon pending-icon">
-                                                <i class="fas fa-clock"></i>
-                                            </div>
-                                            <div class="summary-details">
-                                                <span class="summary-number">{{ pending_count }}</span>
-                                                <span class="summary-label">Pending</span>
-                                            </div>
-                                        </div>
-                                        <div class="summary-item">
-                                            <div class="summary-icon pick-up-icon">
-                                                <i class="fas fa-cog"></i>
-                                            </div>
-                                            <div class="summary-details">
-                                                <span class="summary-number">{{ pickup_count }}</span>
-                                                <span class="summary-label">Pick-up</span>
-                                            </div>
-                                        </div>
-                                        <div class="summary-item">
-                                            <div class="summary-icon completed-icon">
-                                                <i class="fas fa-check-circle"></i>
-                                            </div>
-                                            <div class="summary-details">
-                                                <span class="summary-number">{{ completed_count }}</span>
-                                                <span class="summary-label">Completed</span>
-                                            </div>
-                                        </div>
+                                <div class="orders-stats-list">
+                                    <div class="stat-line">
+                                        <span class="stat-label">Pending</span>
+                                        <strong class="stat-value">{{ pending_count }}</strong>
                                     </div>
-                                    
-                                    <!-- SELF-SERVICE BUTTON -->
-                                    <div class="self-service-section">
-                                        <button class="self-service-btn" id="toggleOrdersBtn" onclick="toggleOrders()">
-                                            <i class="fas fa-user-cog"></i>
-                                            <span id="toggleOrdersBtnText">Self-Service Orders</span>
-                                            <i class="fas fa-arrow-right"></i>
-                                        </button>
+                                    <div class="stat-line">
+                                        <span class="stat-label">Pick-up</span>
+                                        <strong class="stat-value">{{ pickup_count }}</strong>
                                     </div>
-                                    
-                                    <!-- ORDERS DISPLAY -->
-                                    <div class="orders-toggle-container">
-                                        <div class="priority-orders-section" id="priorityOrdersSection">
-                                            <h4 class="section-subtitle">Priority Orders</h4>
-
-                                            <div class="order-cards">
-                                                {% if priority_orders %}
-                                                    {% for order in priority_orders %}
-                                                    {% set order_status_lower = (order.ORDER_STATUS or '').lower().replace('-', '').replace('_', '') %}
-                                                    {% set status_class = 'pending' if order_status_lower == 'pending' else ('pick-up' if 'pickup' in order_status_lower or 'pick' in order_status_lower else 'completed') %}
-                                                    {% set order_type_lower = (order.ORDER_TYPE or '').lower() %}
-                                                    <div class="order-card {{ status_class }}">
-                                                        <div class="order-card-header">
-                                                            <div class="order-id">ORD-{{ "%03d" % order.ORDER_ID }}</div>
-                                                            <div class="order-time">{{ order.TIME_FORMATTED or 'N/A' }}</div>
-                                                        </div>
-                                                        <div class="order-card-body">
-                                                            <div class="customer-info">
-                                                                <div class="customer-avatar">
-                                                                    <i class="fas fa-user"></i>
-                                                                </div>
-                                                                <div class="customer-details">
-                                                                    <span class="customer-name">{{ order.CUSTOMER_NAME or 'N/A' }}</span>
-                                                                    <span class="order-type-badge {{ 'self-service' if order_type_lower == 'self-service' else 'drop-off' }}">{{ order.ORDER_TYPE or 'N/A' }}</span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="order-details">
-                                                                <div class="order-items">
-                                                                    <span class="load-count">{{ order.TOTAL_LOAD or 0 }} load{% if (order.TOTAL_LOAD or 0) != 1 %}s{% endif %}</span>
-                                                                    <span class="order-value">₱{{ '%.2f'|format(order.TOTAL_PRICE or 0) }}</span>
-                                                                </div>
-                                                                <div class="order-status-badge {{ status_class }}">{{ order.ORDER_STATUS or 'N/A' }}</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {% endfor %}
-                                                {% else %}
-                                                    <div style="text-align: center; padding: 20px; color: #6c757d;">
-                                                        <p>No priority orders available</p>
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="self-service-orders-section" id="selfServiceOrdersSection" style="display:none;">
-                                            <h4 class="section-subtitle">Self-Service Orders</h4>
-                                            <div class="order-cards">
-                                                {% if self_service_orders %}
-                                                    {% for order in self_service_orders %}
-                                                    {% set order_status_lower = (order.ORDER_STATUS or '').lower().replace('-', '').replace('_', '') %}
-                                                    {% set status_class = 'pending' if order_status_lower == 'pending' else ('pick-up' if 'pickup' in order_status_lower or 'pick' in order_status_lower else 'completed') %}
-                                                    {% set order_type_lower = (order.ORDER_TYPE or '').lower() %}
-                                                    <div class="order-card {{ status_class }}">
-                                                        <div class="order-card-header">
-                                                            <div class="order-id">#ORD-{{ "%03d" % order.ORDER_ID }}</div>
-                                                            <div class="order-time">{{ order.TIME_FORMATTED or 'N/A' }}</div>
-                                                        </div>
-                                                        <div class="order-card-body">
-                                                            <div class="customer-info">
-                                                                <div class="customer-avatar">
-                                                                    <i class="fas fa-user"></i>
-                                                                </div>
-                                                                <div class="customer-details">
-                                                                    <span class="customer-name">{{ order.CUSTOMER_NAME or 'N/A' }}</span>
-                                                                    <span class="order-type-badge {{ 'self-service' if order_type_lower == 'self-service' else 'drop-off' }}">{{ order.ORDER_TYPE or 'N/A' }}</span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="order-details">
-                                                                <div class="order-items">
-                                                                    <span class="load-count">{{ order.TOTAL_LOAD or 0 }} load{% if (order.TOTAL_LOAD or 0) != 1 %}s{% endif %}</span>
-                                                                    <span class="order-value">₱{{ '%.2f'|format(order.TOTAL_PRICE or 0) }}</span>
-                                                                </div>
-                                                                <div class="order-status-badge {{ status_class }}">{{ order.ORDER_STATUS or 'N/A' }}</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {% endfor %}
-                                                {% else %}
-                                                    <div style="text-align: center; padding: 20px; color: #6c757d;">
-                                                        <p>No self-service orders available</p>
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
+                                    <div class="stat-line">
+                                        <span class="stat-label">Completed</span>
+                                        <strong class="stat-value">{{ completed_count }}</strong>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="stat-label">Self-service</span>
+                                        <strong class="stat-value">{{ self_service_count }}</strong>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="stat-label">Drop-off</span>
+                                        <strong class="stat-value">{{ drop_off_count }}</strong>
+                                    </div>
+                                </div>
+                                <div class="orders-charts">
+                                    <div class="chart-block large">
+                                        <div class="chart-title"><i class="fas fa-circle-notch"></i> Status Breakdown</div>
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                    <div class="chart-block large">
+                                        <div class="chart-title"><i class="fas fa-chart-line"></i> Last 7 Days</div>
+                                        <canvas id="trendChart"></canvas>
                                     </div>
                                 </div>
                                 <div class="view-all">
@@ -283,9 +191,11 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
+                    <div class="dashboard-row secondary-row">
                         <!-- CALENDAR -->
-                        <div class="dashboard-card">
+                        <div class="dashboard-card calendar-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-calendar-alt"></i> Calendar</h3>
                                 <span class="card-badge">2025-2040</span>
@@ -397,7 +307,6 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -563,10 +472,13 @@
         let selectedDate = new Date();
         let datesWithOrders = new Set();
         let datesWithPickups = new Set();
+        const orderStatusCounts = JSON.parse('{{ order_status_counts|tojson|safe }}');
+        const orderTrend = JSON.parse('{{ order_trend|tojson|safe }}');
     
         document.addEventListener('DOMContentLoaded', function() {
             loadCalendarDates();
             renderCalendar();
+            renderOrderCharts();
         });
         
         // Load dates with orders and pickups from database
@@ -915,6 +827,124 @@
             if (!selectedDate) return;
             const dateStr = formatDateForAPI(selectedDate);
             window.location.href = `/orders?pickup_date=${dateStr}`;
+        }
+        
+        function renderOrderCharts() {
+            if (typeof Chart === 'undefined') return;
+            
+            // Status doughnut with background ring and center text
+            const centerText = {
+                id: 'centerText',
+                afterDraw(chart) {
+                    const opts = chart.config.options.plugins.centerText || {};
+                    const { text = '', subText = '' } = opts;
+                    if (!text) return;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+                    const x = (chartArea.left + chartArea.right) / 2;
+                    const y = (chartArea.top + chartArea.bottom) / 2;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#122D69';
+                    ctx.font = '700 18px Poppins, sans-serif';
+                    ctx.fillText(text, x, y - (subText ? 6 : 0));
+                    if (subText) {
+                        ctx.fillStyle = '#6c757d';
+                        ctx.font = '600 12px Poppins, sans-serif';
+                        ctx.fillText(subText, x, y + 12);
+                    }
+                    ctx.restore();
+                }
+            };
+
+            const statusLabels = Object.keys(orderStatusCounts || {});
+            const statusValues = Object.values(orderStatusCounts || {});
+            const statusColors = ['#2fa35a', '#9aa5b5', '#f5c04e', '#4cb7d1'];
+            const statusTotal = statusValues.reduce((a, b) => a + b, 0) || 1;
+            const statusCtx = document.getElementById('statusChart');
+            if (statusCtx) {
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [
+                            {
+                                data: [statusTotal],
+                                backgroundColor: ['#e8edf5'],
+                                borderWidth: 0,
+                                hoverOffset: 0,
+                                weight: 0.5,
+                                cutout: '40%'
+                            },
+                            {
+                                data: statusValues,
+                                backgroundColor: statusColors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 6,
+                                spacing: 2,
+                                weight: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        plugins: { 
+                            legend: { 
+                                position: 'bottom',
+                                onHover: (evt) => { if (evt?.native?.target) evt.native.target.style.cursor = 'pointer'; },
+                                onLeave: (evt) => { if (evt?.native?.target) evt.native.target.style.cursor = 'default'; },
+                                labels: {
+                                    usePointStyle: false,
+                                    boxWidth: 18,
+                                    boxHeight: 10,
+                                    padding: 10,
+                                    generateLabels(chart) {
+                                        const labels = statusLabels;
+                                        const colors = statusColors;
+                                        const values = statusValues;
+                                        return labels.map((label, i) => ({
+                                            text: `${label} ${values[i] ?? 0}`,
+                                            fillStyle: colors[i] || '#9aa5b5',
+                                            strokeStyle: colors[i] || '#9aa5b5',
+                                            lineWidth: 2,
+                                            hidden: false,
+                                            index: i
+                                        }));
+                                    }
+                                }
+                            },
+                            centerText: { text: statusTotal.toString(), subText: 'Total' }
+                        },
+                        maintainAspectRatio: false,
+                        cutout: '78%'
+                    },
+                    plugins: [centerText]
+                });
+            }
+
+            // Trend bar (last 7 days)
+            const trendLabels = (orderTrend && orderTrend.labels) || [];
+            const trendValues = (orderTrend && orderTrend.counts) || [];
+            const trendCtx = document.getElementById('trendChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            label: 'Orders',
+                            data: trendValues,
+                            backgroundColor: '#122D69',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                        plugins: { legend: { display: false } },
+                        maintainAspectRatio: false
+                    }
+                });
+            }
         }
         
         // INVENTORY
