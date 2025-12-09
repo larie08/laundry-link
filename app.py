@@ -526,6 +526,74 @@ def staff_login():
             return redirect(url_for('staff_login'))
     return render_template('staff_login.html', error=error)
 
+# ADMIN FORGET PASSWORD
+@app.route('/reset_admin_password', methods=['POST'])
+def reset_admin_password():
+    username = request.form.get('username', '').strip()
+    old_password = request.form.get('old_password', '').strip()
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    # Validate passwords match
+    if new_password != confirm_password:
+        flash('New password and confirm password do not match!', 'danger')
+        return redirect(url_for('admin_login'))
+    
+    # Authenticate user with old password
+    user = authenticate_user(username, old_password)
+    
+    if not user:
+        flash('Invalid username or password!', 'danger')
+        return redirect(url_for('admin_login'))
+    
+    # Check if user is admin
+    if user['ROLE'].lower() != 'admin':
+        flash('Only admin accounts can reset password from this page.', 'danger')
+        return redirect(url_for('admin_login'))
+    
+    # Update the password
+    try:
+        update_user(user['USER_ID'], username, new_password, user['ROLE'], user.get('FULLNAME', ''))
+        flash('Password has been reset successfully! Please login with your new password.', 'success')
+        return redirect(url_for('admin_login'))
+    except Exception as e:
+        flash(f'Error resetting password: {str(e)}', 'danger')
+        return redirect(url_for('admin_login'))
+
+# STAFF FORGET PASSWORD
+@app.route('/reset_staff_password', methods=['POST'])
+def reset_staff_password():
+    username = request.form.get('username', '').strip()
+    old_password = request.form.get('old_password', '').strip()
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    # Validate passwords match
+    if new_password != confirm_password:
+        flash('New password and confirm password do not match!', 'danger')
+        return redirect(url_for('staff_login'))
+    
+    # Authenticate user with old password
+    user = authenticate_user(username, old_password)
+    
+    if not user:
+        flash('Invalid username or password!', 'danger')
+        return redirect(url_for('staff_login'))
+    
+    # Check if user is staff
+    if user['ROLE'].lower() != 'staff':
+        flash('Only staff accounts can reset password from this page.', 'danger')
+        return redirect(url_for('staff_login'))
+    
+    # Update the password
+    try:
+        update_user(user['USER_ID'], username, new_password, user['ROLE'], user.get('FULLNAME', ''))
+        flash('Password has been reset successfully! Please login with your new password.', 'success')
+        return redirect(url_for('staff_login'))
+    except Exception as e:
+        flash(f'Error resetting password: {str(e)}', 'danger')
+        return redirect(url_for('staff_login'))
+
 # ADMIN AND STAFF
 @app.route('/dashboard')
 def dashboard():
