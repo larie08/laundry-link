@@ -37,6 +37,9 @@ def datetimeformat(value, format='%B %d, %Y, %I:%M %p'):
         return value.strftime(format)
     return value
 
+# Register built-in functions for Jinja2 templates
+app.jinja_env.globals.update(max=max, min=min)
+
 # CUSTOMER ROUTES
 @app.route('/')
 def home():
@@ -1545,6 +1548,29 @@ def inventory_report():
         total_pages = 1
         page = 1
 
+    # Calculate inventory sales summary statistics
+    inv_period_label = 'All Time'
+    if period == 'daily':
+        inv_period_label = 'Today'
+    elif period == 'weekly':
+        inv_period_label = 'This Week'
+    elif period == 'monthly':
+        inv_period_label = 'This Month'
+    elif period == 'yearly':
+        inv_period_label = 'This Year'
+    
+    # Calculate totals for the current filtered dataset (before pagination)
+    inv_total_detergent_qty = sum(d.get('QUANTITY', 0) for d in detergents)
+    inv_total_detergent_items = len(detergents)
+    inv_total_detergent_cost = sum(float(d.get('UNIT_PRICE', 0) or 0) * d.get('QUANTITY', 0) for d in detergents)
+    
+    inv_total_fabcon_qty = sum(f.get('QUANTITY', 0) for f in fabric_conditioners)
+    inv_total_fabcon_items = len(fabric_conditioners)
+    inv_total_fabcon_cost = sum(float(f.get('UNIT_PRICE', 0) or 0) * f.get('QUANTITY', 0) for f in fabric_conditioners)
+    
+    inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
+    inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
+
     return render_template(
         'admin_inventory_report.html',
         consumed_detergents=paginated_detergents,
@@ -1556,7 +1582,17 @@ def inventory_report():
         all_detergents=all_detergents,
         all_fabric_conditioners=all_fabric_conditioners,
         current_page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        # Inventory sales summary variables
+        inv_period_label=inv_period_label,
+        inv_total_detergent_qty=inv_total_detergent_qty,
+        inv_total_detergent_items=inv_total_detergent_items,
+        inv_total_detergent_cost=round(inv_total_detergent_cost, 2),
+        inv_total_fabcon_qty=inv_total_fabcon_qty,
+        inv_total_fabcon_items=inv_total_fabcon_items,
+        inv_total_fabcon_cost=round(inv_total_fabcon_cost, 2),
+        inv_total_qty=inv_total_qty,
+        inv_total_cost=round(inv_total_cost, 2)
     )
 
 @app.route('/download_order_report/<format>')
