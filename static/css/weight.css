@@ -449,12 +449,6 @@ body {
     }
 }
 
-/* ============================================
-   RESPONSIVE SCALING - TABLET OPTIMIZED
-   Based on contact.css structure
-   ============================================ */
-
-/* Tablet Devices (800px - 1200px) - Optimized for Xiaomi Pad 6S Pro */
 @media screen and (min-width: 800px) and (max-width: 1200px) {
   
   html, body {
@@ -469,7 +463,6 @@ body {
     position: relative;
   }
 
-  /* Main container */
   .v93_70 {
     width: 95vw;
     height: 85vh;
@@ -480,7 +473,6 @@ body {
     transform: translateY(-5%);
   }
 
-  /* Progress bar container */
   .v93_72 {
     width: 85%;
     height: 40px;
@@ -496,7 +488,6 @@ body {
     z-index: 5;
   }
 
-  /* Progress dots */
   .v93_73,
   .v93_74,
   .v93_75,
@@ -560,7 +551,6 @@ body {
     font-size: 18px;
   }
 
-  /* Progress lines */
   .v93_77 {
     width: 95%;
     height: 6px;
@@ -581,7 +571,6 @@ body {
     z-index: 2;
   }
 
-  /* Icon inside first progress dot (checkmark) */
   .v96_2 {
     width: 24px;
     height: 24px;
@@ -600,7 +589,6 @@ body {
     pointer-events: none;
   }
 
-  /* Number "2" inside second progress dot */
   .v96_4 {
     width: auto;
     color: rgba(255,255,255,1);
@@ -617,7 +605,6 @@ body {
     pointer-events: none;
   }
 
-  /* Step labels */
   .v93_78 {
     width: 80px;
     color: rgba(18,45,105,1);
@@ -674,7 +661,6 @@ body {
     text-align: center;
   }
 
-  /* Main content container */
   .v93_144 {
     width: 90%;
     height: 80%;
@@ -689,7 +675,6 @@ body {
     padding: 60px 40px 40px 40px;
   }
 
-  /* Image */
   .v95_13 {
     width: 70%;
     max-width: 450px;
@@ -707,7 +692,6 @@ body {
     aspect-ratio: 302 / 205;
   }
 
-  /* Text inputs */
   .v95_24 {
     color: rgba(51,51,51,1);
     font-family: Baloo;
@@ -753,7 +737,6 @@ body {
     font-size: 22px;
   }
 
-  /* Button container */
   .button-container {
     position: absolute;
     bottom: 8%;
@@ -764,7 +747,6 @@ body {
     align-items: center;
   }
 
-  /* Previous button */
   .v103_9 {
     width: 200px;
     height: 70px;
@@ -782,7 +764,6 @@ body {
     cursor: pointer;
   }
 
-  /* Next button */
   .v103_7 {
     width: 200px;
     height: 70px;
@@ -810,7 +791,6 @@ body {
     text-align: center;
   }
 
-  /* Error modal */
   .error-content {
     max-width: 600px;
     width: 80%;
@@ -845,7 +825,6 @@ body {
   }
 }
 
-/* Mobile Devices (up to 480px) */
 @media only screen and (max-width: 480px) {
   .v93_70 {
     transform: scale(0.7);
@@ -857,7 +836,6 @@ body {
   }
 }
 
-/* Small Mobile to Small Tablet (481px - 799px) */
 @media only screen and (min-width: 481px) and (max-width: 799px) {
   .v93_70 {
     transform: scale(0.9);
@@ -869,7 +847,6 @@ body {
   }
 }
 
-/* Desktop (1201px - 1439px) */
 @media only screen and (min-width: 1201px) and (max-width: 1439px) {
   .v93_70 {
     transform: scale(1.05);

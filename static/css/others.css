@@ -238,7 +238,7 @@ body {
   text-align: left;
   animation: slideInFromTop 0.8s ease-out 0.3s both;
 }
-/* OPTIONS Section - Row 1: Detergent & Fabcon */
+/* Detergent & Fabcon */
 .v100_133 {
   width: 160px;
   height: 50px;
@@ -263,7 +263,7 @@ body {
   border: 1px solid #0d47a1;
 }
 
-/* OPTIONS Section - Row 2: Own Detergent */
+/* Own Detergent */
 .v100_140 {
   width: 160px;
   height: 50px;
@@ -288,7 +288,7 @@ body {
   border: 1px solid #0d47a1;
 }
 
-/* OPTIONS Section - Row 1: Fabcon */
+/* Fabcon */
 .v100_138 {
   width: 160px;
   height: 50px;
@@ -313,7 +313,7 @@ body {
   border: 1px solid #0d47a1;
 }
 
-/* OPTIONS Section - Row 2: Own Fabcon */
+/* Own Fabcon */
 .v100_151 {
   width: 160px;
   height: 50px;
@@ -338,7 +338,7 @@ body {
   border: 1px solid #0d47a1;
 }
 
-/* OTHER Section - Iron */
+/*Iron */
 .v100_163 {
   width: 160px;
   height: 50px;
@@ -362,7 +362,7 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
-/* OTHER Section - Fold */
+/* Fold */
 .v100_165 {
   width: 160px;
   height: 50px;
@@ -412,8 +412,6 @@ body {
   border: 1px solid #0d47a1;
 }
 
-/* Removed .v244_285 - not used */
-
 /* Schedule Pickup */
 .v245_297 {
   width: 160px;
@@ -438,7 +436,7 @@ body {
   background: rgba(13, 71, 161, 0.1);
   border: 1px solid #0d47a1;
 }
-/* Button and Icon Positions - OPTIONS Section */
+
 button.v100_145 {
   width: 120px;
   color: rgba(18,45,105,1);
@@ -584,7 +582,7 @@ button.v100_147 {
   overflow: hidden;
   z-index: 1;
 }
-/* OTHER Section - Icons and Buttons */
+
 .v100_176 {
   width: 32px;
   height: 32px;
@@ -599,6 +597,7 @@ button.v100_147 {
   overflow: hidden;
   z-index: 1;
 }
+
 button.v100_167 {
   width: 120px;
   color: rgba(18,45,105,1);
@@ -701,7 +700,7 @@ button.v100_173 {
   opacity: 1;
   text-align: left;
 }
-/* Removed duplicate .v244_284 and .v244_297 definitions - using uniform ones above */
+
 button.v244_288 {
   width: 120px;
   color: rgba(18,45,105,1);
@@ -748,7 +747,7 @@ button.v244_288 {
   overflow: hidden;
   z-index: 1;
 }
-/* Removed duplicate .v245_297 definition - using uniform one above */
+
 .v245_304 {
   width: 32px;
   height: 32px;
@@ -783,7 +782,7 @@ button.v245_298 {
   align-items: center;
   height: auto;
 }
-/* ADD NOTE Section */
+/* ADD NOTE */
 .v244_285 {
   width: 160px;
   height: 50px;
@@ -844,7 +843,6 @@ button.v244_290 {
   height: auto;
 }
 
-/* Button container*/
 .button-container {
   position: absolute;
   bottom: 20px;
@@ -1482,12 +1480,7 @@ button.v245_298:hover {
   }
 }
 
-/* ============================================
-   RESPONSIVE SCALING - TABLET OPTIMIZED
-   Based on contact.css structure
-   ============================================ */
-
-/* Tablet Devices (800px - 1200px) - Optimized for tablets */
+/* Tablet Devices */
 @media screen and (min-width: 800px) and (max-width: 1200px) {
   
   html, body {
@@ -1502,7 +1495,6 @@ button.v245_298:hover {
     position: relative;
   }
 
-  /* Main container */
   .v100_93 {
     width: 95vw;
     height: 85vh;
@@ -1513,7 +1505,6 @@ button.v245_298:hover {
     transform: translateY(-5%);
   }
 
-  /* Progress bar container */
   .v100_100 {
     width: 85%;
     height: 40px;
@@ -1529,7 +1520,6 @@ button.v245_298:hover {
     z-index: 5;
   }
 
-  /* Progress dots */
   .v100_101,
   .v100_102,
   .v100_103,
@@ -1572,7 +1562,6 @@ button.v245_298:hover {
     transform: translateX(-100%);
   }
 
-  /* Progress lines */
   .v100_105 {
     width: 95%;
     height: 6px;
@@ -1603,7 +1592,6 @@ button.v245_298:hover {
     z-index: 2;
   }
 
-  /* Icons inside progress dots */
   .v100_108 {
     width: 24px;
     height: 24px;
@@ -1639,7 +1627,6 @@ button.v245_298:hover {
     pointer-events: none;
   }
 
-  /* Number "3" inside third progress dot */
   .v100_110 {
     width: auto;
     color: rgba(255,255,255,1);
@@ -1656,7 +1643,6 @@ button.v245_298:hover {
     pointer-events: none;
   }
 
-  /* Step labels */
   .v100_111 {
     width: 80px;
     color: rgba(18,45,105,1);
@@ -1713,7 +1699,6 @@ button.v245_298:hover {
     text-align: center;
   }
 
-  /* Main content container */
   .v100_94 {
     width: 90%;
     height: 80%;
@@ -1729,7 +1714,6 @@ button.v245_298:hover {
     overflow-y: auto;
   }
 
-  /* Section titles */
   .v100_95 {
     width: auto;
     color: rgba(0,0,0,0.5);
@@ -1756,7 +1740,6 @@ button.v245_298:hover {
     text-align: left;
   }
 
-  /* OPTIONS Section boxes - Row 1: Detergent & Fabcon */
   .v100_133 {
     width: 38%;
     height: 90px;
@@ -1777,7 +1760,6 @@ button.v245_298:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* OPTIONS Section boxes - Row 2: Own Detergent & Own Fabcon */
   .v100_140 {
     width: 38%;
     height: 90px;
@@ -1798,7 +1780,6 @@ button.v245_298:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* OTHER Section boxes - Iron & Fold */
   .v100_163 {
     width: 38%;
     height: 90px;
@@ -1819,7 +1800,6 @@ button.v245_298:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* Priority Order & Schedule Pickup */
   .v244_284 {
     width: 38%;
     height: 90px;
@@ -1840,7 +1820,6 @@ button.v245_298:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* Add Note */
   .v244_285 {
     width: 38%;
     height: 90px;
@@ -1851,7 +1830,6 @@ button.v245_298:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* Icons for OPTIONS section */
   .v100_157 {
     width: 50px;
     height: 50px;
@@ -2075,7 +2053,6 @@ button.v245_298:hover {
     font-size: 14px;
   }
 
-  /* Button container */
   .button-container {
     position: absolute;
     bottom: 8%;
@@ -2087,7 +2064,6 @@ button.v245_298:hover {
     z-index: 100;
   }
 
-  /* Previous and Next buttons */
   .v100_98,
   .v100_96 {
     width: 200px;
@@ -2111,7 +2087,6 @@ button.v245_298:hover {
     text-align: center;
   }
 
-  /* Modal adjustments - BIGGER for tablet */
   .modal-content {
     width: 750px;
     max-width: 90%;
@@ -2123,7 +2098,6 @@ button.v245_298:hover {
     margin-bottom: 30px;
   }
 
-  /* Detergent & Fabcon Modal */
   #detergentModal .modal-content,
   #fabconModal .modal-content {
     width: 750px;
@@ -2199,7 +2173,6 @@ button.v245_298:hover {
     border-radius: 8px;
   }
 
-  /* Fabcon Modal Buttons - ensure consistency in tablet view */
   #fabconModal .modal-buttons .submit,
   #fabconModal .modal-buttons .cancel {
     font-size: 22px;
@@ -2207,7 +2180,6 @@ button.v245_298:hover {
     border-radius: 8px;
   }
 
-  /* Schedule Pickup Modal */
   .note {
     font-size: 16px;
     margin-bottom: 25px;
@@ -2226,7 +2198,6 @@ button.v245_298:hover {
     border-radius: 8px;
   }
 
-  /* Add Note Modal */
   .note-modal {
     width: 750px;
     max-width: 90%;
@@ -2255,7 +2226,6 @@ button.v245_298:hover {
     font-size: 16px;
   }
 
-  /* Error modal - tablet */
   .error-content {
     max-width: 600px;
     width: 80%;
@@ -2290,7 +2260,6 @@ button.v245_298:hover {
   }
 }
 
-/* Mobile Devices (up to 480px) */
 @media only screen and (max-width: 480px) {
   .v100_93 {
     transform: scale(0.7);
@@ -2302,7 +2271,6 @@ button.v245_298:hover {
   }
 }
 
-/* Small Mobile to Small Tablet (481px - 799px) */
 @media only screen and (min-width: 481px) and (max-width: 799px) {
   .v100_93 {
     transform: scale(0.9);
@@ -2314,7 +2282,6 @@ button.v245_298:hover {
   }
 }
 
-/* Desktop (1201px - 1439px) */
 @media only screen and (min-width: 1201px) and (max-width: 1439px) {
   .v100_93 {
     transform: scale(1.05);
@@ -2322,7 +2289,6 @@ button.v245_298:hover {
   }
 }
 
-/* Desktop and up: center all modals */
 @media only screen and (min-width: 1201px) {
   .modal.show,
   .modal[style*="block"] {

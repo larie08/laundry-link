@@ -317,7 +317,6 @@ font-size: 15px;
 text-align: center;
 }
 
-/* ===== ANIMATIONS AND TRANSITIONS ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -596,7 +595,6 @@ body {
     position: relative;
   }
 
-  /* Main container */
   .v128_49 {
     width: 95vw;
     height: 85vh;
@@ -607,7 +605,6 @@ body {
     transform: translateY(-5%);
   }
 
-  /* Form container */
   .v128_50 {
     width: 90%;
     height: 80%;
@@ -621,7 +618,6 @@ body {
     border-radius: 15px;
   }
 
-  /* Progress bar container  */
   .v128_51 {
     width: 85%;
     height: 40px;
@@ -637,7 +633,6 @@ body {
     z-index: 5;
   }
 
-  /* Progress bar steps  */
   .v128_52, .v128_53, .v128_54, .v128_55 {
     width: 40px;
     height: 40px;
@@ -668,7 +663,6 @@ body {
     font-size: 18px;
   }
 
-  /* Progress bar lines */
   .v128_56 {
     width: 95%;
     height: 6px;
@@ -689,7 +683,6 @@ body {
     z-index: 2;
   }
 
-  /* Progress Labels  */
   .v128_58 {
     width: 80px;
     color: rgba(18,45,105,1);
@@ -746,7 +739,6 @@ body {
     text-align: center;
   }
 
-  /* Phone Icon  */
   .v128_75 {
     width: 50px;
     height: 50px;
@@ -769,7 +761,6 @@ body {
     color: white;
   }
 
-  /* Main Heading */
   .v128_62 {
     width: 80%;
     color: rgba(0,0,0,0.7);
@@ -783,7 +774,6 @@ body {
     text-align: center;
   }
 
-  /* Form Labels  */
   .v128_63 {
     width: 150px;
     color: rgba(18,45,105,1);
@@ -810,7 +800,6 @@ body {
     text-align: left;
   }
 
-  /* Input Fields */
   .v128_67 {
     width: 80%;
     height: 70px;
@@ -851,8 +840,6 @@ body {
     font-size: 16px;
   }
 
-  /* Button container  */
-  /* Button container */
   .button-container {
     position: absolute;
     bottom: 8%;
@@ -863,7 +850,6 @@ body {
     align-items: center;
   }
 
-  /* Previous and Next buttons */
   .v128_79, .v128_77 {
     width: 200px;
     height: 70px;

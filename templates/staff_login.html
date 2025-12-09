@@ -37,15 +37,136 @@
             <button type="submit" class="login-button">Login</button>
         </form>
         <br>
+        <button type="button" class="forget-password-btn" onclick="openForgetPasswordModal()">Forget Password?</button>
+        
+        <!-- Flash messages for notification system -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="error-message" style="color: #fff; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center;">
-                        {{ message }}
-                    </div>
+                    <div class="flashed-message" data-type="{% if category == 'success' %}success{% else %}error{% endif %}" data-title="{% if category == 'success' %}Success{% else %}Error{% endif %}" style="display:none;">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
     </div>
+
+    <!-- Forget Password Modal -->
+    <div id="forgetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForgetPasswordModal()">&times;</span>
+            <h3>Reset Password</h3>
+            <form id="forgetPasswordForm" method="POST" action="/reset_staff_password">
+                <div class="input-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="resetUsername" name="username" placeholder="Enter Username" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="oldPassword" name="old_password" placeholder="Enter Old Password" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="newPassword" name="new_password" placeholder="Enter New Password" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm New Password" required>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="submit" class="submit-btn">Submit</button>
+                    <button type="button" class="cancel-btn" onclick="closeForgetPasswordModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="notification-modal">
+        <div class="notification-content">
+            <div id="notificationIcon" class="notification-icon"></div>
+            <h3 class="notification-title" id="notificationTitle">Title</h3>
+            <p class="notification-message" id="notificationMessage">Message</p>
+            <button class="notification-button" onclick="closeNotification()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        function openForgetPasswordModal() {
+            document.getElementById('forgetPasswordModal').style.display = 'block';
+        }
+
+        function closeForgetPasswordModal() {
+            document.getElementById('forgetPasswordModal').style.display = 'none';
+            document.getElementById('forgetPasswordForm').reset();
+        }
+
+        function showNotification(title, message, type = 'success') {
+            const notificationModal = document.getElementById('notificationModal');
+            const notificationIcon = document.getElementById('notificationIcon');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            notificationIcon.className = 'notification-icon ' + type;
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            notificationModal.classList.add('show');
+        }
+
+        function closeNotification() {
+            const notificationModal = document.getElementById('notificationModal');
+            notificationModal.classList.remove('show');
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const forgetModal = document.getElementById('forgetPasswordModal');
+            const notificationModal = document.getElementById('notificationModal');
+            
+            if (event.target == forgetModal) {
+                forgetModal.style.display = 'none';
+            }
+            if (event.target == notificationModal) {
+                closeNotification();
+            }
+        }
+
+        // Validate passwords match before submission
+        document.getElementById('forgetPasswordForm').addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                showNotification('Password Mismatch', 'New Password and Confirm Password do not match!', 'error');
+                return false;
+            }
+        });
+
+        // Check if there's a flash message in the page and display it
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flashed-message');
+            if (flashMessages.length > 0) {
+                flashMessages.forEach(msg => {
+                    const type = msg.dataset.type || 'success';
+                    const title = msg.dataset.title || 'Notification';
+                    const message = msg.textContent;
+                    showNotification(title, message, type);
+                    msg.remove();
+                });
+            }
+        });
+    </script>
 </body>
 </html>

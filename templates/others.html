@@ -563,7 +563,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         applyTranslations();
         
-        // Close error modal when clicking outside
         document.getElementById('errorModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeErrorModal();
