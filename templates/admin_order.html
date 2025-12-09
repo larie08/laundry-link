@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Customers Management</title>
+    <title>Orders Management</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -94,13 +94,13 @@
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="#">
-                            <span>Income Statement</span>
+                            <span>Sales Report</span>
                         </a>
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
-                            <span>Customer Reports</span>
+                            <span>Transaction Reports</span>
                         </a>
                     </li>
                 </ul>
@@ -215,9 +215,9 @@
                                     <span class="badge-table 
                                         {% if order.ORDER_STATUS|lower == 'pending' %}badge-pending-table
                                         {% elif order.ORDER_STATUS|lower == 'completed' %}badge-completed-table
-                                        {% elif order.ORDER_STATUS|lower == 'pickup' %}badge-pickup-table
+                                        {% elif order.ORDER_STATUS|lower == 'pickup' or order.ORDER_STATUS|lower == 'pick-up' %}badge-pickup-table
                                         {% endif %}">
-                                        {{ order.ORDER_STATUS|capitalize }}
+                                        {% if order.ORDER_STATUS|lower == 'pick-up' %}Pick-up{% else %}{{ order.ORDER_STATUS|capitalize }}{% endif %}
                                     </span>
                                 </td>
                                 <td>
@@ -305,12 +305,28 @@
         <!-- Receipt Section (leave empty for JS to fill) -->
         <div class="receipt-section"></div>
         <div class="modal-actions">
-            <button class="modal-btn paid-btn">Mark as Paid</button>
+            <button class="modal-btn paid-btn" id="markAsPaidBtn" onclick="handleMarkAsPaid()">Mark as Paid</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal">
+    <div class="modal-content" style="max-width: 350px;">
+        <span class="close" onclick="closeConfirmationModal()">&times;</span>
+        <h2>Confirm Payment</h2>
+        <p>Mark this order as paid and print the receipt?</p>
+        <div class="modal-actions" style="margin-top: 20px;">
+            <button class="modal-btn" onclick="confirmMarkAsPaid()" style="background-color: #4CAF50;">Confirm</button>
+            <button class="modal-btn" onclick="closeConfirmationModal()" style="background-color: #f44336;">Cancel</button>
         </div>
     </div>
 </div>
     <script>
+let currentOrderId = null;
+
 function openOrderDetailsModal(orderId) {
+    currentOrderId = orderId;
     fetch(`/order_details/${orderId}`)
         .then(response => response.json())
         .then(data => {
@@ -374,8 +390,58 @@ function openOrderDetailsModal(orderId) {
 }
 function closeOrderDetailsModal() {
     document.getElementById('orderDetailsModal').style.display = 'none';
+    currentOrderId = null;
 }
+
+function handleMarkAsPaid() {
+    if (!currentOrderId) {
+        alert('Order ID not found');
+        return;
+    }
+    document.getElementById('confirmationModal').style.display = 'block';
+}
+
+function closeConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'none';
+}
+
+function confirmMarkAsPaid() {
+    if (!currentOrderId) {
+        alert('Order ID not found');
+        return;
+    }
+    
+    fetch('/mark_order_as_paid', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            order_id: currentOrderId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeConfirmationModal();
+            closeOrderDetailsModal();
+            alert('Order marked as paid and receipt printed successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error occurred'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error marking order as paid');
+    });
+}
+
 window.onclick = function(event) {
+    var confirmModal = document.getElementById('confirmationModal');
+    if (event.target == confirmModal) {
+        confirmModal.style.display = 'none';
+    }
     var modal = document.getElementById('orderDetailsModal');
     if (event.target == modal) {
         modal.style.display = "none";

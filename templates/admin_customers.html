@@ -86,13 +86,13 @@
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="#">
-                            <span>Income Statement</span>
+                            <span>Sales Report</span>
                         </a>
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
-                            <span>Customer Reports</span>
+                            <span>Transaction Reports</span>
                         </a>
                     </li>
                 </ul>
@@ -226,6 +226,7 @@
                                 <th>Payment Status</th>
                                 <th>Order ID</th>
                                 <th>Order Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                        <tbody>
@@ -245,11 +246,16 @@
                                         {{ customer.ORDER_STATUS }}
                                     </span>
                                 </td>
+                                <td>
+                                    <button class="edit-btn" onclick="openEditModal({{ customer.CUSTOMER_ID }})" title="Edit Customer">
+                                        <i class="fas fa-edit"></i> 
+                                    </button>
+                                </td>
                             </tr>
                             {% endfor %}
                             {% if not customers %}
                             <tr>
-                                <td colspan="6" class="text-center">No customers found</td>
+                                <td colspan="7" class="text-center">No customers found</td>
                             </tr>
                             {% endif %}
                         </tbody>
@@ -295,6 +301,37 @@
                 </div>
             </div>
         </main> 
+    </div>
+    
+    <!-- Edit Customer Modal -->
+    <div id="editCustomerModal" class="w3-modal">
+        <div class="w3-modal-content">
+            <header>
+                <h2><i class="fas fa-edit"></i> Edit Customer</h2>
+                <span onclick="closeEditModal()" class="w3-display-topright">&times;</span>
+            </header>
+            <div class="w3-container">
+                <form id="editCustomerForm" method="POST" action="{{ url_for('edit_customer') }}">
+                    <input type="hidden" id="edit_customer_id" name="customer_id">
+                    <div class="w3-margin-bottom" style="margin-top: 15px;">
+                        <label for="edit_fullname">Full Name</label>
+                        <input class="w3-input w3-border" type="text" id="edit_fullname" name="fullname" placeholder="Enter full name" required>
+                    </div>
+                    <div class="w3-margin-bottom">
+                        <label for="edit_phone_number">Phone Number</label>
+                        <input class="w3-input w3-border" type="text" id="edit_phone_number" name="phone_number" placeholder="Enter phone number">
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="w3-button w3-red" onclick="closeEditModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="w3-button w3-blue">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -399,6 +436,67 @@
                 }
             }
         });
+
+        // Edit Customer Modal Functions
+        function openEditModal(customerId) {
+            // Fetch customer data
+            fetch(`/get_customer/${customerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    document.getElementById('edit_customer_id').value = data.CUSTOMER_ID;
+                    document.getElementById('edit_fullname').value = data.FULLNAME || '';
+                    document.getElementById('edit_phone_number').value = data.PHONE_NUMBER || '';
+                    document.getElementById('editCustomerModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load customer data');
+                });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editCustomerModal').style.display = 'none';
+            document.getElementById('editCustomerForm').reset();
+        }
+
+        // Handle form submission
+        document.getElementById('editCustomerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/edit_customer', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Customer updated successfully!');
+                    closeEditModal();
+                    // Reload the page to show updated data
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to update customer'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update customer');
+            });
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editCustomerModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
     </script>
 </body>
 </html>

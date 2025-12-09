@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="google" content="notranslate">
         <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Baloo&display=swap" rel="stylesheet" />
@@ -11,14 +12,13 @@
         <title>Laundrylink - Weight Laundry</title>
         <style>
             .stable-weight {
-                background-color: #e8f5e9 !important;  /* Light green background */
+                background-color: #e8f5e9 !important;  
                 font-weight: bold;
             }
         </style>
     </head>
     <body>
         <div class="v93_70">
-            <!-- Progress bar -->
             <div class="v93_72">
                 <div class="v93_73"></div>
                 <div class="v93_74"></div>
@@ -30,38 +30,171 @@
                 <span class="v96_4">2</span>
             </div>
             
-            <!-- Step labels below progress bar -->
-            <div class="step-labels">
-                <span class="v93_78">YOU</span>
-                <span class="v93_79">WEIGH</span>
-                <span class="v93_80">OTHER</span>
-                <span class="v93_81">PAYMENT</span>
-            </div>
+            <span class="v93_78 notranslate" data-translate="step_you">YOU</span>
+            <span class="v93_79 notranslate" data-translate="step_weigh">WEIGH</span>
+            <span class="v93_80 notranslate" data-translate="step_other">OTHER</span>
+            <span class="v93_81 notranslate" data-translate="step_payment">PAYMENT</span>
             
-            <!-- Main content container -->
-            <div class="content-container">
-                <div class="v93_144">
+            <div class="v93_144">
                     <div class="v95_13"></div>
-                    <!-- Weight input form -->
                     <form method="POST" action="{{ url_for('weight_laundry') }}" id="weightForm">
                         <div class="weight-info">
-                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" placeholder="Waiting for weight (kg)..." required readonly>
-                            <input type="text" id="total_load" class="v95_36" name="total_load" placeholder="Total load (auto)" readonly>
+                            <input type="number" id="weight_input" class="v95_24" name="weight" min="0" step="0.01" data-translate-placeholder="weight_placeholder" placeholder="Waiting for weight (kg)..." required readonly>
+                            <input type="text" id="total_load" class="v95_36" name="total_load" data-translate-placeholder="load_placeholder" placeholder="Load(s): 0" readonly>
                         </div>
                         <div class="button-container">
                             <a href="{{ url_for('contact') }}" class="v103_9" style="text-decoration: none;">
-                                <span class="v103_10">Previous</span>
+                                <span class="v103_10 notranslate" data-translate="previous_btn">Previous</span>
                             </a>
                             <button type="submit" class="v103_7" style="text-decoration: none;">
-                                <span class="v103_8">Next</span>
+                                <span class="v103_8 notranslate" data-translate="next_btn">Next</span>
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        
+        <!-- Error Modal
+        <div id="errorModal" class="error-modal">
+            <div class="error-content">
+                <div class="error-icon"></div>
+                <div class="error-title"><b>Weight Required</b></div>
+                <div class="error-message">Please wait for the weight to be detected before proceeding to the next step.</div>
+                <button class="error-button" onclick="closeErrorModal()">Got it</button>
+            </div>
+        </div> -->
+        
         <script>
-            // Poll the backend for latest weight every second
+            const translations = {
+                en: {
+                    step_you: "YOU",
+                    step_weigh: "WEIGH",
+                    step_other: "OTHER",
+                    step_payment: "PAYMENT",
+                    weight_placeholder: "Waiting for weight (kg)...",
+                    load_placeholder: "Total load (auto)",
+                    previous_btn: "Previous",
+                    next_btn: "Next",
+                    select_service: "Select Service Type",
+                    self_service: "Self - Service",
+                    drop_off: "Drop Off",
+                    select_language: "Select Your Language",
+                    current_lang_name: "English"
+                },
+                fil: {
+                    step_you: "IKAW",
+                    step_weigh: "TIMBANG",
+                    step_other: "IBA PA",
+                    step_payment: "BAYAD",
+                    weight_placeholder: "Naghihintay ng timbang (kg)...",
+                    load_placeholder: "Kabuuang karga (auto)",
+                    previous_btn: "Nakaraan",
+                    next_btn: "Susunod",
+                    select_service: "Pumili ng Uri ng Serbisyo",
+                    self_service: "Self - Service",
+                    drop_off: "Drop Off",
+                    select_language: "Pumili ng Iyong Wika",
+                    current_lang_name: "Filipino"
+                },
+                ja: {
+                    step_you: "あなた",
+                    step_weigh: "重さ",
+                    step_other: "その他",
+                    step_payment: "支払い",
+                    weight_placeholder: "重量を待っています (kg)...",
+                    load_placeholder: "合計負荷（自動）",
+                    previous_btn: "前へ",
+                    next_btn: "次へ",
+                    select_service: "サービスタイプを選択",
+                    self_service: "セルフサービス",
+                    drop_off: "ドロップオフ",
+                    select_language: "言語を選択してください",
+                    current_lang_name: "日本語"
+                },
+                ko: {
+                    step_you: "당신",
+                    step_weigh: "무게",
+                    step_other: "기타",
+                    step_payment: "결제",
+                    weight_placeholder: "무게를 기다리는 중 (kg)...",
+                    load_placeholder: "총 로드 (자동)",
+                    previous_btn: "이전",
+                    next_btn: "다음",
+                    select_service: "서비스 유형 선택",
+                    self_service: "셀프 서비스",
+                    drop_off: "드롭 오프",
+                    select_language: "언어를 선택하세요",
+                    current_lang_name: "한국어"
+                }
+            };
+
+            function getCurrentLanguage() {
+                return sessionStorage.getItem('language') || 'en';
+            }
+
+            function setCurrentLanguage(lang) {
+                sessionStorage.setItem('language', lang);
+            }
+
+            function applyTranslations() {
+                const currentLang = getCurrentLanguage();
+                
+                const elements = document.querySelectorAll('[data-translate]');
+                elements.forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.textContent = translations[currentLang][key];
+                    }
+                });
+
+                const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+                placeholderElements.forEach(element => {
+                    const key = element.getAttribute('data-translate-placeholder');
+                    if (translations[currentLang] && translations[currentLang][key]) {
+                        element.placeholder = translations[currentLang][key];
+                    }
+                });
+
+                const currentLangElement = document.getElementById('currentLanguage');
+                if (currentLangElement && translations[currentLang]) {
+                    currentLangElement.textContent = translations[currentLang].current_lang_name;
+                }
+            }
+
+            function changeLanguage(lang) {
+                setCurrentLanguage(lang);
+                applyTranslations();
+                closeLanguageModal();
+            }
+
+            // // Show error modal
+            // function showErrorModal() {
+            //     document.getElementById('errorModal').classList.add('show');
+            // }
+            
+            // // Close error modal
+            // function closeErrorModal() {
+            //     document.getElementById('errorModal').classList.remove('show');
+            // }
+            
+            // // Close modal when clicking outside
+            // document.getElementById('errorModal').addEventListener('click', function(e) {
+            //     if (e.target === this) {
+            //         closeErrorModal();
+            //     }
+            // });
+            
+            // // Form validation before submit
+            // document.getElementById('weightForm').addEventListener('submit', function(e) {
+            //     const weightInput = document.getElementById('weight_input').value.trim();
+                
+            //     if (!weightInput || parseFloat(weightInput) <= 0) {
+            //         e.preventDefault();
+            //         showErrorModal();
+            //         return false;
+            //     }
+            // });
+
             function pollWeight() {
                 fetch('/get_latest_weight')
                     .then(response => response.json())
@@ -69,21 +202,20 @@
                         const weight = parseFloat(data.weight) || 0;
                         const weightInput = document.getElementById('weight_input');
                         
-                        // Format weight with 2 decimal places if > 0
                         weightInput.value = weight > 0 ? weight.toFixed(2) : '';
                         
-                        // Calculate total load (1 load = 8kg)
                         const totalLoad = weight > 0 ? Math.ceil(weight / 8) : 0;
-                        document.getElementById('total_load').value = totalLoad;
+                        const totalLoadInput = document.getElementById('total_load');
+                        const totalLoadLabel = `Load(s): ${totalLoad}`;
+                        totalLoadInput.value = weight > 0 ? totalLoadLabel : '';
+                        totalLoadInput.placeholder = totalLoadLabel;
                         
-                        // Highlight stable weight with different style
                         weightInput.classList.toggle('stable-weight', data.is_stable);
                     });
             }
             setInterval(pollWeight, 1000);
             pollWeight();
 
-            // Heartbeat to tell backend page is active
             function setWeightPageActive(active) {
                 fetch('/weight_page_active', {
                     method: 'POST',
@@ -94,10 +226,13 @@
             setWeightPageActive(true);
             var heartbeat = setInterval(() => setWeightPageActive(true), 2000);
 
-            // On page unload, set active to false
             window.addEventListener('beforeunload', function() {
                 setWeightPageActive(false);
                 clearInterval(heartbeat);
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                applyTranslations();
             });
         </script>
     </body>

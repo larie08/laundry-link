@@ -3,8 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="google" content="notranslate">
         <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Baloo&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
         <link href="{{ url_for('static', filename='css/others.css') }}" rel="stylesheet" />
         <title>Laundrylink - Others</title>
@@ -16,18 +18,22 @@
             <div class="v100_140" onclick="document.getElementById('ownDetergentBtn').click()"></div>
             <div class="v100_138" onclick="openFabconModal()"></div>
             <div class="v100_151" onclick="document.getElementById('ownFabconBtn').click()"></div>
-            <span class="v100_95">OPTIONS</span>
-            <span class="v100_161">OTHER</span>
+            <span class="v100_95" data-translate="options_title">OPTIONS</span>
+            {% if order_type != 'Self-service' %}
+            <span class="v100_161" data-translate="step_other">OTHER</span>
+            {% endif %}
             <form id="othersForm" action="{{ url_for('submit_others') }}" method="post">
                 <input type="hidden" name="pickup_date" id="hiddenPickupDate" />
                 <input type="hidden" name="pickup_time" id="hiddenPickupTime" />
                 <input type="hidden" name="order_note" id="hiddenOrderNote" />
                                 
-                <div class="v100_96">
-                    <button class="v100_97" type="submit">Next</button>
-                </div>
-                <div class="v100_98">
-                    <a href="{{ url_for('weight_laundry') }}" class="v100_99">Previous</a>
+                <div class="button-container">
+                    <div class="v100_98">
+                        <a href="{{ url_for('weight_laundry') }}" class="v100_99" data-translate="previous_btn">Previous</a>
+                    </div>
+                    <div class="v100_96">
+                        <button class="v100_97" type="submit" data-translate="next_btn">Next</button>
+                    </div>
                 </div>
                 <div class="v100_100">
                     <div class="v100_101"></div>
@@ -41,16 +47,16 @@
                     <div class="v100_109"></div>
                     <span class="v100_110">3</span>
                 </div>
-                <span class="v100_111">YOU</span>
+                <span class="v100_111" data-translate="step_you">YOU</span>
                 
                 <!-- Trigger Button -->
-                <button class="v100_145" type="button" onclick="openDetergentModal()">DETERGENT</button>
+                <button class="v100_145" type="button" onclick="openDetergentModal()" data-translate="detergent_btn">DETERGENT</button>
 
                 <!-- Modal -->
                 <div id="detergentModal" class="modal">
                     <div class="modal-content">
                         <span class="close" onclick="closeDetergentModal()">&times;</span>
-                        <h2>SELECT DETERGENT</h2>
+                        <h2 data-translate="select_detergent_title">SELECT DETERGENT</h2>
                         {% for detergent in detergents %}
                         <div class="detergent-option">
                             <input type="checkbox" id="detergent_{{ detergent.DETERGENT_ID }}" name="detergent_ids" value="{{ detergent.DETERGENT_ID }}" class="detergent-checkbox" />
@@ -70,25 +76,26 @@
                         </div>
                         {% endfor %}
                         <div class="modal-buttons">
-                            <button type="button" class="submit" onclick="closeDetergentModal()">Done</button>
-                            <button type="button" class="cancel" onclick="closeDetergentModal()">Cancel</button>
+                            <button type="button" class="submit" onclick="closeDetergentModal()" data-translate="done_btn">Done</button>
+                            <button type="button" class="cancel" onclick="closeDetergentModal()" data-translate="cancel_btn">Cancel</button>
                         </div>
                     </div>
                 </div>
+                <div class="v100_157"></div>
                 <div class="v100_158"></div>
                 <div class="v100_159"></div>
-                <button class="v100_149" type="button" id="ownDetergentBtn">OWN DETERGENT</button>
+                <button class="v100_149" type="button" id="ownDetergentBtn" data-translate="own_detergent_btn">OWN DETERGENT</button>
                 <input type="hidden" name="own_detergent" id="ownDetergentInput" value="0" />
-                <button class="v100_154" type="button" id="ownFabconBtn">OWN FABCON</button>
+                <button class="v100_154" type="button" id="ownFabconBtn" data-translate="own_fabcon_btn">OWN FABCON</button>
                 <input type="hidden" name="own_fabcon" id="ownFabconInput" value="0" />
                 <div class="v100_160"></div>
-                <button class="v100_147" type="button" onclick="openFabconModal()">FABCON</button>
+                <button class="v100_147" type="button" onclick="openFabconModal()" data-translate="fabcon_btn">FABCON</button>
 
                 <!-- FABCON Modal -->
                 <div id="fabconModal" class="modal">
                     <div class="modal-content">
                         <span class="close" onclick="closeFabconModal()">&times;</span>
-                        <h2>SELECT FABCON</h2>
+                        <h2 data-translate="select_fabcon_title">SELECT FABCON</h2>
                         {% for fabcon in fabric_conditioners %}
                         <div class="detergent-option">
                             <input type="checkbox" id="fabcon_{{ fabcon.FABCON_ID }}" name="fabcon_ids" value="{{ fabcon.FABCON_ID }}" class="fabcon-checkbox" />
@@ -108,31 +115,30 @@
                         </div>
                         {% endfor %}
                         <div class="modal-buttons">
-                            <button type="button" class="submit" onclick="closeFabconModal()">Done</button>
-                            <button type="button" class="cancel" onclick="closeFabconModal()">Cancel</button>
+                            <button type="button" class="submit" onclick="closeFabconModal()" data-translate="done_btn">Done</button>
+                            <button type="button" class="cancel" onclick="closeFabconModal()" data-translate="cancel_btn">Cancel</button>
                         </div>
                     </div>
                 </div>
-                <span class="v100_112">WEIGH</span>
-                <span class="v100_113">OTHER</span>
-                <span class="v100_114">PAYMENT</span>
+                <span class="v100_112" data-translate="step_weigh">WEIGH</span>
+                {% if order_type != 'Self-service' %}
+                <span class="v100_113" data-translate="step_other">OTHER</span>
+                {% endif %}
+                <span class="v100_114" data-translate="step_payment">PAYMENT</span>
                 <div class="v91_256"></div>
-                <div class="v100_157"></div>
+                {% if order_type != 'Self-service' %}
                 <div class="v100_163"></div>
                 <div class="v100_165"></div>
                 <span class="v100_267">Php 70.00</span>
                 <div class="v100_177"></div>
-                <button class="v100_167" type="button" id="ironBtn">IRON</button>
+                <button class="v100_167" type="button" id="ironBtn" data-translate="iron_btn">IRON</button>
                 <input type="hidden" name="iron" id="ironInput" value="0" />
                 <span class="v100_265">Php 50.00</span>
-                <span class="v100_269" id="detergentTotal">Price: 0.00</span>
-                <span class="v100_273" id="fabconTotal">Price: 0.00</span>
-                <button class="v100_173" type="button" id="foldBtn">FOLD</button>
+                <button class="v100_173" type="button" id="foldBtn" data-translate="fold_btn">FOLD</button>
                 <input type="hidden" name="fold" id="foldInput" value="0" />
                 <div class="v100_176"></div>
                 <div class="v244_284"></div>
-                <div class="v244_285"></div>
-                <button class="v244_288" type="button" id="priorityBtn">PRIORITY ORDER</button>
+                <button class="v244_288" type="button" id="priorityBtn" data-translate="priority_btn">PRIORITY ORDER</button>
                 <input type="hidden" name="priority" id="priorityInput" value="0" />
                 <span class="v244_289">Php 50.00</span>
                 <div class="v245_301"></div>
@@ -140,49 +146,240 @@
                 <div class="v245_304"></div>
 
                 <!-- SCHEDULE PICKUP -->
-                <button class="v245_298" type="button" onclick="document.getElementById('scheduleModal').style.display='block'">SCHEDULE PICKUP</button>
+                <button class="v245_298" type="button" onclick="document.getElementById('scheduleModal').style.display='block'" data-translate="schedule_pickup_btn">SCHEDULE PICKUP</button>
+                {% endif %}
+                <!-- Price totals - visible for both Self-service and Drop-off -->
+                <span class="v100_269" id="detergentTotal" data-translate="price_prefix">Price: 0.00</span>
+                <span class="v100_273" id="fabconTotal" data-translate="price_prefix">Price: 0.00</span>
+                {% if order_type != 'Self-service' %}
                 <div id="scheduleModal" class="modal">
                     <div class="modal-content">
                         <span class="close" onclick="closeScheduleModal()">&times;</span>
-                        <h2>Schedule Pickup</h2>
-                        <p class="note">*No Pickups on Tuesdays/Holidays – Please select another day.</p>
+                        <h2 data-translate="schedule_pickup_title">Schedule Pickup</h2>
+                        <p class="note" data-translate="schedule_note">*No Pickups on Tuesdays/Holidays – Please select another day.</p>
                         <div class="form-group">
-                            <label for="pickup-date">Date</label>
+                            <label for="pickup-date" data-translate="date_label">Date</label>
                             <div class="input-icon">
                                 <input type="date" id="pickup-date" name="pickup-date" onchange="validatePickupDate()" />
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="pickup-time">Time (6:00 AM - 6:00 PM)</label>
+                            <label for="pickup-time" data-translate="time_label">Time (6:00 AM - 6:00 PM)</label>
                             <div class="input-icon">
                                 <input type="time" id="pickup-time" name="pickup-time" min="06:00" max="18:00" onchange="validatePickupTime()" />
                             </div>
                         </div>
                         <div class="modal-buttons">
-                            <button type="button" class="submit" onclick="saveSchedule()">Submit</button>
-                            <button type="button" class="cancel" onclick="closeScheduleModal()">Cancel</button>
+                            <button type="button" class="submit" onclick="saveSchedule()" data-translate="submit_btn">Submit</button>
+                            <button type="button" class="cancel" onclick="closeScheduleModal()" data-translate="cancel_btn">Cancel</button>
                         </div>
                     </div>
                 </div>
-                <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'">ADD NOTE</button>
+                {% endif %}
+                
+                <!-- ERROR MODAL -->
+                <div id="errorModal" class="error-modal">
+                    <div class="error-content">
+                        <div class="error-icon"></div>
+                        <div class="error-title"><b>Notification</b></div>
+                        <div class="error-message" id="errorMessage"></div>
+                        <button type="button" class="error-button" onclick="closeErrorModal(); return false;">Got it</button>
+                    </div>
+                </div>
+                
+                <!-- ADD NOTE -->
+                <div class="v244_285"></div>
+                <div class="v245_296"></div>
+                <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'" data-translate="add_note_btn">ADD NOTE</button>
                 <div id="noteModal" class="modal">
                     <div class="modal-content note-modal">
                         <span class="close" onclick="document.getElementById('noteModal').style.display='none'">&times;</span>
-                        <h2>Note</h2>
+                        <h2 data-translate="note_title">Note</h2>
                         <div class="note-text-area">
-                            <textarea id="note-text" placeholder="You can write your note here..."></textarea>
+                            <textarea id="note-text" placeholder="You can write your note here..." data-translate-placeholder="note_placeholder"></textarea>
                         </div>
                         <div class="modal-buttons">
-                            <button type="button" class="submit" onclick="saveNote()">Submit</button>
-                            <button type="button" class="cancel" onclick="document.getElementById('noteModal').style.display='none'">Cancel</button>
+                            <button type="button" class="submit" onclick="saveNote()" data-translate="submit_btn">Submit</button>
+                            <button type="button" class="cancel" onclick="document.getElementById('noteModal').style.display='none'" data-translate="cancel_btn">Cancel</button>
                         </div>
                     </div>
                 </div>
-                <div class="v245_296"></div>
             </form>
         </div>
 </body>
 <script>
+    // Translation dictionary
+    const translations = {
+        en: {
+            options_title: "OPTIONS",
+            step_you: "YOU",
+            step_weigh: "WEIGH",
+            step_other: "OTHER",
+            step_payment: "PAYMENT",
+            previous_btn: "Previous",
+            next_btn: "Next",
+            detergent_btn: "DETERGENT",
+            select_detergent_title: "SELECT DETERGENT",
+            select_fabcon_title: "SELECT FABCON",
+            done_btn: "Done",
+            cancel_btn: "Cancel",
+            own_detergent_btn: "OWN DETERGENT",
+            own_fabcon_btn: "OWN FABCON",
+            fabcon_btn: "FABCON",
+            iron_btn: "IRON",
+            fold_btn: "FOLD",
+            priority_btn: "PRIORITY ORDER",
+            schedule_pickup_btn: "SCHEDULE PICKUP",
+            schedule_pickup_title: "Schedule Pickup",
+            schedule_note: "*No Pickups on Tuesdays/Holidays – Please select another day.",
+            date_label: "Date",
+            time_label: "Time (6:00 AM - 6:00 PM)",
+            submit_btn: "Submit",
+            add_note_btn: "ADD NOTE",
+            note_title: "Note",
+            note_placeholder: "You can write your note here...",
+            price_prefix: "Price: ",
+            tuesday_unavailable: "Sorry, we are not available on Tuesdays. Please select another day.",
+            holiday_unavailable: "Sorry, we are not available on holidays. Please select another day.",
+            time_invalid: "Pickup time must be between 6:00 AM and 6:00 PM.",
+            tuesday_pickup_unavailable: "Sorry, pickups are not available on Tuesdays. Please select another day.",
+            holiday_pickup_unavailable: "Sorry, pickups are not available on holidays. Please select another day.",
+            time_pickup_invalid: "Pickup time must be between 6:00 AM and 6:00 PM."
+        },
+        fil: {
+            options_title: "PAGPIPILIAN",
+            step_you: "IKAW",
+            step_weigh: "TIMBANG",
+            step_other: "IBA PA",
+            step_payment: "BAYAD",
+            previous_btn: "Nakaraan",
+            next_btn: "Susunod",
+            detergent_btn: "DETERHENTE",
+            select_detergent_title: "PUMILI NG DETERHENTE",
+            select_fabcon_title: "PUMILI NG FABCON",
+            done_btn: "Tapos Na",
+            cancel_btn: "Kanselahin",
+            own_detergent_btn: "SARILING DETERHENTE",
+            own_fabcon_btn: "SARILING FABCON",
+            fabcon_btn: "FABCON",
+            iron_btn: "PLANTSA",
+            fold_btn: "TIKLOP",
+            priority_btn: "PRIORITY ORDER",
+            schedule_pickup_btn: "I-SCHEDULE ANG PICKUP",
+            schedule_pickup_title: "I-Schedule ang Pickup",
+            schedule_note: "*Walang Pickups sa Martes/Holidays – Mangyaring pumili ng iba pang araw.",
+            date_label: "Petsa",
+            time_label: "Oras (6:00 AM - 6:00 PM)",
+            submit_btn: "Ipadala",
+            add_note_btn: "MAGDAGDAG NG TALA",
+            note_title: "Tala",
+            note_placeholder: "Maaari kang magsulat ng iyong tala dito...",
+            price_prefix: "Presyo: ",
+            tuesday_unavailable: "Paumanhin, hindi kami available sa Martes. Mangyaring pumili ng iba pang araw.",
+            holiday_unavailable: "Paumanhin, hindi kami available sa holidays. Mangyaring pumili ng iba pang araw.",
+            time_invalid: "Ang pickup time ay dapat maging 6:00 AM at 6:00 PM.",
+            tuesday_pickup_unavailable: "Paumanhin, walang pickups sa Martes. Mangyaring pumili ng iba pang araw.",
+            holiday_pickup_unavailable: "Paumanhin, walang pickups sa holidays. Mangyaring pumili ng iba pang araw.",
+            time_pickup_invalid: "Ang pickup time ay dapat maging 6:00 AM at 6:00 PM."
+        },
+        ja: {
+            options_title: "オプション",
+            step_you: "あなた",
+            step_weigh: "計量",
+            step_other: "その他",
+            step_payment: "支払い",
+            previous_btn: "戻る",
+            next_btn: "次へ",
+            detergent_btn: "洗剤",
+            select_detergent_title: "洗剤を選択",
+            select_fabcon_title: "ファブコンを選択",
+            done_btn: "完了",
+            cancel_btn: "キャンセル",
+            own_detergent_btn: "自分の洗剤",
+            own_fabcon_btn: "自分のファブコン",
+            fabcon_btn: "ファブコン",
+            iron_btn: "アイロン",
+            fold_btn: "折り畳む",
+            priority_btn: "優先注文",
+            schedule_pickup_btn: "ピックアップをスケジュール",
+            schedule_pickup_title: "ピックアップをスケジュール",
+            schedule_note: "*火曜日/祝日のピックアップはありません。別の日を選択してください。",
+            date_label: "日付",
+            time_label: "時間（午前6:00～午後6:00）",
+            submit_btn: "送信",
+            add_note_btn: "メモを追加",
+            note_title: "メモ",
+            note_placeholder: "ここにメモを書くことができます...",
+            price_prefix: "価格: ",
+            tuesday_unavailable: "申し訳ございません。火曜日はご利用いただけません。別の日をお選びください。",
+            holiday_unavailable: "申し訳ございません。祝日はご利用いただけません。別の日をお選びください。",
+            time_invalid: "ピックアップ時刻は午前6:00から午後6:00の間にしてください。",
+            tuesday_pickup_unavailable: "申し訳ございません。火曜日のピックアップはご利用いただけません。別の日をお選びください。",
+            holiday_pickup_unavailable: "申し訳ございません。祝日のピックアップはご利用いただけません。別の日をお選びください。",
+            time_pickup_invalid: "ピックアップ時刻は午前6:00から午後6:00の間にしてください。"
+        },
+        ko: {
+            options_title: "옵션",
+            step_you: "당신",
+            step_weigh: "무게",
+            step_other: "기타",
+            step_payment: "결제",
+            previous_btn: "이전",
+            next_btn: "다음",
+            detergent_btn: "세제",
+            select_detergent_title: "세제 선택",
+            select_fabcon_title: "섬유유연제 선택",
+            done_btn: "완료",
+            cancel_btn: "취소",
+            own_detergent_btn: "자신의 세제",
+            own_fabcon_btn: "자신의 섬유유연제",
+            fabcon_btn: "섬유유연제",
+            iron_btn: "다림질",
+            fold_btn: "접기",
+            priority_btn: "우선 주문",
+            schedule_pickup_btn: "픽업 예약",
+            schedule_pickup_title: "픽업 예약",
+            schedule_note: "*화요일/휴일에는 픽업이 없습니다. 다른 날을 선택해주세요.",
+            date_label: "날짜",
+            time_label: "시간 (오전 6:00 - 오후 6:00)",
+            submit_btn: "제출",
+            add_note_btn: "메모 추가",
+            note_title: "메모",
+            note_placeholder: "여기에 메모를 작성할 수 있습니다...",
+            price_prefix: "가격: ",
+            tuesday_unavailable: "죄송하지만 화요일에는 이용할 수 없습니다. 다른 날을 선택해주세요.",
+            holiday_unavailable: "죄송하지만 휴일에는 이용할 수 없습니다. 다른 날을 선택해주세요.",
+            time_invalid: "픽업 시간은 오전 6:00에서 오후 6:00 사이여야 합니다.",
+            tuesday_pickup_unavailable: "죄송하지만 화요일 픽업은 이용할 수 없습니다. 다른 날을 선택해주세요.",
+            holiday_pickup_unavailable: "죄송하지만 휴일 픽업은 이용할 수 없습니다. 다른 날을 선택해주세요.",
+            time_pickup_invalid: "픽업 시간은 오전 6:00에서 오후 6:00 사이여야 합니다."
+        }
+    };
+
+    function getCurrentLanguage() {
+        return sessionStorage.getItem('language') || 'en';
+    }
+
+    function applyTranslations() {
+        const currentLang = getCurrentLanguage();
+        const elements = document.querySelectorAll('[data-translate]');
+        
+        elements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[currentLang] && translations[currentLang][key]) {
+                element.textContent = translations[currentLang][key];
+            }
+        });
+
+        const placeholders = document.querySelectorAll('[data-translate-placeholder]');
+        placeholders.forEach(element => {
+            const key = element.getAttribute('data-translate-placeholder');
+            if (translations[currentLang] && translations[currentLang][key]) {
+                element.placeholder = translations[currentLang][key];
+            }
+        });
+    }
+
     function toggleBoxHighlight(boxClass, isSelected) {
         const box = document.querySelector(boxClass);
         if (box) {
@@ -207,11 +404,18 @@
         document.getElementById('fabconModal').style.display = 'none';
     }
     function openScheduleModal() {
-        document.getElementById('scheduleModal').style.display = 'block';
+        const modal = document.getElementById('scheduleModal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
     }
     function closeScheduleModal() {
-        document.getElementById('scheduleModal').style.display = 'none';
+        const modal = document.getElementById('scheduleModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
+    
     function changeQty(inputId, delta) {
         var input = document.getElementById(inputId);
         var val = parseInt(input.value) || 1;
@@ -221,31 +425,14 @@
         input.dispatchEvent(new Event('change'));
     }
     
-    // Alert 
-    function customAlert(message) {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-alert-overlay';
-        
-        const alertBox = document.createElement('div');
-        alertBox.className = 'custom-alert';
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'custom-alert-message';
-        messageDiv.textContent = message;
-        
-        const button = document.createElement('button');
-        button.className = 'custom-alert-button';
-        button.textContent = 'OK';
-        button.onclick = function() {
-            document.body.removeChild(overlay);
-            document.body.removeChild(alertBox);
-        };
-        
-        alertBox.appendChild(messageDiv);
-        alertBox.appendChild(button);
-        
-        document.body.appendChild(overlay);
-        document.body.appendChild(alertBox);
+    // Error Modal
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.add('show');
+    }
+    
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.remove('show');
     }
     
     const philippineHolidays = [
@@ -272,26 +459,26 @@
         return date.getDay() === 2; 
     }
     
-    function validatePickupDate() {
-        const pickupDate = document.getElementById('pickup-date').value;
-        
-        if (pickupDate) {
-            const selectedDate = new Date(pickupDate + 'T00:00:00');
-            if (isTuesday(selectedDate)) {
-                customAlert('Sorry, we are not available on Tuesdays. Please select another day.');
-                document.getElementById('pickup-date').value = '';
-                return false;
-            }
-            if (isHoliday(selectedDate)) {
-                customAlert('Sorry, we are not available on holidays. Please select another day.');
-                document.getElementById('pickup-date').value = '';
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    function validatePickupTime() {
+            function validatePickupDate() {
+                const pickupDate = document.getElementById('pickup-date').value;
+                
+                if (pickupDate) {
+                    const selectedDate = new Date(pickupDate + 'T00:00:00');
+                    if (isTuesday(selectedDate)) {
+                        const currentLang = getCurrentLanguage();
+                        showErrorModal(translations[currentLang]['tuesday_unavailable']);
+                        document.getElementById('pickup-date').value = '';
+                        return false;
+                    }
+                    if (isHoliday(selectedDate)) {
+                        const currentLang = getCurrentLanguage();
+                        showErrorModal(translations[currentLang]['holiday_unavailable']);
+                        document.getElementById('pickup-date').value = '';
+                        return false;
+                    }
+                }
+                return true;
+            }    function validatePickupTime() {
         const pickupTime = document.getElementById('pickup-time').value;
         
         if (pickupTime) {
@@ -301,7 +488,8 @@
             const maxTime = 18 * 60; // 6:00 PM
             
             if (timeInMinutes < minTime || timeInMinutes > maxTime) {
-                customAlert('Pickup time must be between 6:00 AM and 6:00 PM.');
+                const currentLang = getCurrentLanguage();
+                showErrorModal(translations[currentLang]['time_invalid']);
                 document.getElementById('pickup-time').value = '';
                 return false;
             }
@@ -312,15 +500,16 @@
     function saveSchedule() {
         const pickupDate = document.getElementById('pickup-date').value;
         const pickupTime = document.getElementById('pickup-time').value;
+        const currentLang = getCurrentLanguage();
         
         if (pickupDate) {
             const selectedDate = new Date(pickupDate + 'T00:00:00');
             if (isTuesday(selectedDate)) {
-                customAlert('Sorry, pickups are not available on Tuesdays. Please select another day.');
+                showErrorModal(translations[currentLang]['tuesday_pickup_unavailable']);
                 return;
             }
             if (isHoliday(selectedDate)) {
-                customAlert('Sorry, pickups are not available on holidays. Please select another day.');
+                showErrorModal(translations[currentLang]['holiday_pickup_unavailable']);
                 return;
             }
         }
@@ -332,7 +521,7 @@
             const maxTime = 18 * 60; // 6:00 PM
             
             if (timeInMinutes < minTime || timeInMinutes > maxTime) {
-                customAlert('Pickup time must be between 6:00 AM and 6:00 PM.');
+                showErrorModal(translations[currentLang]['time_pickup_invalid']);
                 return;
             }
         }
@@ -341,12 +530,14 @@
         document.getElementById('hiddenPickupTime').value = pickupTime || '';
         
         const scheduleBtn = document.querySelector('button.v245_298');
-        if (pickupDate || pickupTime) {
-            scheduleBtn.classList.add('selected');
-            toggleBoxHighlight('.v245_297', true);
-        } else {
-            scheduleBtn.classList.remove('selected');
-            toggleBoxHighlight('.v245_297', false);
+        if (scheduleBtn) {
+            if (pickupDate || pickupTime) {
+                scheduleBtn.classList.add('selected');
+                toggleBoxHighlight('.v245_297', true);
+            } else {
+                scheduleBtn.classList.remove('selected');
+                toggleBoxHighlight('.v245_297', false);
+            }
         }
         
         closeScheduleModal();
@@ -370,6 +561,15 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        applyTranslations();
+        
+        // Close error modal when clicking outside
+        document.getElementById('errorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeErrorModal();
+            }
+        });
+        
         function updateTotals() {
             let detTotal = 0;
             let anyDetSelected = false;
@@ -493,35 +693,43 @@
         document.querySelectorAll('.quantity input[type="number"]').forEach(inp => {
             inp.addEventListener('change', updateTotals);
         });
+        {% if order_type != 'Self-service' %}
         const ironBtn = document.getElementById('ironBtn');
         const ironInput = document.getElementById('ironInput');
-        ironBtn.addEventListener('click', function() {
-            ironInput.value = ironInput.value === '1' ? '0' : '1';
+        if (ironBtn && ironInput) {
+            ironBtn.addEventListener('click', function() {
+                ironInput.value = ironInput.value === '1' ? '0' : '1';
+                toggleButtonSelected(ironBtn, ironInput);
+                toggleBoxHighlight('.v100_163', ironInput.value === '1');
+            });
             toggleButtonSelected(ironBtn, ironInput);
             toggleBoxHighlight('.v100_163', ironInput.value === '1');
-        });
-        toggleButtonSelected(ironBtn, ironInput);
-        toggleBoxHighlight('.v100_163', ironInput.value === '1');
+        }
         
         const foldBtn = document.getElementById('foldBtn');
         const foldInput = document.getElementById('foldInput');
-        foldBtn.addEventListener('click', function() {
-            foldInput.value = foldInput.value === '1' ? '0' : '1';
+        if (foldBtn && foldInput) {
+            foldBtn.addEventListener('click', function() {
+                foldInput.value = foldInput.value === '1' ? '0' : '1';
+                toggleButtonSelected(foldBtn, foldInput);
+                toggleBoxHighlight('.v100_165', foldInput.value === '1');
+            });
             toggleButtonSelected(foldBtn, foldInput);
             toggleBoxHighlight('.v100_165', foldInput.value === '1');
-        });
-        toggleButtonSelected(foldBtn, foldInput);
-        toggleBoxHighlight('.v100_165', foldInput.value === '1');
+        }
         
         const priorityBtn = document.getElementById('priorityBtn');
         const priorityInput = document.getElementById('priorityInput');
-        priorityBtn.addEventListener('click', function() {
-            priorityInput.value = priorityInput.value === '1' ? '0' : '1';
+        if (priorityBtn && priorityInput) {
+            priorityBtn.addEventListener('click', function() {
+                priorityInput.value = priorityInput.value === '1' ? '0' : '1';
+                toggleButtonSelected(priorityBtn, priorityInput);
+                toggleBoxHighlight('.v244_284', priorityInput.value === '1');
+            });
             toggleButtonSelected(priorityBtn, priorityInput);
             toggleBoxHighlight('.v244_284', priorityInput.value === '1');
-        });
-        toggleButtonSelected(priorityBtn, priorityInput);
-        toggleBoxHighlight('.v244_284', priorityInput.value === '1');
+        }
+        {% endif %}
         updateTotals();
     });
 </script>

@@ -32,8 +32,6 @@ body {
 }
 
 .page-wrapper {
-  width: 50vw; 
-  height: 100vh;
   position: relative;
   display: flex;
   justify-content: center;
@@ -193,3 +191,55 @@ body {
   font-size: 33px;
   text-align: center;
 }
+
+@media screen and (min-width: 800px) and (max-width: 1200px) {
+
+    body {
+        overflow: none; 
+    }
+
+    .v91_57 {
+        transform: scale(1.45);       
+        width: 600px;
+        height: 800px;
+        margin-top: 20px;              
+    }
+
+    .v91_115, .v91_116 {
+        font-size: 70px;              
+        left: 55px;                    
+    }
+
+    .v91_124 {
+        font-size: 28px;
+        width: 80%;
+        left: 100px;
+        top: 290px;
+    }
+
+    .v91_118 {
+        width: 330px; 
+        height: 80px;
+        top: 680px;
+        left: 160px;
+    }
+
+    .v91_119 {
+        font-size: 38px;
+    }
+
+    .v91_122 {
+        width: 600px;
+        height: 550px;
+        top: 360px;
+        left: 0px;
+        background-size: contain;
+    }
+
+    .v91_64,
+    .v91_65,
+    .v91_91 {
+        transform: scale(1.25);
+    }
+}
+

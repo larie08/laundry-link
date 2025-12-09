@@ -167,7 +167,7 @@ def getallprocess(sql: str, params: tuple = ()) -> list:
 # - update_customer(): edit customer info
 # - delete_customer(): remove customer
 # ==================================================
-def add_customer(fullname: str, phone_number: str) -> bool:
+def add_customer(fullname: str, phone_number: str, user_id: int = None) -> bool:
     """Create a new customer and assign an incremental CUSTOMER_ID."""
     _require_db()
     transaction = db.transaction()
@@ -178,6 +178,9 @@ def add_customer(fullname: str, phone_number: str) -> bool:
         'PHONE_NUMBER': phone_number,
         'DATE_CREATED': _now(),
     })
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Add', customer_id, fullname, phone_number)
     return True
 
 def get_all_customers() -> list:
@@ -192,7 +195,7 @@ def get_customer_by_id(customer_id: int) -> dict:
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
     return docs[0].to_dict() if docs else None
 
-def update_customer(customer_id: int, fullname: str, phone_number: str) -> bool:
+def update_customer(customer_id: int, fullname: str, phone_number: str, user_id: int = None) -> bool:
     """Update FULLNAME and PHONE_NUMBER for a customer."""
     _require_db()
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
@@ -202,15 +205,22 @@ def update_customer(customer_id: int, fullname: str, phone_number: str) -> bool:
         'FULLNAME': fullname,
         'PHONE_NUMBER': phone_number,
     })
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Update', customer_id, fullname, phone_number)
     return True
 
-def delete_customer(customer_id: int) -> bool:
+def delete_customer(customer_id: int, user_id: int = None) -> bool:
     """Delete a customer document by CUSTOMER_ID."""
     _require_db()
     docs = db.collection('CUSTOMER').where('CUSTOMER_ID', '==', customer_id).limit(1).get()
     if not docs:
         return False
+    customer = docs[0].to_dict()
     db.collection('CUSTOMER').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_customer_log(user_id, 'Delete', customer_id, customer.get('FULLNAME', ''), customer.get('PHONE_NUMBER', ''))
     return True
 
 def add_user(username: str, password: str, role: str, fullname: str) -> bool:
@@ -283,7 +293,7 @@ def authenticate_user(username: str, password: str) -> dict:
 # - search_detergents(): simple name/ID search
 # - get_detergent_total_value(): compute total value
 # ==================================================
-def add_detergent(name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def add_detergent(name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Add a detergent to inventory with auto-increment DETERGENT_ID."""
     _require_db()
     transaction = db.transaction()
@@ -298,9 +308,12 @@ def add_detergent(name: str, price: float, qty: int, image_filename: str = None)
         'DATE_UPDATED': now,
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Add', 'Detergent', det_id, name, qty, price)
     return True
 
-def update_detergent(detergent_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def update_detergent(detergent_id: int, name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Update a detergent by DETERGENT_ID."""
     _require_db()
     docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
@@ -313,15 +326,22 @@ def update_detergent(detergent_id: int, name: str, price: float, qty: int, image
         'DATE_UPDATED': _now(),
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Update', 'Detergent', detergent_id, name, qty, price)
     return True
 
-def delete_detergent(detergent_id: int) -> bool:
+def delete_detergent(detergent_id: int, user_id: int = None) -> bool:
     """Delete a detergent by DETERGENT_ID."""
     _require_db()
     docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
     if not docs:
         return False
+    det = docs[0].to_dict()
     db.collection('DETERGENT').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Delete', 'Detergent', detergent_id, det.get('DETERGENT_NAME', ''), det.get('QTY', 0), det.get('DETERGENT_PRICE', 0.0))
     return True
 
 def get_all_detergents() -> list:
@@ -369,7 +389,7 @@ def get_detergent_total_value() -> dict:
 # - search_fabric_conditioners(): simple name/ID search
 # - get_fabcon_total_value(): compute total value
 # ==================================================
-def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Add a fabric conditioner to inventory with auto-increment FABCON_ID."""
     _require_db()
     transaction = db.transaction()
@@ -384,9 +404,12 @@ def add_fabric_conditioner(name: str, price: float, qty: int, image_filename: st
         'DATE_UPDATED': now,
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Add', 'Fabric Conditioner', fab_id, name, qty, price)
     return True
 
-def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: float, qty: int, image_filename: str = None) -> bool:
+def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: float, qty: int, image_filename: str = None, user_id: int = None) -> bool:
     """Update a fabric conditioner by FABCON_ID."""
     _require_db()
     docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
@@ -399,17 +422,23 @@ def update_fabric_conditioner(fabric_conditioner_id: int, name: str, price: floa
         'DATE_UPDATED': _now(),
         'IMAGE_FILENAME': image_filename,
     })
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Update', 'Fabric Conditioner', fabric_conditioner_id, name, qty, price)
     return True
 
-def delete_fabric_conditioner(fabric_conditioner_id: int) -> bool:
+def delete_fabric_conditioner(fabric_conditioner_id: int, user_id: int = None) -> bool:
     """Delete a fabric conditioner by FABCON_ID."""
     _require_db()
     docs = db.collection('FABCON').where('FABCON_ID', '==', fabric_conditioner_id).limit(1).get()
     if not docs:
         return False
+    fab = docs[0].to_dict()
     db.collection('FABCON').document(docs[0].id).delete()
+    # Log the action
+    if user_id is not None:
+        add_inventory_log(user_id, 'Delete', 'Fabric Conditioner', fabric_conditioner_id, fab.get('FABCON_NAME', ''), fab.get('QTY', 0), fab.get('FABCON_PRICE', 0.0))
     return True
-
 def get_all_fabric_conditioners() -> list:
     """Return all fabric conditioners ordered by name."""
     _require_db()
@@ -444,7 +473,7 @@ def get_fabcon_total_value() -> dict:
         d = doc.to_dict()
         total += float(d.get('FABCON_PRICE', 0)) * int(d.get('QTY', 0))
     return {'ItemType': 'Fabric Conditioner', 'TotalValue': total}
-
+    
 ##################################################
 # ORDER_ITEM TABLE
 # - add_order_item(): create order item flags/options
@@ -475,8 +504,8 @@ def add_orderitem_detergent(orderitem_id: int, detergent_id: int, quantity: int,
     """
     _require_db()
     docs = db.collection('ORDERITEM_DETERGENT') \
-        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
-        .where(field_path='DETERGENT_ID', op_string='==', value=detergent_id).limit(1).get()
+        .where('ORDERITEM_ID', '==', orderitem_id) \
+        .where('DETERGENT_ID', '==', detergent_id).limit(1).get()
     if docs:
         return False
     db.collection('ORDERITEM_DETERGENT').add({
@@ -497,8 +526,8 @@ def add_orderitem_fabcon(orderitem_id: int, fabcon_id: int, quantity: int, unit_
     """
     _require_db()
     docs = db.collection('ORDERITEM_FABCON') \
-        .where(field_path='ORDERITEM_ID', op_string='==', value=orderitem_id) \
-        .where(field_path='FABCON_ID', op_string='==', value=fabcon_id).limit(1).get()
+        .where('ORDERITEM_ID', '==', orderitem_id) \
+        .where('FABCON_ID', '==', fabcon_id).limit(1).get()
     if docs:
         return False
     db.collection('ORDERITEM_FABCON').add({
@@ -623,6 +652,20 @@ def update_order_qr_code(order_id, qr_code_path):
     })
     return True
 
+def update_order_note(order_id, order_note):
+    """Update ORDER_NOTE field for an order."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    # If order_note is empty, set to None
+    note_value = order_note.strip() if order_note and order_note.strip() else None
+    db.collection('ORDER').document(docs[0].id).update({
+        'ORDER_NOTE': note_value,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
 def get_customers_with_orders() -> list:
     """Get all customers with their latest order details."""
     _require_db()
@@ -674,6 +717,43 @@ def get_customers_with_orders() -> list:
             
         customers.append(customer)
         
+    return customers
+
+def get_all_customers_with_order_stats():
+    """Return all customers with their latest order and order count (batch, fast)."""
+    _require_db()
+    customers = []
+    customer_docs = db.collection('CUSTOMER').order_by('CUSTOMER_ID').get()
+    orders = db.collection('ORDER').get()
+    orders_by_customer = {}
+    for doc in orders:
+        order = doc.to_dict()
+        cid = order.get('CUSTOMER_ID')
+        if cid not in orders_by_customer:
+            orders_by_customer[cid] = []
+        orders_by_customer[cid].append(order)
+    for customer_doc in customer_docs:
+        customer = customer_doc.to_dict()
+        cid = customer['CUSTOMER_ID']
+        cust_orders = orders_by_customer.get(cid, [])
+        customer['total_orders'] = len(cust_orders)
+        # Add CUSTOMER_NAME for template compatibility
+        customer['CUSTOMER_NAME'] = customer.get('FULLNAME', '')
+        if cust_orders:
+            latest_order = max(cust_orders, key=lambda x: x.get('DATE_CREATED', datetime.min))
+            customer['ORDER_ID'] = latest_order.get('ORDER_ID', 'N/A')
+            customer['ORDER_STATUS'] = latest_order.get('ORDER_STATUS', 'N/A')
+            customer['PAYMENT_STATUS'] = latest_order.get('PAYMENT_STATUS', 'N/A')
+            # Add ORDER_TYPE and TOTAL_PRICE for template compatibility
+            customer['ORDER_TYPE'] = latest_order.get('ORDER_TYPE', '')
+            customer['TOTAL_PRICE'] = latest_order.get('TOTAL_PRICE', '')
+        else:
+            customer['ORDER_ID'] = 'N/A'
+            customer['ORDER_STATUS'] = 'N/A'
+            customer['PAYMENT_STATUS'] = 'N/A'
+            customer['ORDER_TYPE'] = ''
+            customer['TOTAL_PRICE'] = ''
+        customers.append(customer)
     return customers
 
 def get_customer_statistics():
@@ -744,6 +824,32 @@ def get_monthly_customer_data():
         'counts': counts
     }
 
+def get_daily_customer_counts():
+    """Get customer counts by day for the last 30 days."""
+    _require_db()
+    
+    daily_counts = {}
+    
+    # Get all customers
+    customers = db.collection('CUSTOMER').get()
+    
+    # Count customers added each day
+    for doc in customers:
+        customer = doc.to_dict()
+        if customer.get('DATE_CREATED'):
+            date_created = customer['DATE_CREATED']
+            # Convert to date only (remove time)
+            if hasattr(date_created, 'date'):
+                date_key = date_created.date()
+            else:
+                date_key = date_created
+            
+            if date_key not in daily_counts:
+                daily_counts[date_key] = 0
+            daily_counts[date_key] += 1
+    
+    return daily_counts
+
 def get_all_orders_with_priority():
     """Return all orders with priority info and customer name."""
     _require_db()
@@ -790,23 +896,157 @@ def get_all_orders_with_priority():
         customer = customer_map.get(order.get('CUSTOMER_ID'))
         out.append({
             'ORDER_ID': order.get('ORDER_ID'),
+            'ORDERITEM_ID': order.get('ORDERITEM_ID'),
             'CUSTOMER_ID': order.get('CUSTOMER_ID'),
             'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+            'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
             'ORDER_TYPE': order.get('ORDER_TYPE'),
             'PRIORITY': 'Priority' if orderitem and orderitem.get('PRIORITIZE_ORDER') else 'Normal',
             'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
             'ORDER_STATUS': order.get('ORDER_STATUS'),
+            'DATE_UPDATED': order.get('DATE_UPDATED'),
             'DATE_CREATED': order.get('DATE_CREATED'),
             'TOTAL_LOAD': order.get('TOTAL_LOAD'),
             'TOTAL_PRICE': order.get('TOTAL_PRICE'),
             'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
             'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
-            'PHONE_NUMBER': order.get('PHONE_NUMBER', customer.get('PHONE_NUMBER') if customer else ''),
         })
 
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
 
+def add_inventory_log(user_id: int, action: str, item_type: str, item_id: int, name: str, qty: int, price: float):
+    """Add an inventory log entry for detergent/fabcon actions."""
+    _require_db()
+    db.collection('INVENTORY_LOG').add({
+        'USER_ID': user_id,
+        'ACTION': action,  # 'Add', 'Update', 'Delete'
+        'ITEM_TYPE': item_type,  # 'Detergent' or 'Fabric Conditioner'
+        'ITEM_ID': item_id,
+        'NAME': name,
+        'QTY': qty,
+        'PRICE': price,
+        'DATE': _now(),
+    })
+
+def add_customer_log(user_id: int, action: str, customer_id: int, fullname: str, phone_number: str):
+    """Log customer actions (add, update, delete)."""
+    _require_db()
+    db.collection('CUSTOMER_LOG').add({
+        'USER_ID': user_id,
+        'ACTION': action,  # 'Add', 'Update', 'Delete'
+        'CUSTOMER_ID': customer_id,
+        'FULLNAME': fullname,
+        'PHONE_NUMBER': phone_number,
+        'DATE': _now(),
+    })
+
+##################################################
+# CONSUMED INVENTORY REPORT FUNCTIONS
+# - get_consumed_detergents_report(): get consumed detergents with total value
+# - get_consumed_fabcons_report(): get consumed fabric conditioners with total value
+##################################################
+def get_consumed_detergents_report() -> list:
+    """
+    Get all consumed detergents from ORDERITEM_DETERGENT junction table.
+    Joins with ORDER_ITEM, ORDER, DETERGENT to get full details.
+    Returns: List of dicts with detergent consumption data and total cost.
+    """
+    _require_db()
+    
+    # Get all ORDERITEM_DETERGENT records
+    orderitem_det_docs = db.collection('ORDERITEM_DETERGENT').get()
+    out = []
+    
+    for doc in orderitem_det_docs:
+        oid_det = doc.to_dict()
+        orderitem_id = oid_det.get('ORDERITEM_ID')
+        detergent_id = oid_det.get('DETERGENT_ID')
+        quantity = int(oid_det.get('QUANTITY', 0))
+        unit_price = float(oid_det.get('UNIT_PRICE', 0))
+        total_value = quantity * unit_price
+        
+        # Get ORDER_ITEM to link to ORDER
+        orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not orderitem_docs:
+            continue
+        
+        # Get ORDER to get date and order details
+        order_docs = db.collection('ORDER').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not order_docs:
+            continue
+        
+        order = order_docs[0].to_dict()
+        date_created = order.get('DATE_CREATED')
+        
+        # Get DETERGENT to get name
+        detergent_docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+        detergent_name = 'Unknown'
+        if detergent_docs:
+            detergent_name = detergent_docs[0].to_dict().get('DETERGENT_NAME', 'Unknown')
+        
+        out.append({
+            'DETERGENT_ID': detergent_id,
+            'DETERGENT_NAME': detergent_name,
+            'QUANTITY': quantity,
+            'UNIT_PRICE': unit_price,
+            'TOTAL_VALUE': total_value,
+            'DATE_CREATED': date_created,
+            'ORDER_ID': order.get('ORDER_ID'),
+        })
+    
+    return out
+
+def get_consumed_fabcons_report() -> list:
+    """
+    Get all consumed fabric conditioners from ORDERITEM_FABCON junction table.
+    Joins with ORDER_ITEM, ORDER, FABCON to get full details.
+    Returns: List of dicts with fabric conditioner consumption data and total cost.
+    """
+    _require_db()
+    
+    # Get all ORDERITEM_FABCON records
+    orderitem_fab_docs = db.collection('ORDERITEM_FABCON').get()
+    out = []
+    
+    for doc in orderitem_fab_docs:
+        oid_fab = doc.to_dict()
+        orderitem_id = oid_fab.get('ORDERITEM_ID')
+        fabcon_id = oid_fab.get('FABCON_ID')
+        quantity = int(oid_fab.get('QUANTITY', 0))
+        unit_price = float(oid_fab.get('UNIT_PRICE', 0))
+        total_value = quantity * unit_price
+        
+        # Get ORDER_ITEM to link to ORDER
+        orderitem_docs = db.collection('ORDER_ITEM').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not orderitem_docs:
+            continue
+        
+        # Get ORDER to get date and order details
+        order_docs = db.collection('ORDER').where('ORDERITEM_ID', '==', orderitem_id).limit(1).get()
+        if not order_docs:
+            continue
+        
+        order = order_docs[0].to_dict()
+        date_created = order.get('DATE_CREATED')
+        
+        # Get FABCON to get name
+        fabcon_docs = db.collection('FABCON').where('FABCON_ID', '==', fabcon_id).limit(1).get()
+        fabcon_name = 'Unknown'
+        if fabcon_docs:
+            fabcon_name = fabcon_docs[0].to_dict().get('FABCON_NAME', 'Unknown')
+        
+        out.append({
+            'FABCON_ID': fabcon_id,
+            'FABCON_NAME': fabcon_name,
+            'QUANTITY': quantity,
+            'UNIT_PRICE': unit_price,
+            'TOTAL_VALUE': total_value,
+            'DATE_CREATED': date_created,
+            'ORDER_ID': order.get('ORDER_ID'),
+        })
+    
+    return out
 
 def compute_order_stats(orders: list, days: int = 7) -> dict:
     """Aggregate status/type counts and build a short-term trend series.
