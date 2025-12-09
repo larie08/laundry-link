@@ -807,6 +807,83 @@ def get_all_orders_with_priority():
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
 
+
+def compute_order_stats(orders: list, days: int = 7) -> dict:
+    """Aggregate status/type counts and build a short-term trend series.
+
+    Args:
+        orders: List of order dictionaries (as returned by get_all_orders_with_priority()).
+        days: Number of trailing days (including today) for the trend series.
+
+    Returns:
+        dict with keys:
+            - status_counts: dict of Pending/Pick-up/Completed/Other
+            - type_counts: dict of Self-service/Drop-off/Other
+            - trend: {labels: [...], counts: [...]}
+    """
+    status_counts = {"Pending": 0, "Pick-up": 0, "Completed": 0, "Other": 0}
+    type_counts = {"Self-service": 0, "Drop-off": 0, "Other": 0}
+
+    # Normalize helpers
+    def _norm_status(raw):
+        if not raw:
+            return "Other"
+        s = str(raw).lower()
+        if "pending" in s:
+            return "Pending"
+        if "pickup" in s or "pick-up" in s or "pick up" in s:
+            return "Pick-up"
+        if "completed" in s or "complete" in s or "done" in s:
+            return "Completed"
+        return "Other"
+
+    def _norm_type(raw):
+        if not raw:
+            return "Other"
+        t = str(raw).lower().replace("_", "").replace(" ", "")
+        if "selfservice" in t or t == "self":
+            return "Self-service"
+        if "dropoff" in t or "drop" == t:
+            return "Drop-off"
+        return "Other"
+
+    today = datetime.now().date()
+    trend_labels = []
+    trend_counts = []
+    # Precompute dates for quick comparison
+    bucket_dates = [today - timedelta(days=i) for i in range(days - 1, -1, -1)]
+
+    for order in orders:
+        status = _norm_status(order.get("ORDER_STATUS"))
+        otype = _norm_type(order.get("ORDER_TYPE"))
+        status_counts[status] = status_counts.get(status, 0) + 1
+        type_counts[otype] = type_counts.get(otype, 0) + 1
+
+    # Trend: count orders per day for the chosen window
+    for d in bucket_dates:
+        trend_labels.append(d.strftime("%b %d"))
+        count = 0
+        for order in orders:
+            date_created = order.get("DATE_CREATED")
+            if not date_created:
+                continue
+            # Handle both Firestore timestamp-like and datetime objects
+            if hasattr(date_created, "date"):
+                order_date = date_created.date()
+            elif isinstance(date_created, datetime):
+                order_date = date_created.date()
+            else:
+                continue
+            if order_date == d:
+                count += 1
+        trend_counts.append(count)
+
+    return {
+        "status_counts": status_counts,
+        "type_counts": type_counts,
+        "trend": {"labels": trend_labels, "counts": trend_counts},
+    }
+
     
 if __name__ == "__main__":
     initialize_database()
