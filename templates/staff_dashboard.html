@@ -156,18 +156,6 @@
                             <div class="card-content">
                                 <div class="orders-stats-list">
                                     <div class="stat-line">
-                                        <span class="stat-label">Pending</span>
-                                        <strong class="stat-value">{{ pending_count }}</strong>
-                                    </div>
-                                    <div class="stat-line">
-                                        <span class="stat-label">Pick-up</span>
-                                        <strong class="stat-value">{{ pickup_count }}</strong>
-                                    </div>
-                                    <div class="stat-line">
-                                        <span class="stat-label">Completed</span>
-                                        <strong class="stat-value">{{ completed_count }}</strong>
-                                    </div>
-                                    <div class="stat-line">
                                         <span class="stat-label">Self-service</span>
                                         <strong class="stat-value">{{ self_service_count }}</strong>
                                     </div>
@@ -179,7 +167,31 @@
                                 <div class="orders-charts">
                                     <div class="chart-block large">
                                         <div class="chart-title"><i class="fas fa-circle-notch"></i> Status Breakdown</div>
+                                        <!-- REMOVE the legend below the doughnut (do not add any legend here) -->
                                         <canvas id="statusChart"></canvas>
+                                        <!-- Centered legend below the doughnut using flexbox -->
+                                        <div class="order-status-legend" style="display:flex;justify-content:center;gap:32px;margin-top:12px;">
+                                            <div class="legend-item" style="display:flex;align-items:center;gap:8px;">
+                                                <span class="legend-color completed"></span>
+                                                <span class="legend-label">Completed</span>
+                                                <span class="legend-tooltip">{{ order_status_counts['Completed'] if order_status_counts and 'Completed' in order_status_counts else 0 }}</span>
+                                            </div>
+                                            <div class="legend-item" style="display:flex;align-items:center;gap:8px;">
+                                                <span class="legend-color other"></span>
+                                                <span class="legend-label">Other</span>
+                                                <span class="legend-tooltip">{{ order_status_counts['Other'] if order_status_counts and 'Other' in order_status_counts else 0 }}</span>
+                                            </div>
+                                            <div class="legend-item" style="display:flex;align-items:center;gap:8px;">
+                                                <span class="legend-color pending"></span>
+                                                <span class="legend-label">Pending</span>
+                                                <span class="legend-tooltip">{{ order_status_counts['Pending'] if order_status_counts and 'Pending' in order_status_counts else 0 }}</span>
+                                            </div>
+                                            <div class="legend-item" style="display:flex;align-items:center;gap:8px;">
+                                                <span class="legend-color pickup"></span>
+                                                <span class="legend-label">Pick-up</span>
+                                                <span class="legend-tooltip">{{ order_status_counts['Pick-up'] if order_status_counts and 'Pick-up' in order_status_counts else 0 }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="chart-block large">
                                         <div class="chart-title"><i class="fas fa-chart-line"></i> Last 7 Days</div>
@@ -903,31 +915,7 @@
                     },
                     options: {
                         plugins: { 
-                            legend: { 
-                                position: 'bottom',
-                                onHover: (evt) => { if (evt?.native?.target) evt.native.target.style.cursor = 'pointer'; },
-                                onLeave: (evt) => { if (evt?.native?.target) evt.native.target.style.cursor = 'default'; },
-                                labels: {
-                                    usePointStyle: false,
-                                    boxWidth: 18,
-                                    boxHeight: 10,
-                                    padding: 10,
-                                    generateLabels(chart) {
-                                        // Always show all status labels with 0 if empty
-                                        const labels = statusLabels;
-                                        const colors = statusColors;
-                                        const values = showEmpty ? labels.map(() => 0) : statusValues;
-                                        return labels.map((label, i) => ({
-                                            text: `${label} ${values[i] ?? 0}`,
-                                            fillStyle: colors[i] || '#9aa5b5',
-                                            strokeStyle: colors[i] || '#9aa5b5',
-                                            lineWidth: 2,
-                                            hidden: false,
-                                            index: i
-                                        }));
-                                    }
-                                }
-                            },
+                            legend: { display: false }, // <-- Hide legend
                             centerText: { text: (statusTotal || 0).toString(), subText: 'Total' }
                         },
                         maintainAspectRatio: false,
@@ -988,7 +976,7 @@
             if (prioritySection.style.display === 'none') {
                 prioritySection.style.display = '';
                 selfServiceSection.style.display = 'none';
-                btnText.textContent = 'Self-Service Orders';
+                btnText.textContent = 'Self-service Orders';
                 btnIcon.className = 'fas fa-user-cog';
             } else {
                 prioritySection.style.display = 'none';

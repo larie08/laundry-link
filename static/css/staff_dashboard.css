@@ -785,7 +785,6 @@ main {
 .full-calendar-days .calendar-day.other-month {
     color: #ccc;
     cursor: default;
-    font-weight: 400;
 }
 
 .full-calendar-days .calendar-day.other-month:hover {
@@ -1277,34 +1276,62 @@ main {
 .orders-stats-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 4px 12px;
+    gap: 18px;
     margin-bottom: 10px;
+    align-items: stretch;
 }
 
 .stat-line {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row; /* Side by side */
     align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid #e9ecef;
+    justify-content: space-between;
+    padding: 10px 0 6px 0;
+    border-bottom: 4px solid #e9ecef; /* Default underline */
+    background: none;
+    border-radius: 0;
+    min-height: 48px;
+    box-shadow: none;
+    margin-bottom: 0;
+    transition: border-color 0.3s;
+    gap: 10px; /* Space between label and value */
 }
 
-.stat-line:last-child {
-    border-bottom: none;
+/* Unique underline color for each status */
+.stat-line:nth-child(1) { /* Pending */
+    border-bottom-color: #ffc107;
+}
+.stat-line:nth-child(2) { /* Pick-up */
+    border-bottom-color: #2196f3;
+}
+.stat-line:nth-child(3) { /* Completed */
+    border-bottom-color: #4caf50;
+}
+.stat-line:nth-child(4) { /* Self-service */
+    border-bottom-color: #1976d2;
+}
+.stat-line:nth-child(5) { /* Drop-off */
+    border-bottom-color: #7b1fa2;
 }
 
 .stat-label {
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: #6c757d;
-    letter-spacing: 0.4px;
+    color: #233872;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
+    margin-bottom: 0;
+    text-align: left;
+    /* Remove margin-bottom for horizontal layout */
 }
 
 .stat-value {
-    font-size: 1.15rem;
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
     color: #122D69;
+    text-align: right;
+    margin-top: 0;
+    letter-spacing: 1px;
 }
 
 .orders-charts {
@@ -1641,6 +1668,67 @@ main {
     margin-bottom: 2px;
     line-height: 1.3;
 }
+
+/* Legend styles for status breakdown */
+.order-status-legend {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+    margin: 18px 0 8px 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.legend-color {
+    width: 22px;
+    height: 18px;
+    border-radius: 4px;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.legend-label {
+    font-size: 1rem;
+    color: #233872;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+}
+
+/* Tooltip styles */
+.legend-tooltip {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: -32px;
+    transform: translateX(-50%);
+    background: #233872;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(35,56,114,0.15);
+    pointer-events: none;
+}
+
+.legend-item:hover .legend-tooltip {
+    display: block;
+}
+
+/* Colors for each status */
+.legend-color.completed { background: #2fa35a; }
+.legend-color.other { background: #9aa5b5; }
+.legend-color.pending { background: #f5c04e; }
+.legend-color.pickup { background: #4cb7d1; }
 
 
 
