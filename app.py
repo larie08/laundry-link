@@ -1347,6 +1347,18 @@ def admin_order_report():
 
     pending_orders = [o for o in filtered_orders if (o.get('ORDER_STATUS') or '').lower() == 'pending']
     completed_orders = [o for o in filtered_orders if (o.get('ORDER_STATUS') or '').lower() == 'completed']
+    
+    # Basic stats for the report page (mirrors the orders view stats)
+    priority_count = sum(1 for o in filtered_orders if (o.get('PRIORITY') or '').lower() == 'priority')
+    normal_count = sum(1 for o in filtered_orders if (o.get('PRIORITY') or '').lower() == 'normal')
+    pickup_count = sum(1 for o in filtered_orders if (o.get('ORDER_STATUS') or '').lower() == 'pickup')
+    stats = {
+        'priority_count': priority_count,
+        'normal_count': normal_count,
+        'pending_count': len(pending_orders),
+        'pickup_count': pickup_count,
+        'completed_count': len(completed_orders)
+    }
 
     # Pagination
     total_pages = (total_orders + items_per_page - 1) // items_per_page if total_orders > 0 else 1
@@ -1399,17 +1411,111 @@ def admin_order_report():
             })
     
     sales_report_df = pd.DataFrame(sales_report_data)
+
+    # Sales summary (for template display)
+    def parse_date_val(val):
+        if not val:
+            return None
+        if hasattr(val, 'date'):
+            return val
+        if isinstance(val, str):
+            try:
+                # Try full datetime string
+                return datetime.fromisoformat(val.replace('Z', '+00:00'))
+            except Exception:
+                try:
+                    return datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    try:
+                        return datetime.strptime(val, '%Y-%m-%d')
+                    except Exception:
+                        return None
+        return None
+
+    # Determine sales period range based on sales_view
+    now = datetime.now()
+    sales_start = sales_end = None
+    sales_period_label = 'All Time'
+    if sales_view == 'daily':
+        base_date = sales_date or now.strftime('%Y-%m-%d')
+        try:
+            day_dt = datetime.strptime(base_date, '%Y-%m-%d')
+        except Exception:
+            day_dt = now
+        sales_start = day_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        sales_end = day_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+        sales_period_label = day_dt.strftime('%B %d, %Y')
+    elif sales_view == 'weekly':
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        sales_start = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        sales_end = end_of_week.replace(hour=23, minute=59, second=59, microsecond=999999)
+        sales_period_label = f"{sales_start.strftime('%b %d')} - {sales_end.strftime('%b %d, %Y')}"
+    elif sales_view == 'monthly':
+        base_month = sales_month or now.strftime('%Y-%m')
+        try:
+            year, month = map(int, base_month.split('-'))
+            start_of_month = datetime(year, month, 1)
+        except Exception:
+            start_of_month = now.replace(day=1)
+        if start_of_month.month == 12:
+            next_month = start_of_month.replace(year=start_of_month.year + 1, month=1, day=1)
+        else:
+            next_month = start_of_month.replace(month=start_of_month.month + 1, day=1)
+        sales_start = start_of_month.replace(hour=0, minute=0, second=0, microsecond=0)
+        sales_end = (next_month - timedelta(seconds=1)).replace(microsecond=999999)
+        sales_period_label = start_of_month.strftime('%B %Y')
+    elif sales_view == 'yearly':
+        sales_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        sales_end = now.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+        sales_period_label = str(now.year)
+
+    sales_completed_orders = []
+    for o in filtered_orders:
+        if (o.get('ORDER_STATUS') or '').lower() != 'completed':
+            continue
+        created_dt = parse_date_val(o.get('DATE_CREATED'))
+        if sales_start and sales_end and created_dt:
+            if created_dt < sales_start or created_dt > sales_end:
+                continue
+        revenue = float(o.get('TOTAL_PRICE', 0) or 0)
+        sales_completed_orders.append({
+            'ORDER_ID': o.get('ORDER_ID'),
+            'CUSTOMER_NAME': o.get('CUSTOMER_NAME', ''),
+            'PHONE_NUMBER': o.get('PHONE_NUMBER', ''),
+            'ORDER_TYPE': o.get('ORDER_TYPE', ''),
+            'Revenue': revenue,
+            'COGS': revenue * 0.3,
+            'Net': revenue * 0.7
+        })
+
+    sales_total_orders = len(sales_completed_orders)
+    sales_total_revenue = sum(item['Revenue'] for item in sales_completed_orders)
+    sales_total_cogs = sum(item['COGS'] for item in sales_completed_orders)
+    sales_total_net = sum(item['Net'] for item in sales_completed_orders)
     # --- End of sales report data block ---
 
     # BASED ON ROLE
     template_name = 'admin_order_report.html' if session['role'] == 'admin' else 'staff_order_report.html'
     return render_template(template_name, 
                          orders=paginated_orders, 
+                         paginated_orders=paginated_orders,
+                         page=page,
                          stats=stats,
                          current_page=page,
                          total_pages=total_pages,
                          total_orders=total_orders,
-                         sales_report_df=sales_report_df  # Pass sales report DataFrame to template
+                         sales_report_df=sales_report_df,  # Pass sales report DataFrame to template
+                         # Sales summary values for template
+                         sales_completed_orders=sales_completed_orders,
+                         sales_total_orders=sales_total_orders,
+                         sales_total_revenue=sales_total_revenue,
+                         sales_total_cogs=sales_total_cogs,
+                         sales_total_net=sales_total_net,
+                         sales_view=sales_view,
+                         sales_date=sales_date,
+                         sales_month=sales_month,
+                         sales_period_label=sales_period_label
     )
 
 # INVENTORY REPORT
@@ -1854,152 +1960,334 @@ def download_order_report(format):
 
     filename = 'order_report'
     sheet_name = 'Orders'
+
+    # Shared totals for all formats
+    total_orders = len(df)
+    total_price_val = 0.0
+    if 'TOTAL_PRICE' in df.columns:
+        try:
+            total_price_val = pd.to_numeric(df['TOTAL_PRICE'], errors='coerce').fillna(0).sum()
+        except Exception:
+            total_price_val = 0.0
+
     if format == 'excel':
         output = io.BytesIO()
         df = make_excel_safe(df)
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            # Start the table lower so the title/info sit clearly under the logo
+            data_start_row = 8  # column headers; data begins at data_start_row + 1
+            df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=data_start_row)
+
+            # --- Financial-style formatting (Excel only) ---
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+
+            # Title/header formats
+            title_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': 'white',
+                'bg_color': '#122D69',
+                'align': 'center',
+                'valign': 'vcenter',
+                'font_size': 16,
+                'border': 1
+            })
+            subtitle_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': '#122D69',
+                'align': 'left',
+                'valign': 'vcenter',
+                'font_size': 10
+            })
+
+            # Header format: bold, dark background, centered text
+            header_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': 'white',
+                'bg_color': '#122D69',
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1
+            })
+
+            # Body formats
+            center_fmt = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'border': 1})
+            text_fmt = workbook.add_format({'align': 'left', 'valign': 'vcenter', 'text_wrap': True, 'border': 1})
+            currency_fmt = workbook.add_format({
+                'align': 'right',
+                'valign': 'vcenter',
+                'num_format': '"₱"#,##0.00',
+                'border': 1
+            })
+            int_fmt = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'num_format': '0', 'border': 1})
+            weight_fmt = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'num_format': '0.00', 'border': 1})
+            total_label_fmt = workbook.add_format({'bold': True, 'align': 'right', 'valign': 'vcenter'})
+            total_value_fmt = workbook.add_format({
+                'bold': True,
+                'align': 'right',
+                'valign': 'vcenter',
+                'num_format': '"₱"#,##0.00'
+            })
+            total_int_fmt = workbook.add_format({'bold': True, 'align': 'left', 'valign': 'vcenter'})
+
+            # Report header (logo on top; title/info clearly beneath the logo)
+            last_col = len(df.columns) - 1
+            # Optional logo (if available). If missing, this is skipped silently.
+            try:
+                worksheet.insert_image(0, 0, 'static/images/logo.jpg', {'x_scale': 0.4, 'y_scale': 0.4})
+            except Exception:
+                pass
+            title_row = 3
+            worksheet.merge_range(title_row, 0, title_row, last_col, 'Order Report', title_fmt)
+            worksheet.merge_range(title_row + 1, 0, title_row + 1, last_col, 'Laundry Link • Sanciangko St, Cebu City, 6000 Cebu', subtitle_fmt)
+            worksheet.merge_range(title_row + 2, 0, title_row + 2, last_col, 'Phone: 0912-345-6789   •   est. 2025', subtitle_fmt)
+
+            # Apply header formatting (row with column titles)
+            header_row_idx = data_start_row
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(header_row_idx, col_num, value, header_fmt)
+
+            # Suggested column widths (financial report style)
+            col_widths = {
+                'ORDER_ID': 10,
+                'CUSTOMER_NAME': 22,
+                'ORDER_TYPE': 12,
+                'ORDER_STATUS': 12,
+                'PAYMENT_STATUS': 14,
+                'TOTAL_PRICE': 14,
+                'TOTAL_LOAD': 10,
+                'TOTAL_WEIGHT': 12,
+                'Detergent': 24,
+                'Fabric Conditioner': 24,
+                'Others': 16,
+                'PICKUP_SCHEDULE': 18,
+                'DATE_CREATED': 18,
+                'DATE_UPDATED': 18
+            }
+
+            # Apply column widths and formats
+            for idx, col in enumerate(df.columns):
+                width = col_widths.get(col, 14)
+                if col == 'TOTAL_PRICE':
+                    worksheet.set_column(idx, idx, width, currency_fmt)
+                elif col == 'TOTAL_LOAD':
+                    worksheet.set_column(idx, idx, width, int_fmt)
+                elif col == 'TOTAL_WEIGHT':
+                    worksheet.set_column(idx, idx, width, weight_fmt)
+                elif col in ['ORDER_ID', 'ORDER_TYPE', 'ORDER_STATUS', 'PAYMENT_STATUS']:
+                    worksheet.set_column(idx, idx, width, center_fmt)
+                else:
+                    worksheet.set_column(idx, idx, width, text_fmt)
+
+            # Totals row (aligned to the right, similar to the screenshot)
+            total_row_idx = data_start_row + len(df) + 2
+            worksheet.write(total_row_idx, max(last_col - 4, 0), 'Total Orders:', total_label_fmt)
+            worksheet.write(total_row_idx, max(last_col - 3, 1), total_orders, total_int_fmt)
+            worksheet.write(total_row_idx, max(last_col - 2, 2), 'Total Price:', total_label_fmt)
+            worksheet.write(total_row_idx, max(last_col - 1, 3), total_price_val, total_value_fmt)
+
+            # Freeze header row for easier review (just below the column headers)
+            worksheet.freeze_panes(data_start_row + 1, 0)
+
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     elif format == 'csv':
         output = io.StringIO()
         df = make_excel_safe(df)
+
+        # Styled CSV header to mimic the Excel report structure
+        output.write("Order Report\n")
+        output.write("Laundry Link • Sanciangko St, Cebu City, 6000 Cebu\n")
+        output.write("Phone: 0912-345-6789 • est. 2025\n")
+        output.write("\n")
+        output.write(f"Total Orders: {total_orders}, Total Price: ₱{total_price_val:,.2f}\n")
+        output.write("\n")
+
         df.to_csv(output, index=False)
         output.seek(0)
         return Response(output.getvalue(), mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}.csv"})
     elif format == 'pdf':
-        # Styled PDF export - use landscape with better layout
+        # Styled PDF export tuned for printing: legal (long bond) landscape
         from fpdf import FPDF
-        pdf = FPDF(orientation='L', unit='mm', format='a4')  # Use A4 landscape
-        pdf.set_auto_page_break(auto=True, margin=10)
-        
+
+        pdf = FPDF(orientation='L', unit='mm', format='legal')
+        pdf.set_left_margin(12)
+        pdf.set_right_margin(12)
+        pdf.set_auto_page_break(auto=True, margin=12)
+
+        def safe_text(text):
+            """Return text encoded for latin-1, replacing unsupported chars (e.g., ₱ -> PHP)."""
+            if text is None:
+                return ''
+            cleaned = str(text).replace('₱', 'PHP')
+            return cleaned.encode('latin-1', 'replace').decode('latin-1')
+
         def add_title_bar(title):
+            """Draw a clean, thinner header bar."""
             pdf.set_fill_color(18, 45, 105)  # #122D69
             pdf.set_text_color(255, 255, 255)
-            pdf.set_font('Arial', 'B', 14)
-            pdf.cell(0, 10, title, ln=True, align='C', fill=True)
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 9, title, ln=True, align='C', fill=True)
             pdf.ln(2)
-        
+
+        def estimate_lines(text, width, line_height):
+            """Estimate lines needed for wrapped text at current font."""
+            if text is None:
+                return 1
+            text = str(text)
+            if not text:
+                return 1
+            words = text.split(' ')
+            lines = 1
+            current = ''
+            for word in words:
+                candidate = word if current == '' else f"{current} {word}"
+                if pdf.get_string_width(candidate) <= (width - 2):
+                    current = candidate
+                else:
+                    lines += 1
+                    current = word
+            return max(lines, 1)
+
         def add_table(df):
             if df.empty:
                 pdf.set_text_color(200, 0, 0)
-                pdf.set_font('Arial', '', 10)
-                pdf.cell(0, 7, 'No data available.', ln=True, align='C')
+                pdf.set_font('Arial', '', 9)
+                pdf.cell(0, 6, 'No data available.', ln=True, align='C')
                 return
-            
-            pdf.set_font('Arial', 'B', 8)
-            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
-            pdf.set_text_color(35, 56, 114)    # #233872
-            
-            available_width = pdf.w - 2 * pdf.l_margin
+
+            pdf.set_fill_color(245, 247, 250)  # header background
+            pdf.set_text_color(35, 56, 114)    # header text
+
+            available_width = pdf.w - pdf.l_margin - pdf.r_margin
             columns = list(df.columns)
-            
-            # Define column widths with specific sizes for each column
-            col_width_map = {
-                'ORDER_ID': 10,
-                'CUSTOMER_NAME': 20,
-                'ORDER_TYPE': 15,
-                'ORDER_STATUS': 15,
-                'PAYMENT_STATUS': 15,
-                'TOTAL_PRICE': 12,
-                'TOTAL_LOAD': 10,
-                'TOTAL_WEIGHT': 12,
-                'Detergent': 30,
-                'Fabric Conditioner': 30,
-                'Others': 20,
-                'PICKUP_SCHEDULE': 20,
-                'DATE_CREATED': 22,
-                'DATE_UPDATED': 22,
+
+            # Relative weights to spread columns across full width
+            weight_map = {
+                'ORDER_ID': 6,
+                'CUSTOMER_NAME': 12,
+                'ORDER_TYPE': 7,
+                'ORDER_STATUS': 7,
+                'PAYMENT_STATUS': 7,
+                'TOTAL_PRICE': 6,
+                'TOTAL_LOAD': 4,
+                'TOTAL_WEIGHT': 5,
+                'Detergent': 10,
+                'Fabric Conditioner': 10,
+                'Others': 7,
+                'PICKUP_SCHEDULE': 6,
+                'DATE_CREATED': 8,
+                'DATE_UPDATED': 8,
             }
-            
-            col_widths = [col_width_map.get(col, 15) for col in columns]
-            total_width = sum(col_widths)
-            
-            # Scale if needed
-            if total_width > available_width:
-                scale_factor = available_width / total_width
-                col_widths = [w * scale_factor for w in col_widths]
-            
-            # Header row
-            for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 8, str(col), border=1, align='C', fill=True)
-            pdf.ln()
-            
-            # Data rows
-            pdf.set_font('Arial', '', 7)
-            pdf.set_text_color(0, 0, 0)
-            
+            total_weight = sum(weight_map.get(col, 6) for col in columns)
+            col_widths = [
+                available_width * (weight_map.get(col, 6) / total_weight)
+                for col in columns
+            ]
+
+            header_line_height = 4.5
+            body_line_height = 5.2  # slightly reduced padding
+
+            def render_header():
+                """Render header with word-based wrapping (e.g., CUSTOMER_NAME -> CUSTOMER\nNAME)."""
+                pdf.set_font('Arial', 'B', 9)
+                pdf.set_fill_color(245, 247, 250)
+                pdf.set_text_color(35, 56, 114)
+
+                formatted_headers = []
+                for col in columns:
+                    cleaned = str(col).replace('_', ' ')
+                    words = cleaned.split()
+                    formatted_headers.append(safe_text('\n'.join(words) if words else cleaned))
+
+                header_lines = [max(len(h.split('\n')), 1) for h in formatted_headers]
+                header_row_height = max(header_lines) * header_line_height
+
+                for i, text in enumerate(formatted_headers):
+                    x_start = pdf.get_x()
+                    y_start = pdf.get_y()
+                    pdf.multi_cell(
+                        col_widths[i],
+                        header_line_height,
+                        safe_text(text),
+                        border=1,
+                        align='C',
+                        fill=True,
+                    )
+                    pdf.set_xy(x_start + col_widths[i], y_start)
+
+                pdf.ln(header_row_height)
+                # Reset body text color
+                pdf.set_text_color(0, 0, 0)
+
+            render_header()
+            pdf.set_font('Arial', '', 8)
+
             for row_idx, row in df.iterrows():
-                # Set alternating row colors
-                if row_idx % 2 == 0:
-                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
-                else:
-                    pdf.set_fill_color(255, 255, 255)  # white
-                
-                max_height = 8
-                current_y = pdf.get_y()
-                
-                # Print each cell with wrapped text
-                for i, (col_width, item) in enumerate(zip(col_widths, row)):
-                    pdf.set_xy(pdf.get_x(), current_y)
-                    
-                    # Convert item to string and limit length for long text
-                    item_str = str(item) if item is not None else ''
-                    
-                    # Use multi_cell for text wrapping but track height
-                    x = pdf.get_x()
-                    y = pdf.get_y()
-                    
-                    # For cells with long content, create a compact display
-                    if len(item_str) > 25:
-                        item_str = item_str[:25] + '...'
-                    
-                    pdf.cell(col_width, 8, item_str, border=1, align='L', fill=True)
-                
-                pdf.ln(8)
-        
+                values = [safe_text(item) for item in row]
+
+                max_lines = 1
+                for text, width in zip(values, col_widths):
+                    max_lines = max(max_lines, estimate_lines(text, width, body_line_height))
+
+                row_height = max_lines * body_line_height
+
+                # Ensure the row fits; if not, start a new page and redraw header
+                if pdf.get_y() + row_height > pdf.page_break_trigger:
+                    pdf.add_page()
+                    render_header()
+
+                # Alternate row fill
+                fill_color = (248, 250, 252) if row_idx % 2 == 0 else (255, 255, 255)
+                pdf.set_fill_color(*fill_color)
+
+                y_start = pdf.get_y()
+                for text, width in zip(values, col_widths):
+                    x_start = pdf.get_x()
+                    pdf.multi_cell(width, body_line_height, text, border=1, align='C', fill=True)
+                    # Move to the next cell in the row
+                    pdf.set_xy(x_start + width, y_start)
+                pdf.ln(row_height)
+
         pdf.add_page()
-        
-        # Add logo at the top left
+
+        # Add logo at the top left (slightly larger) then thin header, then table
         try:
-            pdf.image('static/images/pdfheader.jpg', x=10, y=10, w=50)
-            pdf.ln(20)  # Move down after logo
-        except:
+            pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
+            pdf.ln(18)
+        except Exception:
             pass  # Skip logo if not found
-        
+
         add_title_bar('Order Report')
-        
-        # Show date range if filtered
-        if start_date or end_date:
-            pdf.set_font('Arial', '', 9)
-            pdf.set_text_color(0, 0, 0)
-            date_range = "Date Range: "
-            if start_date:
-                date_range += f"From {start_date} "
-            if end_date:
-                date_range += f"To {end_date}"
-            pdf.cell(0, 6, date_range, ln=True, align='L')
-            pdf.ln(2)
-        
+
         # Format dataframe for display
         df_display = df.copy()
-        
+
         # Format date columns
         for col in ['DATE_CREATED', 'DATE_UPDATED']:
             if col in df_display.columns:
                 df_display[col] = df_display[col].apply(
                     lambda x: x.strftime('%m/%d/%Y') if isinstance(x, (datetime, pd.Timestamp)) else str(x)
                 )
-        
-        # Truncate long strings
-        for col in df_display.columns:
-            if col in ['Detergent', 'Fabric Conditioner', 'Others', 'PICKUP_SCHEDULE']:
-                df_display[col] = df_display[col].apply(
-                    lambda x: (str(x)[:40] + '...') if len(str(x)) > 40 else str(x)
-                )
-        
+
         add_table(df_display)
-        
+
+        # Footer summary: total counts and generation timestamp
+        pdf.ln(4)
+        pdf.set_font('Arial', 'B', 9)
+        total_price_sum = 0.0
+        if 'TOTAL_PRICE' in df_display.columns:
+            try:
+                total_price_sum = pd.to_numeric(df_display['TOTAL_PRICE'], errors='coerce').fillna(0).sum()
+            except Exception:
+                total_price_sum = 0.0
+        total_price_display = f"PHP {total_price_sum:,.2f}"
+        footer_text = safe_text(f"Total Orders: {len(df_display)}    Total Price: {total_price_display}")
+        pdf.cell(0, 6, footer_text, ln=True, align='R')
+        pdf.set_font('Arial', '', 8)
+        generated_at = datetime.now().strftime('%B %d, %Y %I:%M %p')
+        pdf.cell(0, 5, safe_text(f"Date Generated: {generated_at}"), ln=True, align='R')
+
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
         output.seek(0)
         return send_file(output, download_name=f"{filename}.pdf", as_attachment=True)
@@ -2222,43 +2510,131 @@ def download_inventory_report(format):
                     df[col] = df[col].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if isinstance(x, (datetime, pd.Timestamp)) else x)
             return df
 
+        def break_header(text):
+            if not text:
+                return ''
+            if '_' in text:
+                return '\n'.join(text.split('_'))
+            parts = text.split(' ')
+            if len(text) > 14 and len(parts) > 1:
+                return '\n'.join(parts)
+            return text
+
+        def apply_table_formatting(worksheet, df_for_sheet):
+            header_fmt = worksheet.book.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'font_size': 11
+            })
+            body_fmt = worksheet.book.add_format({
+                'text_wrap': True,
+                'valign': 'top',
+                'border': 1,
+                'font_size': 10
+            })
+            # Rewrite headers with line breaks and apply wrap/bold
+            for col_num, header in enumerate(df_for_sheet.columns):
+                worksheet.write(0, col_num, header, header_fmt)
+                # Auto-fit width based on header + data (capped for readability)
+                col_series = df_for_sheet.iloc[:, col_num].astype(str)
+                header_segments = str(header).split('\n')
+                header_len = max(len(seg) for seg in header_segments)
+                max_data_len = col_series.map(len).max() if not col_series.empty else 0
+                # Heuristic width: keep within 12-40 chars
+                width = max(header_len, max_data_len)
+                width = min(max(width + 2, 12), 40)
+                worksheet.set_column(col_num, col_num, width, body_fmt)
+            # Add a slightly larger logo at the top-right if available
+            try:
+                worksheet.insert_image(0, len(df_for_sheet.columns) + 1, 'static/images/logo.jpg', {
+                    'x_scale': 0.7,
+                    'y_scale': 0.7
+                })
+            except Exception:
+                pass
+
         if inv_type in ['detergent', 'fabcon']:
             df = make_excel_safe(df)
+            df_excel = df.copy()
+            df_excel.columns = [break_header(c) for c in df_excel.columns]
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+                df_excel.to_excel(writer, sheet_name=sheet_name, index=False)
+                worksheet = writer.sheets[sheet_name]
+                apply_table_formatting(worksheet, df_excel)
         else:
             det_df = make_excel_safe(det_df)
             fabcon_df = make_excel_safe(fabcon_df)
+            det_df_excel = det_df.copy()
+            fabcon_df_excel = fabcon_df.copy()
+            det_df_excel.columns = [break_header(c) for c in det_df_excel.columns]
+            fabcon_df_excel.columns = [break_header(c) for c in fabcon_df_excel.columns]
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                det_df.to_excel(writer, sheet_name='Consumed Detergents', index=False)
-                fabcon_df.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
+                if not det_df_excel.empty:
+                    det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False)
+                    apply_table_formatting(writer.sheets['Consumed Detergents'], det_df_excel)
+                if not fabcon_df_excel.empty:
+                    fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
+                    apply_table_formatting(writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel)
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     elif format == 'pdf':
         pdf = FPDF(orientation='L', unit='mm', format='legal')
         pdf.set_auto_page_break(auto=True, margin=15)
+
+        def break_header(text):
+            if not text:
+                return ''
+            if '_' in text:
+                return '\n'.join(text.split('_'))
+            parts = text.split(' ')
+            if len(text) > 14 and len(parts) > 1:
+                return '\n'.join(parts)
+            return text
+
+        def estimate_lines(text, width, font_size):
+            pdf.set_font('Arial', '', font_size)
+            if text is None or text == '':
+                return 1
+            text = str(text)
+            # Account for explicit line breaks first
+            lines = text.split('\n')
+            total = 0
+            for line in lines:
+                words = line.split(' ')
+                current = ''
+                subtotal = 1
+                for word in words:
+                    candidate = word if current == '' else f"{current} {word}"
+                    if pdf.get_string_width(candidate) <= max(width - 2, 1):
+                        current = candidate
+                    else:
+                        subtotal += 1
+                        current = word
+                total += subtotal
+            return max(total, 1)
+
         def add_title_bar(title):
             pdf.set_fill_color(18, 45, 105)  # #122D69
             pdf.set_text_color(255, 255, 255)
             pdf.set_font('Arial', 'B', 16)
             pdf.cell(0, 14, title, ln=True, align='C', fill=True)
-            pdf.ln(2)
+            pdf.ln(3)
+
         def add_table(df):
             if df.empty:
                 pdf.set_text_color(200, 0, 0)
                 pdf.set_font('Arial', '', 10)
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
-            # Table header
-            pdf.set_font('Arial', 'B', 8)
-            pdf.set_fill_color(245, 247, 250)  # #f5f7fa
-            pdf.set_text_color(35, 56, 114)    # #233872
-            # Calculate column widths
+
+            # Prepare columns and widths
             available_width = pdf.w - 2 * pdf.l_margin
-            columns = list(df.columns)
-            # Assign custom widths: wider for name/value, narrower for ID/dates
+            columns = [break_header(c) for c in df.columns]
             col_widths = []
-            for col in columns:
+            for col in df.columns:
                 if 'NAME' in col or 'Value' in col:
                     col_widths.append(available_width * 0.18)
                 elif 'ID' in col or 'ORDER' in col:
@@ -2267,39 +2643,76 @@ def download_inventory_report(format):
                     col_widths.append(available_width * 0.18)
                 else:
                     col_widths.append(available_width * 0.12)
-            # Normalize if sum > available_width
             total_width = sum(col_widths)
-            if total_width > available_width:
+            if total_width > 0:
                 col_widths = [w * available_width / total_width for w in col_widths]
-            # Header
-            for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
-            pdf.ln()
-            # Table rows
-            pdf.set_font('Arial', '', 9)
-            for row_idx, row in df.iterrows():
-                if row_idx % 2 == 0:
-                    pdf.set_fill_color(248, 250, 252)  # #f8fafc
-                else:
-                    pdf.set_fill_color(255, 255, 255)  # white
+
+            header_line_height = 5
+            body_line_height = 4.5
+
+            def render_header():
+                pdf.set_font('Arial', 'B', 9)
+                pdf.set_fill_color(245, 247, 250)
+                pdf.set_text_color(35, 56, 114)
+                # Determine header height
+                max_header_lines = 1
+                for header, width in zip(columns, col_widths):
+                    max_header_lines = max(max_header_lines, estimate_lines(header, width, 9))
+                header_height = max_header_lines * header_line_height
+                y_start = pdf.get_y()
+                for header, width in zip(columns, col_widths):
+                    x_start = pdf.get_x()
+                    pdf.multi_cell(width, header_line_height, header, border=1, align='C', fill=True)
+                    pdf.set_xy(x_start + width, y_start)
+                pdf.ln(header_height)
                 pdf.set_text_color(0, 0, 0)
-                for i, item in enumerate(row):
-                    pdf.cell(col_widths[i], 7, str(item), border=1, align='C', fill=True)
-                pdf.ln()
+
+            render_header()
+            pdf.set_font('Arial', '', 8)
+            for row_idx, row in df.iterrows():
+                # Alternate row fill
+                pdf.set_fill_color(248, 250, 252) if row_idx % 2 == 0 else pdf.set_fill_color(255, 255, 255)
+                # Calculate row height
+                max_lines = 1
+                for val, width in zip(row, col_widths):
+                    max_lines = max(max_lines, estimate_lines(val, width, 8))
+                row_height = max_lines * body_line_height
+                # Page break check
+                if pdf.get_y() + row_height > pdf.page_break_trigger:
+                    pdf.add_page()
+                    render_header()
+                y_start = pdf.get_y()
+                for val, width in zip(row, col_widths):
+                    x_start = pdf.get_x()
+                    pdf.multi_cell(width, body_line_height, str(val), border=1, align='C', fill=True)
+                    pdf.set_xy(x_start + width, y_start)
+                pdf.ln(row_height)
+
+        def add_logo():
+            try:
+                # Place logo at top-left and move cursor below it so header bar sits under the logo
+                pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
+                pdf.set_y(40)  # tighten gap between logo and header
+            except Exception:
+                pass
 
         if inv_type == 'detergent':
             pdf.add_page()
+            add_logo()
             add_title_bar('Consumed Detergent Report')
             add_table(df)
         elif inv_type == 'fabcon':
             pdf.add_page()
+            add_logo()
             add_title_bar('Consumed Fabric Conditioner Report')
             add_table(df)
         else:
             pdf.add_page()
+            add_logo()
             add_title_bar('Consumed Detergent Report')
             add_table(det_df)
             pdf.add_page()
+            add_logo()
             add_title_bar('Consumed Fabric Conditioner Report')
             add_table(fabcon_df)
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
@@ -2800,23 +3213,60 @@ def download_inventory_sales_report(format):
     filename = f'inventory_consumption_report_{inv_sales_view}'
     
     if format == 'excel':
+        def break_header(text):
+            if not text:
+                return ''
+            if '_' in text:
+                return '\n'.join(text.split('_'))
+            parts = text.split(' ')
+            if len(text) > 14 and len(parts) > 1:
+                return '\n'.join(parts)
+            return text
+
+        def apply_table_formatting(worksheet, df_for_sheet):
+            header_fmt = worksheet.book.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'font_size': 11
+            })
+            body_fmt = worksheet.book.add_format({
+                'text_wrap': True,
+                'valign': 'top',
+                'border': 1,
+                'font_size': 10
+            })
+            for col_num, header in enumerate(df_for_sheet.columns):
+                worksheet.write(0, col_num, header, header_fmt)
+                series_len = df_for_sheet.iloc[:, col_num].astype(str).map(len).max() if not df_for_sheet.empty else 0
+                header_len = max(len(part) for part in str(header).split('\n'))
+                width = min(max(max(series_len, header_len) + 2, 12), 40)
+                worksheet.set_column(col_num, col_num, width, body_fmt)
+            try:
+                worksheet.insert_image(0, len(df_for_sheet.columns) + 1, 'static/images/logo.jpg', {
+                    'x_scale': 0.7,
+                    'y_scale': 0.7
+                })
+            except Exception:
+                pass
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             # Write detergents sheet
             if not det_df.empty:
-                det_df.to_excel(writer, sheet_name='Consumed Detergents', index=False)
-                worksheet = writer.sheets['Consumed Detergents']
-                for i, col in enumerate(det_df.columns):
-                    max_len = max(det_df[col].astype(str).apply(len).max(), len(col)) + 2
-                    worksheet.set_column(i, i, max_len)
+                det_df_excel = det_df.copy()
+                det_df_excel.columns = [break_header(c) for c in det_df_excel.columns]
+                det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False)
+                apply_table_formatting(writer.sheets['Consumed Detergents'], det_df_excel)
             
             # Write fabric conditioners sheet
             if not fabcon_df.empty:
-                fabcon_df.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
-                worksheet = writer.sheets['Consumed Fabric Conditioners']
-                for i, col in enumerate(fabcon_df.columns):
-                    max_len = max(fabcon_df[col].astype(str).apply(len).max(), len(col)) + 2
-                    worksheet.set_column(i, i, max_len)
+                fabcon_df_excel = fabcon_df.copy()
+                fabcon_df_excel.columns = [break_header(c) for c in fabcon_df_excel.columns]
+                fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
+                apply_table_formatting(writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel)
             
             # Write summary sheet
             summary_data = [
@@ -2825,11 +3275,10 @@ def download_inventory_sales_report(format):
                 {'Category': 'TOTAL', 'Items Consumed': inv_total_qty, 'Total Cost': inv_total_cost}
             ]
             summary_df = pd.DataFrame(summary_data)
-            summary_df.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False)
-            worksheet = writer.sheets[f'Summary ({inv_period_label})']
-            for i, col in enumerate(summary_df.columns):
-                max_len = max(summary_df[col].astype(str).apply(len).max(), len(col)) + 2
-                worksheet.set_column(i, i, max_len)
+            summary_df_excel = summary_df.copy()
+            summary_df_excel.columns = [break_header(c) for c in summary_df_excel.columns]
+            summary_df_excel.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False)
+            apply_table_formatting(writer.sheets[f'Summary ({inv_period_label})'], summary_df_excel)
         
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
@@ -2858,14 +3307,52 @@ def download_inventory_sales_report(format):
     elif format == 'pdf':
         pdf = FPDF(orientation='L', unit='mm', format='legal')
         pdf.set_auto_page_break(auto=True, margin=15)
-        
+
+        def break_header(text):
+            if not text:
+                return ''
+            if '_' in text:
+                return '\n'.join(text.split('_'))
+            parts = text.split(' ')
+            if len(text) > 14 and len(parts) > 1:
+                return '\n'.join(parts)
+            return text
+
+        def estimate_lines(text, width, font_size):
+            pdf.set_font('Arial', '', font_size)
+            if text is None or text == '':
+                return 1
+            text = str(text)
+            blocks = text.split('\n')
+            total = 0
+            for block in blocks:
+                words = block.split(' ')
+                current = ''
+                lines = 1
+                for word in words:
+                    candidate = word if current == '' else f"{current} {word}"
+                    if pdf.get_string_width(candidate) <= max(width - 2, 1):
+                        current = candidate
+                    else:
+                        lines += 1
+                        current = word
+                total += lines
+            return max(total, 1)
+
         def add_title_bar(title):
             pdf.set_fill_color(18, 45, 105)  # #122D69
             pdf.set_text_color(255, 255, 255)
             pdf.set_font('Arial', 'B', 14)
             pdf.cell(0, 12, title, ln=True, align='C', fill=True)
             pdf.ln(3)
-        
+
+        def add_logo():
+            try:
+                pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
+                pdf.ln(18)
+            except Exception:
+                pass
+
         def add_table(df, columns_config):
             if df.empty:
                 pdf.set_text_color(200, 0, 0)
@@ -2873,40 +3360,62 @@ def download_inventory_sales_report(format):
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
             
-            pdf.set_font('Arial', 'B', 8)
-            pdf.set_fill_color(245, 247, 250)
-            pdf.set_text_color(35, 56, 114)
-            
             available_width = pdf.w - 2 * pdf.l_margin
             col_widths = [available_width * w for w in columns_config]
-            
-            columns = list(df.columns)
-            for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
-            pdf.ln()
-            
+            columns = [break_header(c) for c in df.columns]
+
+            header_line_height = 5
+            body_line_height = 4.5
+
+            def render_header():
+                pdf.set_font('Arial', 'B', 9)
+                pdf.set_fill_color(245, 247, 250)
+                pdf.set_text_color(35, 56, 114)
+                max_header_lines = 1
+                for header, width in zip(columns, col_widths):
+                    max_header_lines = max(max_header_lines, estimate_lines(header, width, 9))
+                header_height = max_header_lines * header_line_height
+                y_start = pdf.get_y()
+                for header, width in zip(columns, col_widths):
+                    x_start = pdf.get_x()
+                    pdf.multi_cell(width, header_line_height, header, border=1, align='C', fill=True)
+                    pdf.set_xy(x_start + width, y_start)
+                pdf.ln(header_height)
+                pdf.set_text_color(0, 0, 0)
+
+            render_header()
             pdf.set_font('Arial', '', 8)
             for row_idx, row in df.iterrows():
                 if str(row.iloc[0]) == 'SUBTOTAL':
                     pdf.set_fill_color(230, 236, 250)
-                    pdf.set_font('Arial', 'B', 8)
-                elif row_idx % 2 == 0:
-                    pdf.set_fill_color(248, 250, 252)
+                    font_style = 'B'
                 else:
-                    pdf.set_fill_color(255, 255, 255)
-                
-                pdf.set_text_color(0, 0, 0)
-                for i, item in enumerate(row):
-                    if columns[i] in ['Unit Price', 'Total Cost'] and isinstance(item, (int, float)):
-                        item = f"P{item:,.2f}"
-                    pdf.cell(col_widths[i], 6, str(item), border=1, align='C', fill=True)
-                pdf.ln()
-                
+                    font_style = ''
+                    pdf.set_fill_color(248, 250, 252) if row_idx % 2 == 0 else pdf.set_fill_color(255, 255, 255)
+
+                pdf.set_font('Arial', font_style, 8)
+                max_lines = 1
+                for idx, (item, width, col_name) in enumerate(zip(row, col_widths, columns)):
+                    display_text = f"P{item:,.2f}" if isinstance(item, (int, float)) and ('Unit Price' in col_name or 'Total Cost' in col_name) else str(item)
+                    max_lines = max(max_lines, estimate_lines(display_text, width, 8))
+                row_height = max_lines * body_line_height
+                if pdf.get_y() + row_height > pdf.page_break_trigger:
+                    pdf.add_page()
+                    render_header()
+                y_start = pdf.get_y()
+                for item, width, col_name in zip(row, col_widths, columns):
+                    display_text = f"P{item:,.2f}" if isinstance(item, (int, float)) and ('Unit Price' in col_name or 'Total Cost' in col_name) else str(item)
+                    x_start = pdf.get_x()
+                    pdf.multi_cell(width, body_line_height, display_text, border=1, align='C', fill=True)
+                    pdf.set_xy(x_start + width, y_start)
+                pdf.ln(row_height)
+
                 if str(row.iloc[0]) == 'SUBTOTAL':
                     pdf.set_font('Arial', '', 8)
-        
+
         # Page 1: Consumed Detergents
         pdf.add_page()
+        add_logo()
         pdf.set_font('Arial', 'B', 16)
         pdf.set_text_color(35, 56, 114)
         pdf.cell(0, 10, f'Inventory Consumption Report - {inv_period_label}', ln=True, align='C')
@@ -2918,6 +3427,7 @@ def download_inventory_sales_report(format):
         
         # Page 2: Consumed Fabric Conditioners
         pdf.add_page()
+        add_logo()
         add_title_bar('Consumed Fabric Conditioners')
         add_table(fabcon_df, col_config)
         
