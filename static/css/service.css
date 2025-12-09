@@ -343,14 +343,12 @@ body {
     height: 911px;
   }
 
-  /* Title text */
   .v91_136 {
     font-size: 38px;
     width: max-content;
     max-width: 450px;
   }
 
-  /* Self-Service */
   .v91_154 {
     width: 300px;
     height: 420px;
@@ -373,10 +371,6 @@ body {
     left: 45px;
   }
 
-  /* Self-Service */
-
-
-  /* Drop-Off */
   .v91_194 {
     width: 300px;
     height: 420px;
@@ -399,10 +393,6 @@ body {
     left: 381px;
   }
 
-  /* Drop-Off */
-
-
-  /* Language button */
   .v91_144 {
     padding: 12px 24px;
     top: 22px;
@@ -418,14 +408,12 @@ body {
     font-size: 22px;
   }
 
-  /* Logo images */
   .v91_97 {
     width: 255px;
     height: 280px;
     top: 133px;
   }
 
-  /* Language Modal */
   .language-modal {
     width: 60vw;
     height: 30vh;
