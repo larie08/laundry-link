@@ -860,32 +860,46 @@
             const statusLabels = Object.keys(orderStatusCounts || {});
             const statusValues = Object.values(orderStatusCounts || {});
             const statusColors = ['#2fa35a', '#9aa5b5', '#f5c04e', '#4cb7d1'];
-            const statusTotal = statusValues.reduce((a, b) => a + b, 0) || 1;
+            const statusTotal = statusValues.reduce((a, b) => a + b, 0);
+
             const statusCtx = document.getElementById('statusChart');
             if (statusCtx) {
+                // If no orders, show empty ring and legend with all zeros
+                const showEmpty = statusTotal === 0;
                 new Chart(statusCtx, {
                     type: 'doughnut',
                     data: {
                         labels: statusLabels,
-                        datasets: [
-                            {
-                                data: [statusTotal],
-                                backgroundColor: ['#e8edf5'],
-                                borderWidth: 0,
-                                hoverOffset: 0,
-                                weight: 0.5,
-                                cutout: '40%'
-                            },
-                            {
-                                data: statusValues,
-                                backgroundColor: statusColors,
-                                borderWidth: 2,
-                                borderColor: '#ffffff',
-                                hoverOffset: 6,
-                                spacing: 2,
-                                weight: 1
-                            }
-                        ]
+                        datasets: showEmpty
+                            ? [
+                                {
+                                    data: [1],
+                                    backgroundColor: ['#e8edf5'],
+                                    borderWidth: 0,
+                                    hoverOffset: 0,
+                                    weight: 1,
+                                    cutout: '78%'
+                                }
+                              ]
+                            : [
+                                {
+                                    data: [statusTotal],
+                                    backgroundColor: ['#e8edf5'],
+                                    borderWidth: 0,
+                                    hoverOffset: 0,
+                                    weight: 0.5,
+                                    cutout: '40%'
+                                },
+                                {
+                                    data: statusValues,
+                                    backgroundColor: statusColors,
+                                    borderWidth: 2,
+                                    borderColor: '#ffffff',
+                                    hoverOffset: 6,
+                                    spacing: 2,
+                                    weight: 1
+                                }
+                              ]
                     },
                     options: {
                         plugins: { 
@@ -899,9 +913,10 @@
                                     boxHeight: 10,
                                     padding: 10,
                                     generateLabels(chart) {
+                                        // Always show all status labels with 0 if empty
                                         const labels = statusLabels;
                                         const colors = statusColors;
-                                        const values = statusValues;
+                                        const values = showEmpty ? labels.map(() => 0) : statusValues;
                                         return labels.map((label, i) => ({
                                             text: `${label} ${values[i] ?? 0}`,
                                             fillStyle: colors[i] || '#9aa5b5',
@@ -913,7 +928,7 @@
                                     }
                                 }
                             },
-                            centerText: { text: statusTotal.toString(), subText: 'Total' }
+                            centerText: { text: (statusTotal || 0).toString(), subText: 'Total' }
                         },
                         maintainAspectRatio: false,
                         cutout: '78%'

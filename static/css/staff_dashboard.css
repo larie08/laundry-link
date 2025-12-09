@@ -1240,6 +1240,16 @@ main {
 
 .dashboard-row.full-row {
     grid-template-columns: 1fr;
+    margin-bottom: 32px; /* Add margin below Orders Statistics */
+}
+
+.dashboard-row.secondary-row {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 32px; /* Add gap between Calendar and Inventory Alerts */
+}
+
+.dashboard-row.full-row {
+    grid-template-columns: 1fr;
 }
 
 .dashboard-row.secondary-row {
