@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Admin Dashboard</title>
+    <title>Dashboard</title>
 </head>
 <body>
     <!-- CONTAINER -->
@@ -38,8 +38,8 @@
                             <span>Dashboard</span>
                         </a>
                     </li>
-                        
-                    <li class="w3-padding w3-bar-item w3-button">
+
+                    <li class="w3-padding w3-bar-item w3-button ">
                         <a href="{{ url_for('detergent_inventory') }}">
                             <span>Detergent</span>
                         </a>      
@@ -170,7 +170,7 @@
                     </div>
 
                     <!-- MAIN CONTENT -->
-                    <div class="dashboard-row full-row" style="margin-bottom: 32px;">
+                    <div class="dashboard-row full-row">
                         <!-- ORDERS STATISTICS -->
                         <div class="dashboard-card">
                             <div class="card-header">
@@ -197,7 +197,7 @@
                                         <!-- REMOVE the legend below the doughnut (do not add any legend here) -->
                                         <canvas id="statusChart"></canvas>
                                         <!-- Centered legend below the doughnut using flexbox -->
-                                        <div class="order-status-legend" style="display:flex;justify-content:center;gap:32px;margin-top:20px;">
+                                        <div class="order-status-legend" style="display:flex;justify-content:center;gap:32px;margin-top:12px;">
                                             <div class="legend-item" style="display:flex;align-items:center;gap:8px;">
                                                 <span class="legend-color completed"></span>
                                                 <span class="legend-label">Completed</span>
@@ -231,10 +231,10 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="dashboard-row secondary-row" style="gap: 32px;">
+
+                    <div class="dashboard-row secondary-row">
                         <!-- CALENDAR -->
-                        <div class="dashboard-card calendar-card" style="margin-top: 30px;">
+                        <div class="dashboard-card calendar-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-calendar-alt"></i> Calendar</h3>
                                 <span class="card-badge">2025-2040</span>
@@ -273,7 +273,7 @@
                         </div>
 
                         <!-- INVENTORY ALERTS -->
-                        <div class="dashboard-card inventory-alerts-card" style="margin-top: 30px;">
+                        <div class="dashboard-card inventory-alerts-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
                                 <span class="card-badge alert">{{ low_detergents|length + low_fabcons|length }}</span>
@@ -524,7 +524,7 @@
         function loadCalendarDates() {
             fetch('/api/calendar_dates')
                 .then(response => response.json())
-                .then data => {
+                .then(data => {
                     datesWithOrders = new Set(data.dates_with_orders || []);
                     datesWithPickups = new Set(data.dates_with_pickups || []);
                     renderCalendar(); // Re-render to mark dates
