@@ -95,8 +95,12 @@ def weight_laundry():
         except ValueError:
             weight = 0.0
         try:
-            total_load = int(total_load_str) if total_load_str else 0
-        except ValueError:
+            # Extract numeric value from "Load(s): X" format
+            if 'Load(s):' in total_load_str:
+                total_load = int(total_load_str.split(':')[1].strip())
+            else:
+                total_load = int(total_load_str) if total_load_str else 0
+        except (ValueError, IndexError):
             total_load = 0
         session['total_weight'] = weight
         session['total_load'] = total_load
@@ -1143,35 +1147,65 @@ def mark_order_as_paid():
 
             receipt_text = "".join(lines)
             
-            # FIRST RECEIPT WITH QR CODE
-            # Print logo at top middle
-            logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
-            if os.path.exists(logo_path):
-                p.image(logo_path)
-                p.text("\n")
-            
-            p.text(receipt_text)
-            
-            # Print QR code
-            qr_code_path = order.get('QR_CODE_PATH')
-            if qr_code_path:
-                qr_full_path = os.path.join(app.static_folder, qr_code_path)
-                if os.path.exists(qr_full_path):
-                    p.image(qr_full_path)
+            try:
+                # FIRST RECEIPT WITH QR CODE
+                # Print logo at top middle
+                logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
+                if os.path.exists(logo_path):
+                    p.image(logo_path)
                     p.text("\n")
-
-            p.cut()
-            
-            # SECOND RECEIPT WITHOUT QR CODE
-            # Print logo at top middle
-            if os.path.exists(logo_path):
-                p.image(logo_path)
+                
+                # Print header with store information
+                p.set(align='center')
+                p.text("LAUNDRYLINK\n")
+                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                p.text("Phone: 0912-345-6789\n")
+                p.text("est. 2025\n")
+                p.set(align='left')
                 p.text("\n")
-            
-            p.text(receipt_text)
-            
-            # No QR code on second receipt
-            p.cut()
+                
+                p.text(receipt_text)
+                
+                # Print QR code
+                qr_code_relative_path = order.get('QR_CODE')
+                if qr_code_relative_path:
+                    qr_full_path = os.path.join(app.static_folder, qr_code_relative_path)
+                    if os.path.exists(qr_full_path):
+                        p.image(qr_full_path)
+                        p.text("\n")
+                    else:
+                        print(f"QR code file not found: {qr_full_path}")
+
+                # Add separator between receipts
+                p.text("\n" + "=" * 32 + "\n")
+                p.text("CUT HERE - MANUAL CUT REQUIRED\n")
+                p.text("=" * 32 + "\n\n")
+                
+                # Wait for printer to finish processing first receipt
+                import time
+                time.sleep(3)
+                
+                # SECOND RECEIPT WITHOUT QR CODE
+                # Print logo at top middle
+                if os.path.exists(logo_path):
+                    p.image(logo_path)
+                    p.text("\n")
+                
+                # Print header with store information
+                p.set(align='center')
+                p.text("LAUNDRYLINK\n")
+                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                p.text("Phone: 0912-345-6789\n")
+                p.text("est. 2025\n")
+                p.set(align='left')
+                p.text("\n")
+                
+                p.text(receipt_text)
+                
+            except Exception as receipt_error:
+                print(f"Receipt printing error: {receipt_error}")
+                # Continue even if second receipt fails
+                pass
             
         except Exception as e:
             print("Printer error:", e)
