@@ -258,60 +258,35 @@ body {
   position: absolute;
   bottom: 20px;
   left: 60px;
-  right: 60px; 
+  right: 60px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* Previous button */
-.v103_9 {
+/* Previous and Next buttons */
+.v103_9, .v103_7 {
   width: 116px; 
   height: 42px; 
   background: rgba(255,193,7,1);
   padding: 13px 37px; 
-  opacity: 1;
-  border: none;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+  border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  cursor: pointer;
-}
-
-/* Next button */
-.v103_7 {
-  width: 116px; 
-  height: 42px; 
-  background: rgba(255,193,7,1);
-  padding: 13px 37px; 
-  opacity: 1;
   border: none;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
   cursor: pointer;
+  transition: transform 0.2s ease;
+  overflow: hidden;
 }
 
 .v103_8, .v103_10 {
   color: rgba(255,255,255,1);
   font-family: Poppins;
-  font-weight: SemiBold;
+  font-weight: 400;
   font-size: 15px;
-  opacity: 1;
   text-align: center;
 }
 
@@ -739,45 +714,27 @@ body {
 
   .button-container {
     position: absolute;
-    bottom: 8%;
-    left: 10%;
-    right: 10%;
+    bottom: 61px;
+    left: 40px;
+    right: 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
-  .v103_9 {
+  /* Previous and Next buttons */
+  .v103_9, .v103_7 {
     width: 200px;
     height: 70px;
     background: rgba(255,193,7,1);
     padding: 20px 50px;
-    opacity: 1;
-    border: none;
     border-radius: 10px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    cursor: pointer;
-  }
-
-  .v103_7 {
-    width: 200px;
-    height: 70px;
-    background: rgba(255,193,7,1);
-    padding: 20px 50px;
-    opacity: 1;
     border: none;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
     cursor: pointer;
   }
 
@@ -853,5 +810,3 @@ body {
     transform-origin: center center;
   }
 }
-
-
