@@ -68,7 +68,15 @@
                                 </div>
                                 <div class="quantity">
                                     <button type="button" onclick="changeQty('detergent_qty_{{ detergent.DETERGENT_ID }}', -1)">-</button>
-                                    <input type="number" min="1" value="1" name="detergent_qty_{{ detergent.DETERGENT_ID }}" id="detergent_qty_{{ detergent.DETERGENT_ID }}" />
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value="1"
+                                        name="detergent_qty_{{ detergent.DETERGENT_ID }}"
+                                        id="detergent_qty_{{ detergent.DETERGENT_ID }}"
+                                        data-available="{{ detergent.QTY|default(0) }}"
+                                        data-name="{{ detergent.DETERGENT_NAME }}"
+                                    />
                                     <button type="button" onclick="changeQty('detergent_qty_{{ detergent.DETERGENT_ID }}', 1)">+</button>
                                 </div>
                                 <input type="hidden" name="detergent_price_{{ detergent.DETERGENT_ID }}" value="{{ detergent.DETERGENT_PRICE }}" />
@@ -107,7 +115,15 @@
                                 </div>
                                 <div class="quantity">
                                     <button type="button" onclick="changeQty('fabcon_qty_{{ fabcon.FABCON_ID }}', -1)">-</button>
-                                    <input type="number" min="1" value="1" name="fabcon_qty_{{ fabcon.FABCON_ID }}" id="fabcon_qty_{{ fabcon.FABCON_ID }}" />
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value="1"
+                                        name="fabcon_qty_{{ fabcon.FABCON_ID }}"
+                                        id="fabcon_qty_{{ fabcon.FABCON_ID }}"
+                                        data-available="{{ fabcon.QTY|default(0) }}"
+                                        data-name="{{ fabcon.FABCON_NAME }}"
+                                    />
                                     <button type="button" onclick="changeQty('fabcon_qty_{{ fabcon.FABCON_ID }}', 1)">+</button>
                                 </div>
                                 <input type="hidden" name="fabcon_price_{{ fabcon.FABCON_ID }}" value="{{ fabcon.FABCON_PRICE }}" />
@@ -418,12 +434,44 @@
         }
     }
     
+    function getAvailable(input) {
+        const availableRaw = input ? parseInt(input.getAttribute('data-available')) : NaN;
+        return Number.isNaN(availableRaw) ? Infinity : Math.max(0, availableRaw);
+    }
+
+    function enforceAvailable(input) {
+        if (!input) return true;
+        const available = getAvailable(input);
+        let val = parseInt(input.value) || 1;
+        if (val < 1) val = 1;
+
+        // If out of stock or exceeding stock, alert the user and clamp the value
+        if (available <= 0) {
+            const name = input.getAttribute('data-name') || 'this item';
+            showErrorModal(`Sorry, ${name} is out of stock.`);
+            input.value = 1;
+            return false;
+        }
+
+        if (val > available) {
+            const name = input.getAttribute('data-name') || 'this item';
+            showErrorModal(`Only ${available} left for ${name}.`);
+            input.value = available;
+            return false;
+        }
+
+        input.value = val;
+        return true;
+    }
+
     function changeQty(inputId, delta) {
-        var input = document.getElementById(inputId);
-        var val = parseInt(input.value) || 1;
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        let val = parseInt(input.value) || 1;
         val += delta;
         if (val < 1) val = 1;
         input.value = val;
+        enforceAvailable(input);
         input.dispatchEvent(new Event('change'));
     }
     
@@ -610,6 +658,28 @@
                 fabconBtn.classList.remove('selected');
             }
         }
+        function validateInventorySelection() {
+            let isValid = true;
+
+            document.querySelectorAll('.detergent-checkbox:checked').forEach(cb => {
+                const input = document.getElementById('detergent_qty_' + cb.value);
+                if (input && !enforceAvailable(input)) {
+                    isValid = false;
+                }
+            });
+
+            document.querySelectorAll('.fabcon-checkbox:checked').forEach(cb => {
+                const input = document.getElementById('fabcon_qty_' + cb.value);
+                if (input && !enforceAvailable(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                updateTotals(); // Refresh totals if quantities were clamped
+            }
+            return isValid;
+        }
         function toggleButtonSelected(btn, input) {
             if (input.value === '1') {
                 btn.classList.add('selected');
@@ -692,8 +762,20 @@
             });
         });
         document.querySelectorAll('.quantity input[type="number"]').forEach(inp => {
-            inp.addEventListener('change', updateTotals);
+            inp.addEventListener('change', function() {
+                enforceAvailable(inp);
+                updateTotals();
+            });
         });
+        const othersForm = document.getElementById('othersForm');
+        if (othersForm) {
+            othersForm.addEventListener('submit', function(e) {
+                if (!validateInventorySelection()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
         {% if order_type != 'Self-service' %}
         const ironBtn = document.getElementById('ironBtn');
         const ironInput = document.getElementById('ironInput');

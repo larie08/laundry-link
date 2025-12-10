@@ -47,7 +47,7 @@
                     <p><strong data-translate="contact_number_label">Contact Number:</strong> {{ customer.PHONE_NUMBER }}</p>
                     <h3 style="font-family: 'Poppins', sans-serif;" data-translate="order_breakdown_title">Order Breakdown</h3>
 
-                    {% set load_amt = order.TOTAL_LOAD * 50 %}
+                    {% set load_amt = order.TOTAL_LOAD * price_per_load %}
                     {% set iron_amt = 50 if orderitem.IRON else 0 %}
                     {% set fold_amt = 70 if orderitem.FOLD_CLOTHES else 0 %}
                     {% set priority_amt = 50 if orderitem.PRIORITIZE_ORDER else 0 %}

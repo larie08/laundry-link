@@ -998,6 +998,8 @@ def get_consumed_detergents_report() -> list:
             'TOTAL_VALUE': total_value,
             'DATE_CREATED': date_created,
             'ORDER_ID': order.get('ORDER_ID'),
+            # Include status so callers can filter (e.g., completed-only views)
+            'ORDER_STATUS': order.get('ORDER_STATUS')
         })
     
     return out
@@ -1049,6 +1051,8 @@ def get_consumed_fabcons_report() -> list:
             'TOTAL_VALUE': total_value,
             'DATE_CREATED': date_created,
             'ORDER_ID': order.get('ORDER_ID'),
+            # Include status so callers can filter (e.g., completed-only views)
+            'ORDER_STATUS': order.get('ORDER_STATUS')
         })
     
     return out
