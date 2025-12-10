@@ -12,17 +12,21 @@
 </head>
 <body>
     <div class="background-image">
-        <img src="../static/images/staff_admin_background.png" alt="background">
+        <img src="../static/images/Thank you.png" alt="background">
     </div>
     <div class="page-wrapper">
-        <div class="card">
-            <div class="icon"></div>
-            <h1 class="title" data-translate="thank_you_title">Thank you!</h1>
-            <p class="subtitle" data-translate="confirmation_msg">Your order has been placed successfully.</p>
-            {% if order_id %}
-            <p class="order-id"><span data-translate="order_id_label">Order ID:</span> LL-{{ order_id }}</p>
-            {% endif %}
-            <a href="{{ url_for('service_type') }}" class="primary-btn" data-translate="order_again_btn">Order Again</a>
+        <div class="thank-you-container">
+            <div class="content-left">
+                <div class="mascot-icon"></div>
+            </div>
+            <div class="content-right">
+                <p class="subtitle" data-translate="confirmation_msg">Your order has been placed successfully.</p>
+                <h1 class="title" data-translate="thank_you_title">Thank you!</h1>
+                {% if order_id %}
+                <p class="order-id"><span data-translate="order_id_label">Order ID:</span> LL-{{ order_id }}</p>
+                {% endif %}
+                <a href="{{ url_for('service_type') }}" class="primary-btn" data-translate="order_again_btn">Order Again</a>
+            </div>
         </div>
     </div>
 </body>
