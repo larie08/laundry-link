@@ -144,14 +144,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="field">
-                            <label>Tax Rate</label>
-                            <select name="tax_rate">
-                                {% for rate in [0,0.01,0.05,0.08,0.12,0.20,0.25,0.30,0.35] %}
-                                <option value="{{ rate }}" {{ 'selected' if (rate==tax_rate) else '' }}>{{ (rate*100)|int }}%</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="actions">
                             <button class="btn primary" type="submit">View</button>
                         </div>
@@ -185,7 +177,6 @@
                     <div class="card net">
                         <div class="label">Net Income</div>
                         <div class="value">₱ {{ '{:,.2f}'.format(net_income) }}</div>
-                        <div class="hint">After taxes</div>
                     </div>
                 </section>
 
@@ -198,9 +189,9 @@
                             <p class="period">For the period: {{ period_label }}</p>
                         </div>
                         <div class="download-btns" style="display: flex; gap: 10px; margin-top: 10px;">
-                            <a href="{{ url_for('download_income_statement', format='excel', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, tax_rate=tax_rate, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                            <a href="{{ url_for('download_income_statement', format='csv', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, tax_rate=tax_rate, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                            <a href="{{ url_for('download_income_statement', format='pdf', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, tax_rate=tax_rate, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <a href="{{ url_for('download_income_statement', format='excel', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="{{ url_for('download_income_statement', format='csv', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="{{ url_for('download_income_statement', format='pdf', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, maintenance_repairs=maintenance_repairs) }}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
                         </div>
                     </div>
 
@@ -213,16 +204,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Total Sales (Processed Orders)</td>
-                                <td class="right">₱ {{ '{:,.2f}'.format(net_sales) }}</td>
+                                <td>Total Sales (Completed Orders)</td>
+                                <td class="right">₱ {{ '{:,.2f}'.format(completed_total_revenue) }}</td>
                             </tr>
                             <tr>
-                                <td>Total Transactions (Processed)</td>
-                                <td class="right">{{ total_transactions }}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Orders (All Status)</td>
-                                <td class="right">{{ total_orders_count }}</td>
+                                <td>Total Transactions (Completed)</td>
+                                <td class="right">{{ completed_orders_total }}</td>
                             </tr>
                             <tr>
                                 <td>Total Inventory Items</td>
@@ -234,7 +221,7 @@
                             </tr>
                             <tr class="total">
                                 <td>Net Revenue</td>
-                                <td class="right">₱ {{ '{:,.2f}'.format(net_income) }}</td>
+                                <td class="right">₱ {{ '{:,.2f}'.format(completed_total_net) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -308,11 +295,11 @@
                         {% if total_order_pages > 1 %}
                         <div class="pagination" style="margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px;">
                             {% if order_page > 1 %}
-                            <a href="{{ url_for('income_statement', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, tax_rate=tax_rate, customer_page=customer_page, order_page=order_page-1, maintenance_repairs=maintenance_repairs) }}" class="btn outline" style="padding: 5px 10px;">Prev</a>
+                            <a href="{{ url_for('income_statement', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, customer_page=customer_page, order_page=order_page-1, maintenance_repairs=maintenance_repairs) }}" class="btn outline" style="padding: 5px 10px;">Prev</a>
                             {% endif %}
                             <span style="color: #233872;">Page {{ order_page }} of {{ total_order_pages }}</span>
                             {% if order_page < total_order_pages %}
-                            <a href="{{ url_for('income_statement', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, tax_rate=tax_rate, customer_page=customer_page, order_page=order_page+1, maintenance_repairs=maintenance_repairs) }}" class="btn outline" style="padding: 5px 10px;">Next</a>
+                            <a href="{{ url_for('income_statement', view=view, month=selected_month, selected_date=selected_date, customer_id=customer_id, customer_page=customer_page, order_page=order_page+1, maintenance_repairs=maintenance_repairs) }}" class="btn outline" style="padding: 5px 10px;">Next</a>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -341,8 +328,7 @@
                                     <tr class="section"><td>Revenue</td><td class="right">{{ '{:,.2f}'.format(r.Revenue + r.OtherSales) }}</td></tr>
                                     <tr><td>Less: COGS</td><td class="right">{{ '{:,.2f}'.format(r.COGS) }}</td></tr>
                                     <tr class="highlight"><td>Gross Profit</td><td class="right">{{ '{:,.2f}'.format(r.Net) }}</td></tr>
-                                    <tr><td>VAT ({{ (tax_rate*100)|int }}%)</td><td class="right">{{ '{:,.2f}'.format(max(r.Net,0)*tax_rate) }}</td></tr>
-                                    <tr class="total"><td>Net After VAT</td><td class="right">{{ '{:,.2f}'.format(r.Net - max(r.Net,0)*tax_rate) }}</td></tr>
+                                    <tr class="total"><td>Net</td><td class="right">{{ '{:,.2f}'.format(r.Net) }}</td></tr>
                                 </tbody>
                             </table>
                             <div class="modal-note">Computed for {{ period_label }}.</div>

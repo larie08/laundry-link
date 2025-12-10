@@ -3756,7 +3756,6 @@ def income_statement():
     # Get filter parameters
     view = request.args.get('view', 'daily')
     customer_id = request.args.get('customer_id', type=int)
-    tax_rate = float(request.args.get('tax_rate', 0.12))
     selected_month = request.args.get('month', '')  # Format: YYYY-MM
     selected_date = request.args.get('selected_date', '')  # Format: YYYY-MM-DD
     
@@ -4040,8 +4039,8 @@ def income_statement():
     gross_profit = net_sales - total_cogs
     operating_income = gross_profit - total_opex
     income_before_tax = operating_income
-    income_tax_amount = income_before_tax * tax_rate if income_before_tax > 0 else 0
-    net_income = income_before_tax - income_tax_amount
+    income_tax_amount = 0
+    net_income = income_before_tax
     
     # Get all customers for dropdown
     customers = dbhelper.get_all_customers()
@@ -4112,6 +4111,14 @@ def income_statement():
     completed_total_cogs = sum(o['COGS'] for o in all_orders_breakdown)
     completed_total_net = sum(o['Net'] for o in all_orders_breakdown)
     completed_orders_count = len(all_orders_breakdown)
+
+    net_sales = completed_total_revenue
+    total_cogs = completed_total_cogs
+    total_opex = maintenance_repairs
+    gross_profit = net_sales - total_cogs
+    income_before_tax = gross_profit - total_opex
+    income_tax_amount = 0
+    net_income = income_before_tax
     
     # Paginate orders breakdown
     total_order_pages = (len(all_orders_breakdown) + per_page - 1) // per_page if all_orders_breakdown else 1
@@ -4129,7 +4136,6 @@ def income_statement():
         selected_date=selected_date,
         customer_id=customer_id,
         customers=customers,
-        tax_rate=tax_rate,
         max=max,
         maintenance_repairs=maintenance_repairs,
         period_label=period_label,
@@ -4141,7 +4147,6 @@ def income_statement():
         gross_profit=gross_profit,
         operating_income=operating_income,
         income_before_tax=income_before_tax,
-        income_tax_amount=income_tax_amount,
         net_income=net_income,
         total_transactions=total_transactions,
         best_selling_service=best_selling_service,
@@ -4184,7 +4189,6 @@ def download_income_statement(format):
     # Get filter parameters (same as income_statement route)
     view = request.args.get('view', 'daily')
     customer_id = request.args.get('customer_id', type=int)
-    tax_rate = float(request.args.get('tax_rate', 0.12))
     selected_month = request.args.get('month', '')
     selected_date = request.args.get('selected_date', '')  # Format: YYYY-MM-DD
     
@@ -4394,8 +4398,8 @@ def download_income_statement(format):
     gross_profit = net_sales - total_cogs
     operating_income = gross_profit - total_opex
     income_before_tax = operating_income
-    income_tax_amount = income_before_tax * tax_rate if income_before_tax > 0 else 0
-    net_income = income_before_tax - income_tax_amount
+    income_tax_amount = 0
+    net_income = income_before_tax
     
     # Get customers for lookup
     customers = dbhelper.get_all_customers()
