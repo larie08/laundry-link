@@ -325,7 +325,7 @@ def payments():
         qr_code_path = f"qr/{qr_filename}"
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
-        # Receipt printing for all payment methods
+        # Receipt printing for all payment methods - ONLY PRINT ORDER ID
         if payment_method and payment_method.lower() in ['cash', 'gcash', 'maya']:
             try:
                 from escpos.printer import Usb
@@ -374,7 +374,7 @@ def payments():
                     p.text(f"Order ID: {order.get('ORDER_ID')}\n")
                     p.set(height=1, width=1)  # Reset font
 
-                p.cut()
+                # DO NOT close/cut printer - will be used again in mark_order_as_paid()
             except Exception as e:
                 print("Printer error:", e)
         
@@ -1189,9 +1189,121 @@ def order_details(order_id):
         'BREAKDOWN': breakdown
     })
 
+
+@app.route('/order_scan/<int:order_id>')
+def order_scan(order_id):
+    """Fetch order details, mark order as Pickup, and send SMS notification.
+
+    This endpoint is intended for use by the QR scanner: when a QR is scanned
+    the frontend can call this to both retrieve details and trigger pickup
+    workflows (DB update + SMS forward to ESP32).
+    """
+    # Fetch order
+    order = dbhelper.get_order_by_id(order_id)
+    if not order:
+        return jsonify({'error': 'Order not found'}), 404
+
+    # Fetch related data
+    customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+    orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+    detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+    fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+
+    # Update order status to Pickup (best-effort)
+    try:
+        dbhelper.update_order_status(order_id, 'Pick-up')
+        # also update local variable so response reflects change
+        order['ORDER_STATUS'] = 'Pick-up'
+    except Exception:
+        pass
+
+    # Build price breakdown (same logic as order_details)
+    total_price = 0.0
+    breakdown = {}
+    if orderitem and orderitem.get('PRIORITIZE_ORDER'):
+        breakdown['priority'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['priority'] = 0.0
+
+    if orderitem and orderitem.get('IRON'):
+        breakdown['ironing'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['ironing'] = 0.0
+
+    if orderitem and orderitem.get('FOLD_CLOTHES'):
+        breakdown['folding'] = 70.0
+        total_price += 70.0
+    else:
+        breakdown['folding'] = 0.0
+
+    load_price = 0.0
+    if order.get('TOTAL_LOAD'):
+        load_price = float(order['TOTAL_LOAD']) * 50.0
+        breakdown['load'] = load_price
+        total_price += load_price
+    else:
+        breakdown['load'] = 0.0
+
+    det_total = 0.0
+    for det in detergents:
+        det_total += float(det.get('total_price', 0))
+    breakdown['detergents'] = det_total
+    total_price += det_total
+
+    fab_total = 0.0
+    for fab in fabcons:
+        fab_total += float(fab.get('total_price', 0))
+    breakdown['fabcons'] = fab_total
+    total_price += fab_total
+
+    # Try to send SMS via ESP32 forwarder (same behaviour as /api/send_sms)
+    sms_status = 'not_sent'
+    try:
+        phone = customer.get('PHONE_NUMBER') if customer else None
+        customer_name = customer.get('FULLNAME') if customer else ''
+        if phone:
+            message = f"Hi {customer_name or ''}, your laundry (Order #{order_id}) is now ready for pick-up. Thank you for using Laundrylink!"
+            esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')
+            esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+            resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+            if resp.status_code == 200:
+                sms_status = 'sent'
+            else:
+                sms_status = f'error_{resp.status_code}'
+        else:
+            sms_status = 'no_phone'
+    except Exception as e:
+        sms_status = f'error_exception_{str(e)}'
+
+    # Compose response
+    return jsonify({
+        'ORDER_ID': order.get('ORDER_ID'),
+        'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
+        'ORDER_TYPE': order.get('ORDER_TYPE'),
+        'ORDER_STATUS': order.get('ORDER_STATUS'),
+        'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
+        'PAYMENT_METHOD': order.get('PAYMENT_METHOD'),
+        'DATE_CREATED': order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else '',
+        'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
+        'TOTAL_LOAD': order.get('TOTAL_LOAD'),
+        'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
+        'ORDER_NOTE': order.get('ORDER_NOTE'),
+        'PRIORITY': orderitem.get('PRIORITIZE_ORDER') if orderitem else False,
+        'IRON': orderitem.get('IRON') if orderitem else False,
+        'FOLD': orderitem.get('FOLD_CLOTHES') if orderitem else False,
+        'DETERGENTS': detergents,
+        'FABCONS': fabcons,
+        'TOTAL_PRICE': round(total_price, 2),
+        'BREAKDOWN': breakdown,
+        'SMS_STATUS': sms_status
+    })
+
 @app.route('/mark_order_as_paid', methods=['POST'])
 def mark_order_as_paid():
-    """Mark an order as paid and print the full receipt."""
+    """Mark an order as paid and print the full receipt (with and without QR code)."""
     data = request.get_json()
     order_id = data.get('order_id')
     
@@ -1204,7 +1316,7 @@ def mark_order_as_paid():
         if not order:
             return jsonify({'success': False, 'error': 'Order not found'}), 404
         
-        # Update the payment status
+        # Update the payment status to PAID
         dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
         
         # Get updated order details
@@ -1216,12 +1328,20 @@ def mark_order_as_paid():
         price_per_load = get_price_per_load(order.get('ORDER_TYPE'))
         
         # Print the full receipt (twice - second one without QR)
+        # Print the full receipt (twice - with QR and without QR)
         try:
             from escpos.printer import Usb
             from PIL import Image, ImageDraw, ImageFont
-            import qrcode
-            import io
+            import time
+            
             p = Usb(0x0483, 0x5743, encoding='GB18030')
+
+            # Get updated order details
+            order = dbhelper.get_order_by_id(order_id)
+            customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+            orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+            detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+            fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
 
             # Create receipt lines
             lines = []
@@ -1311,7 +1431,6 @@ def mark_order_as_paid():
                 p.text("=" * 32 + "\n\n")
                 
                 # Wait for printer to finish processing first receipt
-                import time
                 time.sleep(3)
                 
                 # SECOND RECEIPT WITHOUT QR CODE
@@ -1330,6 +1449,9 @@ def mark_order_as_paid():
                 p.text("\n")
                 
                 p.text(receipt_text)
+                
+                # Cut the paper after second receipt
+                p.cut()
                 
             except Exception as receipt_error:
                 print(f"Receipt printing error: {receipt_error}")
@@ -4479,7 +4601,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.109.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)

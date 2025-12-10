@@ -671,6 +671,18 @@ def update_order_note(order_id, order_note):
     })
     return True
 
+def update_order_status(order_id, status):
+    """Update ORDER_STATUS field for an order."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('ORDER').document(docs[0].id).update({
+        'ORDER_STATUS': status,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
 def get_customers_with_orders() -> list:
     """Get all customers with their latest order details."""
     _require_db()
