@@ -27,17 +27,22 @@ def _require_db():
     # INITIALIZATION OF FIREBASE ADMIN
     if not firebase_admin._apps:
         cred_path = os.getenv('FIREBASE_CREDENTIALS') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS') or 'serviceAccountKey.json'
-        if os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-        else:
-            # IF DILI TA MAKA CONNECT SA CLOUD PLWEDE TA MO USE UG EMULATOR WHICH ALLOW US TO USE THE WEBSITE WITHOUT CREDENTIALS
-            if os.getenv('FIRESTORE_EMULATOR_HOST'):
-                firebase_admin.initialize_app()
+        try:
+            if os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
             else:
-                raise RuntimeError(
-                    "Firebase credentials not found. Set FIREBASE_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS to your serviceAccountKey.json, or place serviceAccountKey.json in project root."
-                )
+                # IF DILI TA MAKA CONNECT SA CLOUD PLWEDE TA MO USE UG EMULATOR WHICH ALLOW US TO USE THE WEBSITE WITHOUT CREDENTIALS
+                if os.getenv('FIRESTORE_EMULATOR_HOST'):
+                    firebase_admin.initialize_app()
+                else:
+                    raise RuntimeError(
+                        "Firebase credentials not found. Set FIREBASE_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS to your serviceAccountKey.json, or place serviceAccountKey.json in project root."
+                    )
+        except ValueError as e:
+            # If already initialized elsewhere, just reuse existing app
+            if 'already exists' not in str(e).lower():
+                raise
     # CREATE A CLIENT
     db = firestore.client()
 
@@ -1135,6 +1140,59 @@ def compute_order_stats(orders: list, days: int = 7) -> dict:
         "type_counts": type_counts,
         "trend": {"labels": trend_labels, "counts": trend_counts},
     }
+
+
+def deduct_detergent_quantity(detergent_id: int, quantity: int) -> bool:
+    """Deduct quantity from detergent inventory when order is placed.
+    
+    Args:
+        detergent_id: The DETERGENT_ID to deduct from
+        quantity: The quantity to deduct
+        
+    Returns:
+        True if deduction was successful, False otherwise
+    """
+    _require_db()
+    docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+    if not docs:
+        return False
+    
+    detergent = docs[0].to_dict()
+    current_qty = int(detergent.get('QTY', 0))
+    new_qty = max(0, current_qty - quantity)  # Ensure qty doesn't go negative
+    
+    db.collection('DETERGENT').document(docs[0].id).update({
+        'QTY': new_qty,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
+def deduct_fabcon_quantity(fabcon_id: int, quantity: int) -> bool:
+    """Deduct quantity from fabric conditioner inventory when order is placed.
+    
+    Args:
+        fabcon_id: The FABCON_ID to deduct from
+        quantity: The quantity to deduct
+        
+    Returns:
+        True if deduction was successful, False otherwise
+    """
+    _require_db()
+    docs = db.collection('FABCON').where('FABCON_ID', '==', fabcon_id).limit(1).get()
+    if not docs:
+        return False
+    
+    fabcon = docs[0].to_dict()
+    current_qty = int(fabcon.get('QTY', 0))
+    new_qty = max(0, current_qty - quantity)  # Ensure qty doesn't go negative
+    
+    db.collection('FABCON').document(docs[0].id).update({
+        'QTY': new_qty,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
+
 
     
 if __name__ == "__main__":

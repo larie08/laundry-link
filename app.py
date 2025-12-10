@@ -270,7 +270,10 @@ def payments():
                     det['quantity'],
                     det['unit_price']
                 )
-        
+                # Deduct detergent quantity from inventory when order is placed
+                dbhelper.deduct_detergent_quantity(det['detergent_id'], det['quantity'])
+
+
         # Add fabcons to junction table
         if not order_data['own_fabcon']:
             for fab in order_data['fabcon_details']:
@@ -280,6 +283,9 @@ def payments():
                     fab['quantity'],
                     fab['unit_price']
                 )
+                # Deduct fabric conditioner quantity from inventory
+                dbhelper.deduct_fabcon_quantity(fab['fabcon_id'], fab['quantity'])
+
         
         # Create ORDER record
         order_status_value = 'Completed' if str(order_data.get('order_type', '')).lower() == 'self-service' else 'Pending'
@@ -1283,11 +1289,13 @@ def mark_order_as_paid():
         try:
             from escpos.printer import Usb
             from PIL import Image, ImageDraw, ImageFont
+            import qrcode
+            import io
             p = Usb(0x0483, 0x5743, encoding='GB18030')
 
             # Create receipt lines
             lines = []
-            lines.append("========== LAUNDRY LINK ==========\n")
+            lines.append("========= LAUNDRY LINK =========\n")
             lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
             lines.append(f"Customer: {customer.get('FULLNAME') if customer else 'N/A'}\n")
             lines.append(f"Phone: {customer.get('PHONE_NUMBER') if customer else 'N/A'}\n")
@@ -1332,9 +1340,17 @@ def mark_order_as_paid():
             lines.append("-" * 32 + "\n")
             lines.append(f"Total Price: Php{order.get('TOTAL_PRICE'):.2f}\n")
             lines.append("\nThank you!\n")
-            lines.append("==================================\n")
+            lines.append("================================\n")
 
             receipt_text = "".join(lines)
+            
+            # Generate QR code dynamically based on order ID
+            qr_data = str(order.get('ORDER_ID', order_id))
+            qr = qrcode.QRCode(version=1, box_size=10, border=1)
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+            qr_image = qr.make_image(fill_color='black', back_color='white')
+            qr_image = qr_image.convert('RGB')
             
             try:
                 # FIRST RECEIPT WITH QR CODE
@@ -1347,7 +1363,7 @@ def mark_order_as_paid():
                 # Print header with store information
                 p.set(align='center')
                 p.text("LAUNDRYLINK\n")
-                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                p.text("Sanciangko St, Cebu City, 6000\n")
                 p.text("Phone: 0912-345-6789\n")
                 p.text("est. 2025\n")
                 p.set(align='left')
@@ -1355,15 +1371,9 @@ def mark_order_as_paid():
                 
                 p.text(receipt_text)
                 
-                # Print QR code
-                qr_code_relative_path = order.get('QR_CODE')
-                if qr_code_relative_path:
-                    qr_full_path = os.path.join(app.static_folder, qr_code_relative_path)
-                    if os.path.exists(qr_full_path):
-                        p.image(qr_full_path)
-                        p.text("\n")
-                    else:
-                        print(f"QR code file not found: {qr_full_path}")
+                # Print dynamically generated QR code
+                p.image(qr_image)
+                p.text("\n")
 
                 # Add separator between receipts
                 p.text("\n" + "=" * 32 + "\n")
@@ -1457,6 +1467,13 @@ def admin_order_report():
         if include:
             filtered_orders.append(order)
 
+    # Show only completed AND paid orders in the report view
+    filtered_orders = [
+        o for o in filtered_orders
+        if (o.get('ORDER_STATUS') or '').lower() == 'completed'
+        and (o.get('PAYMENT_STATUS') or '').lower() == 'paid'
+    ]
+
     # Statistics
     total_orders = len(filtered_orders)
     total_revenue = 0.0
@@ -1535,23 +1552,28 @@ def admin_order_report():
 
     # Sales summary (for template display)
     def parse_date_val(val):
+        """Return a timezone-naive datetime for comparisons."""
         if not val:
             return None
+        dt = None
         if hasattr(val, 'date'):
-            return val
-        if isinstance(val, str):
+            dt = val
+        elif isinstance(val, str):
             try:
-                # Try full datetime string
-                return datetime.fromisoformat(val.replace('Z', '+00:00'))
+                # Try full datetime string (may be offset-aware)
+                dt = datetime.fromisoformat(val.replace('Z', '+00:00'))
             except Exception:
                 try:
-                    return datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
+                    dt = datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
                 except Exception:
                     try:
-                        return datetime.strptime(val, '%Y-%m-%d')
+                        dt = datetime.strptime(val, '%Y-%m-%d')
                     except Exception:
-                        return None
-        return None
+                        dt = None
+        # Normalize to naive datetime for safe comparisons
+        if dt and getattr(dt, 'tzinfo', None) is not None:
+            dt = dt.replace(tzinfo=None)
+        return dt
 
     # Determine sales period range based on sales_view
     now = datetime.now()
@@ -2001,6 +2023,14 @@ def download_order_report(format):
         if match:
             filtered_orders.append(order)
 
+    # For Excel/PDF exports, further restrict to completed & paid only
+    if format in ['excel', 'pdf']:
+        filtered_orders = [
+            o for o in filtered_orders
+            if (o.get('ORDER_STATUS') or '').lower() == 'completed'
+            and (o.get('PAYMENT_STATUS') or '').lower() == 'paid'
+        ]
+
     # Fetch detergent, fabric conditioner, and order item data for export
     for order in filtered_orders:
         orderitem_id = order.get('ORDERITEM_ID')
@@ -2372,10 +2402,11 @@ def download_order_report(format):
 
         pdf.add_page()
 
-        # Add logo at the top left (slightly larger) then thin header, then table
+        # Add logo at the top left (slightly larger) then add gap before header
         try:
             pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
-            pdf.ln(18)
+            # Ensure there's clear vertical space between logo and header bar
+            pdf.set_y(38)
         except Exception:
             pass  # Skip logo if not found
 
@@ -4656,19 +4687,40 @@ def api_pickup_orders():
         o['QR_CODE'] = o.get('QR_CODE', '')
     return jsonify({'orders': pickup_orders})
 
+# COMPLETE PICK-UP API
 @app.route('/api/complete_pickup/<int:order_id>', methods=['POST'])
 def api_complete_pickup(order_id):
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return jsonify({'status': 'error', 'msg': 'Unauthorized'}), 401
-    # Update order status to Completed
-    docs = dbheldb.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
-    if not docs:
+    
+    # Get order details
+    order = dbhelper.get_order_by_id(order_id)
+    if not order:
         return jsonify({'status': 'error', 'msg': 'Order not found'}), 404
-    dbhelper.db.collection('ORDER').document(docs[0].id).update({
-        'ORDER_STATUS': 'Completed',
-        'DATE_UPDATED': datetime.now()
-    })
+    
+    # Get customer details
+    customer_id = order.get('CUSTOMER_ID')
+    customer = dbhelper.get_customer_by_id(customer_id)
+    if not customer:
+        return jsonify({'status': 'error', 'msg': 'Customer not found'}), 404
+    
+    # Update order status to Completed
+    dbhelper.update_order_status(order_id, 'Completed')
+    
+    # Send SMS notification to customer
+    phone = customer.get('PHONE_NUMBER')
+    customer_name = customer.get('FULLNAME')
+    if phone:
+        message = f"Hi {customer_name}, your laundry (Order #{order_id}) has been picked up. Thank you for using Laundrylink!"
+        try:
+            esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')
+            esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+            requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+        except Exception as e:
+            print(f"Error sending SMS: {e}")
+    
     return jsonify({'status': 'success'})
+
 
 
 
