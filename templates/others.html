@@ -187,7 +187,8 @@
                     </div>
                 </div>
                 
-                <!-- ADD NOTE -->
+                {% if order_type != 'Self-service' %}
+                <!-- ADD NOTE (hidden for Self-service) -->
                 <div class="v244_285"></div>
                 <div class="v245_296"></div>
                 <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'" data-translate="add_note_btn">ADD NOTE</button>
@@ -204,6 +205,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </form>
         </div>
 </body>

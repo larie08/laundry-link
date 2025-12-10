@@ -2250,18 +2250,14 @@ def download_order_report(format):
                 pdf.ln(row_height)
 
         pdf.add_page()
-
-        # Add logo at the top left and leave a clear gap before the title bar
-        logo_top = 10
-        logo_height = 26  # explicit height so we can reserve space predictably
+        
+        # Add logo at the top left
         try:
-            pdf.image('static/images/pdfheader.jpg', x=10, y=logo_top, h=logo_height)
-            # push cursor below the logo plus extra breathing room
-            pdf.set_y(logo_top + logo_height + 4)
-        except Exception:
-            # even if the logo is missing, keep consistent spacing above the header
-            pdf.ln(logo_height + 8)
-
+            pdf.image('static/images/pdfheader.jpg', x=10, y=10, w=50)
+            pdf.ln(20)  # Move down after logo
+        except:
+            pass  # Skip logo if not found
+        
         add_title_bar('Order Report')
 
         # Format dataframe for display
