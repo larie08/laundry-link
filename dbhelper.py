@@ -11,7 +11,7 @@ from firebase_admin import credentials, firestore
 db = None
 
 # ARI NA JUD MAGSUGOD A TUNG HELPERS HAHHAHAH
-# GLOBAL FIRESTORE CLIENT 
+# GLOBAL FIRESTORE CLIENT s
 '''
 GAGI ING ANI MAN DIAY MAG COMMENT PARA DILI NA MAG TAGSA2x T_T
     === FIREBASE_CREDENTIALS env var
@@ -27,17 +27,22 @@ def _require_db():
     # INITIALIZATION OF FIREBASE ADMIN
     if not firebase_admin._apps:
         cred_path = os.getenv('FIREBASE_CREDENTIALS') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS') or 'serviceAccountKey.json'
-        if os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-        else:
-            # IF DILI TA MAKA CONNECT SA CLOUD PLWEDE TA MO USE UG EMULATOR WHICH ALLOW US TO USE THE WEBSITE WITHOUT CREDENTIALS
-            if os.getenv('FIRESTORE_EMULATOR_HOST'):
-                firebase_admin.initialize_app()
+        try:
+            if os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
             else:
-                raise RuntimeError(
-                    "Firebase credentials not found. Set FIREBASE_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS to your serviceAccountKey.json, or place serviceAccountKey.json in project root."
-                )
+                # IF DILI TA MAKA CONNECT SA CLOUD PLWEDE TA MO USE UG EMULATOR WHICH ALLOW US TO USE THE WEBSITE WITHOUT CREDENTIALS
+                if os.getenv('FIRESTORE_EMULATOR_HOST'):
+                    firebase_admin.initialize_app()
+                else:
+                    raise RuntimeError(
+                        "Firebase credentials not found. Set FIREBASE_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS to your serviceAccountKey.json, or place serviceAccountKey.json in project root."
+                    )
+        except ValueError as e:
+            # If already initialized elsewhere, just reuse existing app
+            if 'already exists' not in str(e).lower():
+                raise
     # CREATE A CLIENT
     db = firestore.client()
 
@@ -627,17 +632,27 @@ def get_orderitem_fabcons(orderitem_id):
         out.append({'FABCON_NAME': name, 'QUANTITY': jd.get('QUANTITY', 0), 'UNIT_PRICE': jd.get('UNIT_PRICE', 0), 'total_price': total_price})
     return out
 
-def update_order_payment(order_id, payment_method, payment_status):
+def update_order_payment(order_id, payment_method, payment_status, user_id: int = None):
     """Update payment method/status for an order and bump DATE_UPDATED."""
     _require_db()
     docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
     if not docs:
         return False
+    
+    # Get old payment status for logging
+    old_data = docs[0].to_dict()
+    old_payment_status = old_data.get('PAYMENT_STATUS', 'Unknown')
+    
     db.collection('ORDER').document(docs[0].id).update({
         'PAYMENT_METHOD': payment_method,
         'PAYMENT_STATUS': payment_status,
         'DATE_UPDATED': _now(),
     })
+    
+    # Log the payment status change
+    detail = f"{old_payment_status} -> {payment_status}"
+    add_order_log(order_id, 'Payment Update', detail, user_id)
+    
     return True
 
 def update_order_qr_code(order_id, qr_code_path):
@@ -664,6 +679,28 @@ def update_order_note(order_id, order_note):
         'ORDER_NOTE': note_value,
         'DATE_UPDATED': _now(),
     })
+    return True
+
+def update_order_status(order_id, status, user_id: int = None):
+    """Update ORDER_STATUS field for an order."""
+    _require_db()
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return False
+    
+    # Get old status for logging
+    old_data = docs[0].to_dict()
+    old_status = old_data.get('ORDER_STATUS', 'Unknown')
+    
+    db.collection('ORDER').document(docs[0].id).update({
+        'ORDER_STATUS': status,
+        'DATE_UPDATED': _now(),
+    })
+    
+    # Log the status change
+    detail = f"{old_status} -> {status}"
+    add_order_log(order_id, 'Status Update', detail, user_id)
+    
     return True
 
 def get_customers_with_orders() -> list:
@@ -915,6 +952,17 @@ def get_all_orders_with_priority():
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
 
+def add_order_log(order_id: int, action: str, detail: str, user_id: int = None):
+    """Log order updates (status/payment changes)."""
+    _require_db()
+    db.collection('ORDER_LOG').add({
+        'ORDER_ID': order_id,
+        'ACTION': action,  # 'Status Update', 'Payment Update'
+        'DETAIL': detail,  # e.g., 'Pending -> Pick-up' or 'Unpaid -> PAID'
+        'USER_ID': user_id,
+        'DATE': _now(),
+    })
+
 def add_inventory_log(user_id: int, action: str, item_type: str, item_id: int, name: str, qty: int, price: float):
     """Add an inventory log entry for detergent/fabcon actions."""
     _require_db()
@@ -993,6 +1041,8 @@ def get_consumed_detergents_report() -> list:
             'TOTAL_VALUE': total_value,
             'DATE_CREATED': date_created,
             'ORDER_ID': order.get('ORDER_ID'),
+            # Include status so callers can filter (e.g., completed-only views)
+            'ORDER_STATUS': order.get('ORDER_STATUS')
         })
     
     return out
@@ -1044,6 +1094,8 @@ def get_consumed_fabcons_report() -> list:
             'TOTAL_VALUE': total_value,
             'DATE_CREATED': date_created,
             'ORDER_ID': order.get('ORDER_ID'),
+            # Include status so callers can filter (e.g., completed-only views)
+            'ORDER_STATUS': order.get('ORDER_STATUS')
         })
     
     return out
@@ -1123,6 +1175,59 @@ def compute_order_stats(orders: list, days: int = 7) -> dict:
         "type_counts": type_counts,
         "trend": {"labels": trend_labels, "counts": trend_counts},
     }
+
+
+def deduct_detergent_quantity(detergent_id: int, quantity: int) -> bool:
+    """Deduct quantity from detergent inventory when order is placed.
+    
+    Args:
+        detergent_id: The DETERGENT_ID to deduct from
+        quantity: The quantity to deduct
+        
+    Returns:
+        True if deduction was successful, False otherwise
+    """
+    _require_db()
+    docs = db.collection('DETERGENT').where('DETERGENT_ID', '==', detergent_id).limit(1).get()
+    if not docs:
+        return False
+    
+    detergent = docs[0].to_dict()
+    current_qty = int(detergent.get('QTY', 0))
+    new_qty = max(0, current_qty - quantity)  # Ensure qty doesn't go negative
+    
+    db.collection('DETERGENT').document(docs[0].id).update({
+        'QTY': new_qty,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
+def deduct_fabcon_quantity(fabcon_id: int, quantity: int) -> bool:
+    """Deduct quantity from fabric conditioner inventory when order is placed.
+    
+    Args:
+        fabcon_id: The FABCON_ID to deduct from
+        quantity: The quantity to deduct
+        
+    Returns:
+        True if deduction was successful, False otherwise
+    """
+    _require_db()
+    docs = db.collection('FABCON').where('FABCON_ID', '==', fabcon_id).limit(1).get()
+    if not docs:
+        return False
+    
+    fabcon = docs[0].to_dict()
+    current_qty = int(fabcon.get('QTY', 0))
+    new_qty = max(0, current_qty - quantity)  # Ensure qty doesn't go negative
+    
+    db.collection('FABCON').document(docs[0].id).update({
+        'QTY': new_qty,
+        'DATE_UPDATED': _now(),
+    })
+    return True
+
+
 
     
 if __name__ == "__main__":

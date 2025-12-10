@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <link href="https://fonts.googleapis.com/css?family=Titan+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="{{ url_for('static', filename='css/thank_you.css') }}" rel="stylesheet" />
+    <title>Laundrylink - Thank You</title>
+</head>
+<body>
+    <div class="background-image">
+        <img src="../static/images/staff_admin_background.png" alt="background">
+    </div>
+    <div class="page-wrapper">
+        <div class="card">
+            <div class="icon"></div>
+            <h1 class="title" data-translate="thank_you_title">Thank you!</h1>
+            <p class="subtitle" data-translate="confirmation_msg">Your order has been placed successfully.</p>
+            {% if order_id %}
+            <p class="order-id"><span data-translate="order_id_label">Order ID:</span> LL-{{ order_id }}</p>
+            {% endif %}
+            <a href="{{ url_for('service_type') }}" class="primary-btn" data-translate="order_again_btn">Order Again</a>
+        </div>
+    </div>
+</body>
+<script>
+    // Translation dictionary
+    const translations = {
+        en: {
+            thank_you_title: "Thank you!",
+            confirmation_msg: "Your order has been placed successfully.",
+            order_id_label: "Order ID:",
+            order_again_btn: "Order Again",
+            current_lang_name: "English"
+        },
+        fil: {
+            thank_you_title: "Salamat!",
+            confirmation_msg: "Matagumpay na naisumite ang iyong order.",
+            order_id_label: "Order ID:",
+            order_again_btn: "Umorder Ulit",
+            current_lang_name: "Filipino"
+        },
+        ja: {
+            thank_you_title: "ありがとうございます！",
+            confirmation_msg: "ご注文が正常に送信されました。",
+            order_id_label: "注文番号:",
+            order_again_btn: "もう一度注文する",
+            current_lang_name: "日本語"
+        },
+        ko: {
+            thank_you_title: "감사합니다!",
+            confirmation_msg: "주문이 성공적으로 접수되었습니다.",
+            order_id_label: "주문 번호:",
+            order_again_btn: "다시 주문하기",
+            current_lang_name: "한국어"
+        }
+    };
+
+    function getCurrentLanguage() {
+        return sessionStorage.getItem('language') || 'en';
+    }
+
+    function setCurrentLanguage(lang) {
+        sessionStorage.setItem('language', lang);
+    }
+
+    function applyTranslations() {
+        const currentLang = getCurrentLanguage();
+        const elements = document.querySelectorAll('[data-translate]');
+        
+        elements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (translations[currentLang] && translations[currentLang][key]) {
+                element.textContent = translations[currentLang][key];
+            }
+        });
+
+        const currentLangElement = document.getElementById('currentLanguage');
+        if (currentLangElement && translations[currentLang]) {
+            currentLangElement.textContent = translations[currentLang].current_lang_name;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        applyTranslations();
+    });
+</script>
+</html>

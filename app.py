@@ -40,6 +40,16 @@ def datetimeformat(value, format='%B %d, %Y, %I:%M %p'):
 # Register built-in functions for Jinja2 templates
 app.jinja_env.globals.update(max=max, min=min)
 
+def get_price_per_load(order_type: str) -> float:
+    """
+    Return price per load based on service type.
+    Self-service: 50; Drop-off (or others): 80.
+    """
+    norm = str(order_type or '').strip().lower().replace('_', '-')
+    if 'drop' in norm:
+        return 80.0
+    return 50.0
+
 # CUSTOMER ROUTES
 @app.route('/')
 def home():
@@ -65,7 +75,6 @@ def contact():
             'phone_number': phone_number
         }
         
-        flash('Customer information saved!')
         return redirect(url_for('weight_laundry'))
 
     # Pre-fill form with session data if user goes back
@@ -157,12 +166,13 @@ def submit_others():
     # Get weight and load from session
     total_weight = session.get('total_weight', 0.0)
     total_load = session.get('total_load', 0)
+    price_per_load = get_price_per_load(session.get('order_type', 'Drop-off'))
 
     # Calculate totals
     total_price = 0.0
 
     # Load price (50 per load)
-    total_price += total_load * 50
+    total_price += total_load * price_per_load
 
     # Store detergent details
     detergent_details = []
@@ -204,6 +214,7 @@ def submit_others():
         'total_weight': total_weight,
         'total_load': total_load,
         'total_price': total_price,
+        'price_per_load': price_per_load,
         'order_note': order_note,
         'pickup_schedule': pickup_schedule,
         'own_detergent': own_detergent,
@@ -271,7 +282,10 @@ def payments():
                     det['quantity'],
                     det['unit_price']
                 )
-        
+                # Deduct detergent quantity from inventory when order is placed
+                dbhelper.deduct_detergent_quantity(det['detergent_id'], det['quantity'])
+
+
         # Add fabcons to junction table
         if not order_data['own_fabcon']:
             for fab in order_data['fabcon_details']:
@@ -281,8 +295,12 @@ def payments():
                     fab['quantity'],
                     fab['unit_price']
                 )
+                # Deduct fabric conditioner quantity from inventory
+                dbhelper.deduct_fabcon_quantity(fab['fabcon_id'], fab['quantity'])
+
         
         # Create ORDER record
+        order_status_value = 'Completed' if str(order_data.get('order_type', '')).lower() == 'self-service' else 'Pending'
         order_id = dbhelper.add_order(
             customer_id=customer_id,
             orderitem_id=orderitem_id,
@@ -293,7 +311,7 @@ def payments():
             total_price=order_data['total_price'],
             order_note=order_data['order_note'],
             pickup_schedule=order_data['pickup_schedule'],
-            order_status='Pending',
+            order_status=order_status_value,
             payment_method=payment_method,
             payment_status='Pending'
         )
@@ -307,7 +325,7 @@ def payments():
         qr_code_path = f"qr/{qr_filename}"
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
-        # Receipt printing for all payment methods
+        # Receipt printing for all payment methods - ONLY PRINT ORDER ID
         if payment_method and payment_method.lower() in ['cash', 'gcash', 'maya']:
             try:
                 from escpos.printer import Usb
@@ -356,7 +374,8 @@ def payments():
                     p.text(f"Order ID: {order.get('ORDER_ID')}\n")
                     p.set(height=1, width=1)  # Reset font
 
-                p.cut()
+                # CLOSE printer connection to free it up for mark_order_as_paid()
+                p.close()
             except Exception as e:
                 print("Printer error:", e)
         
@@ -367,8 +386,15 @@ def payments():
         session.pop('total_load', None)
         session.pop('order_type', None)
         
-        flash('Order confirmed successfully!')
-        return redirect(url_for('home'))
+        # If the request came from an AJAX call (QR flows), return JSON for client-side redirect
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True,
+                'order_id': order_id,
+                'redirect': url_for('thank_you_page', order_id=order_id)
+            })
+
+        return redirect(url_for('thank_you_page', order_id=order_id))
     
     # GET request - display payment page using session data
     # Check if all required session data exists
@@ -389,10 +415,11 @@ def payments():
     }
     
     # Create order dict for template
+    order_status_value = 'Completed' if str(order_data.get('order_type', '')).lower() == 'self-service' else 'Pending'
     order = {
         'ORDER_ID': 'Pending',  # Will be assigned when saved
         'ORDER_TYPE': order_data['order_type'],
-        'ORDER_STATUS': 'Pending',
+        'ORDER_STATUS': order_status_value,
         'PAYMENT_STATUS': 'Unpaid',
         'TOTAL_WEIGHT': order_data['total_weight'],
         'TOTAL_LOAD': order_data['total_load'],
@@ -410,8 +437,9 @@ def payments():
         'PRIORITIZE_ORDER': order_data['priority']
     }
     
-    # Calculate load price
-    load_price = order_data['total_load'] * 50.00
+    # Calculate load price based on service type
+    price_per_load = get_price_per_load(order_data['order_type'])
+    load_price = order_data['total_load'] * price_per_load
     
     # Get detergent and fabcon details for display
     orderitem_detergents = []
@@ -459,6 +487,7 @@ def payments():
                          order=order,
                          customer=customer,
                          orderitem=orderitem,
+                         price_per_load=price_per_load,
                          load_price=load_price,
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
@@ -481,10 +510,17 @@ def save_order_note():
     
         return jsonify({'success': True, 'message': 'Note saved successfully'})
     
+@app.route('/thank_you')
+def thank_you_page():
+    order_id = request.args.get('order_id')
+    return render_template('thank_you.html', order_id=order_id)
+
+
 @app.route('/new_order', methods=['GET'])
 def new_order():
+    """Backward-compatible route that now points to the thank you page."""
     order_id = request.args.get('order_id', 'N/A')
-    return render_template('thankyou.html', order_id=order_id)
+    return redirect(url_for('thank_you_page', order_id=order_id))
 
 
 
@@ -887,6 +923,21 @@ def customers():
     
     # Get customers with their orders
     customers_data = get_customers_with_orders()
+
+    # Keep only customers whose latest order is not completed (pending or pick-up)
+    def _norm_status(val: str) -> str:
+        if not val:
+            return ''
+        s = str(val).strip().lower().replace('_', '-')
+        # Normalize pickup variations
+        if s == 'pickup':
+            s = 'pick-up'
+        return s
+
+    customers_data = [
+        c for c in customers_data
+        if _norm_status(c.get('ORDER_STATUS')) in ['pending', 'pick-up']
+    ]
     
     # Get statistics
     stats = get_customer_statistics()
@@ -899,10 +950,13 @@ def customers():
             search_query in c['FULLNAME'].lower() or
             (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'].lower())]
     
-    # Filter by payment status if provided
-    payment_status = request.args.get('payment_status')
-    if payment_status:
-        customers_data = [c for c in customers_data if c['PAYMENT_STATUS'].lower() == payment_status.lower()]
+    # Filter by order status (pending / pick-up) if provided
+    status_filter = request.args.get('status', '').strip().lower()
+    if status_filter:
+        customers_data = [
+            c for c in customers_data
+            if _norm_status(c.get('ORDER_STATUS')) == status_filter
+        ]
     
     # PAGINATION
     page = request.args.get('page', 1, type=int)
@@ -974,6 +1028,14 @@ def orders():
         return redirect(url_for('admin_login'))
     
     orders_data = dbhelper.get_all_orders_with_priority()
+
+    # Show only orders that are pending or not yet paid.
+    def _is_pending_or_unpaid(o):
+        status = (o.get('ORDER_STATUS') or '').strip().lower()
+        payment = (o.get('PAYMENT_STATUS') or '').strip().lower()
+        return status == 'pending' or payment != 'paid'
+
+    orders_data = [o for o in orders_data if _is_pending_or_unpaid(o)]
 
     # Filtering
     order_type = request.args.get('order_type', '').strip().lower()
@@ -1050,12 +1112,6 @@ def order_details(order_id):
     if not order:
         return jsonify({'error': 'Order not found'}), 404
 
-    # Always update order status to "Pick-up" after QR scan
-    dbhelper.db.collection('ORDER').document(
-        dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
-    ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
-    order['ORDER_STATUS'] = 'Pick-up'
-
     customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
     orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
 
@@ -1065,6 +1121,7 @@ def order_details(order_id):
     # Calculate total price breakdown
     total_price = 0.0
     breakdown = {}
+    price_per_load = get_price_per_load(order.get('ORDER_TYPE'))
 
     # Priority
     if orderitem and orderitem.get('PRIORITIZE_ORDER'):
@@ -1090,7 +1147,7 @@ def order_details(order_id):
     # Total Load (₱50 per load)
     load_price = 0.0
     if order.get('TOTAL_LOAD'):
-        load_price = float(order['TOTAL_LOAD']) * 50.0
+        load_price = float(order['TOTAL_LOAD']) * price_per_load
         breakdown['load'] = load_price
         total_price += load_price
     else:
@@ -1133,9 +1190,122 @@ def order_details(order_id):
         'BREAKDOWN': breakdown
     })
 
+
+@app.route('/order_scan/<int:order_id>')
+def order_scan(order_id):
+    """Fetch order details, mark order as Pickup, and send SMS notification.
+
+    This endpoint is intended for use by the QR scanner: when a QR is scanned
+    the frontend can call this to both retrieve details and trigger pickup
+    workflows (DB update + SMS forward to ESP32).
+    """
+    # Fetch order
+    order = dbhelper.get_order_by_id(order_id)
+    if not order:
+        return jsonify({'error': 'Order not found'}), 404
+
+    # Fetch related data
+    customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+    orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+    detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+    fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+
+    # Update order status to Pickup (best-effort)
+    try:
+        user_id = session.get('user_id')
+        dbhelper.update_order_status(order_id, 'Pick-up', user_id)
+        # also update local variable so response reflects change
+        order['ORDER_STATUS'] = 'Pick-up'
+    except Exception:
+        pass
+
+    # Build price breakdown (same logic as order_details)
+    total_price = 0.0
+    breakdown = {}
+    if orderitem and orderitem.get('PRIORITIZE_ORDER'):
+        breakdown['priority'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['priority'] = 0.0
+
+    if orderitem and orderitem.get('IRON'):
+        breakdown['ironing'] = 50.0
+        total_price += 50.0
+    else:
+        breakdown['ironing'] = 0.0
+
+    if orderitem and orderitem.get('FOLD_CLOTHES'):
+        breakdown['folding'] = 70.0
+        total_price += 70.0
+    else:
+        breakdown['folding'] = 0.0
+
+    load_price = 0.0
+    if order.get('TOTAL_LOAD'):
+        load_price = float(order['TOTAL_LOAD']) * 50.0
+        breakdown['load'] = load_price
+        total_price += load_price
+    else:
+        breakdown['load'] = 0.0
+
+    det_total = 0.0
+    for det in detergents:
+        det_total += float(det.get('total_price', 0))
+    breakdown['detergents'] = det_total
+    total_price += det_total
+
+    fab_total = 0.0
+    for fab in fabcons:
+        fab_total += float(fab.get('total_price', 0))
+    breakdown['fabcons'] = fab_total
+    total_price += fab_total
+
+    # Try to send SMS via ESP32 forwarder (same behaviour as /api/send_sms)
+    sms_status = 'not_sent'
+    try:
+        phone = customer.get('PHONE_NUMBER') if customer else None
+        customer_name = customer.get('FULLNAME') if customer else ''
+        if phone:
+            message = f"Hi {customer_name or ''}, your laundry (Order #{order_id}) is now ready for pick-up. Thank you for using Laundrylink!"
+            esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')
+            esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+            resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+            if resp.status_code == 200:
+                sms_status = 'sent'
+            else:
+                sms_status = f'error_{resp.status_code}'
+        else:
+            sms_status = 'no_phone'
+    except Exception as e:
+        sms_status = f'error_exception_{str(e)}'
+
+    # Compose response
+    return jsonify({
+        'ORDER_ID': order.get('ORDER_ID'),
+        'CUSTOMER_NAME': customer.get('FULLNAME') if customer else '',
+        'PHONE_NUMBER': customer.get('PHONE_NUMBER') if customer else '',
+        'ORDER_TYPE': order.get('ORDER_TYPE'),
+        'ORDER_STATUS': order.get('ORDER_STATUS'),
+        'PAYMENT_STATUS': order.get('PAYMENT_STATUS'),
+        'PAYMENT_METHOD': order.get('PAYMENT_METHOD'),
+        'DATE_CREATED': order.get('DATE_CREATED').strftime('%Y-%m-%d') if order.get('DATE_CREATED') else '',
+        'PICKUP_SCHEDULE': order.get('PICKUP_SCHEDULE'),
+        'TOTAL_LOAD': order.get('TOTAL_LOAD'),
+        'TOTAL_WEIGHT': order.get('TOTAL_WEIGHT'),
+        'ORDER_NOTE': order.get('ORDER_NOTE'),
+        'PRIORITY': orderitem.get('PRIORITIZE_ORDER') if orderitem else False,
+        'IRON': orderitem.get('IRON') if orderitem else False,
+        'FOLD': orderitem.get('FOLD_CLOTHES') if orderitem else False,
+        'DETERGENTS': detergents,
+        'FABCONS': fabcons,
+        'TOTAL_PRICE': round(total_price, 2),
+        'BREAKDOWN': breakdown,
+        'SMS_STATUS': sms_status
+    })
+
 @app.route('/mark_order_as_paid', methods=['POST'])
 def mark_order_as_paid():
-    """Mark an order as paid and print the full receipt."""
+    """Mark an order as paid and print the full receipt (with and without QR code)."""
     data = request.get_json()
     order_id = data.get('order_id')
     
@@ -1148,8 +1318,11 @@ def mark_order_as_paid():
         if not order:
             return jsonify({'success': False, 'error': 'Order not found'}), 404
         
-        # Update the payment status
-        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
+        # Get logged in user ID
+        user_id = session.get('user_id')
+        
+        # Update the payment status to PAID
+        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID', user_id)
         
         # Get updated order details
         order = dbhelper.get_order_by_id(order_id)
@@ -1157,16 +1330,30 @@ def mark_order_as_paid():
         orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
         detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
         fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+        price_per_load = get_price_per_load(order.get('ORDER_TYPE'))
         
         # Print the full receipt (twice - second one without QR)
+        # Print the full receipt (twice - with QR and without QR)
         try:
             from escpos.printer import Usb
             from PIL import Image, ImageDraw, ImageFont
+            import time
+            
+            # Add a small delay to ensure previous connection is fully closed
+            time.sleep(1)
+            
             p = Usb(0x0483, 0x5743, encoding='GB18030')
+
+            # Get updated order details
+            order = dbhelper.get_order_by_id(order_id)
+            customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+            orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+            detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+            fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
 
             # Create receipt lines
             lines = []
-            lines.append("========== LAUNDRY LINK ==========\n")
+            lines.append("========= LAUNDRY LINK =========\n")
             lines.append(f"Order ID: {order.get('ORDER_ID')}\n")
             lines.append(f"Customer: {customer.get('FULLNAME') if customer else 'N/A'}\n")
             lines.append(f"Phone: {customer.get('PHONE_NUMBER') if customer else 'N/A'}\n")
@@ -1178,7 +1365,7 @@ def mark_order_as_paid():
             
             # Load
             if order.get('TOTAL_LOAD'):
-                lines.append(f"Loads: {order.get('TOTAL_LOAD')} x Php50 = Php{order.get('TOTAL_LOAD') * 50:.2f}\n")
+                lines.append(f"Loads: {order.get('TOTAL_LOAD')} x Php{price_per_load:.0f} = Php{order.get('TOTAL_LOAD') * price_per_load:.2f}\n")
             
             # Priority
             if orderitem and orderitem.get('PRIORITIZE_ORDER'):
@@ -1211,12 +1398,14 @@ def mark_order_as_paid():
             lines.append("-" * 32 + "\n")
             lines.append(f"Total Price: Php{order.get('TOTAL_PRICE'):.2f}\n")
             lines.append("\nThank you!\n")
-            lines.append("==================================\n")
+            lines.append("================================\n")
 
             receipt_text = "".join(lines)
             
+            # Check if order is self-service
+            is_self_service = str(order.get('ORDER_TYPE', '')).lower() == 'self-service'
+            
             try:
-                # FIRST RECEIPT WITH QR CODE
                 # Print logo at top middle
                 logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
                 if os.path.exists(logo_path):
@@ -1226,7 +1415,7 @@ def mark_order_as_paid():
                 # Print header with store information
                 p.set(align='center')
                 p.text("LAUNDRYLINK\n")
-                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                p.text("Sanciangko St, Cebu City, 6000\n")
                 p.text("Phone: 0912-345-6789\n")
                 p.text("est. 2025\n")
                 p.set(align='left')
@@ -1234,49 +1423,74 @@ def mark_order_as_paid():
                 
                 p.text(receipt_text)
                 
-                # Print QR code
-                qr_code_relative_path = order.get('QR_CODE')
-                if qr_code_relative_path:
-                    qr_full_path = os.path.join(app.static_folder, qr_code_relative_path)
-                    if os.path.exists(qr_full_path):
-                        p.image(qr_full_path)
-                        p.text("\n")
-                    else:
-                        print(f"QR code file not found: {qr_full_path}")
-
-                # Add separator between receipts
-                p.text("\n" + "=" * 32 + "\n")
-                p.text("CUT HERE - MANUAL CUT REQUIRED\n")
-                p.text("=" * 32 + "\n\n")
-                
-                # Wait for printer to finish processing first receipt
-                import time
-                time.sleep(3)
-                
-                # SECOND RECEIPT WITHOUT QR CODE
-                # Print logo at top middle
-                if os.path.exists(logo_path):
-                    p.image(logo_path)
+                # SELF-SERVICE: Only print one receipt without QR code
+                if is_self_service:
+                    # Cut the paper after single receipt
+                    p.cut()
+                else:
+                    # DROP-OFF: Print two receipts (first with QR, second without)
+                    # Generate QR code dynamically based on order ID
+                    qr_data = str(order.get('ORDER_ID', order_id))
+                    qr = qrcode.QRCode(version=1, box_size=10, border=1)
+                    qr.add_data(qr_data)
+                    qr.make(fit=True)
+                    qr_image = qr.make_image(fill_color='black', back_color='white')
+                    qr_image = qr_image.convert('RGB')
+                    
+                    # Print dynamically generated QR code on first receipt
+                    p.image(qr_image)
                     p.text("\n")
+
+                    # Add separator between receipts
+                    p.text("\n" + "=" * 32 + "\n")
+                    p.text("CUT HERE - MANUAL CUT REQUIRED\n")
+                    p.text("=" * 32 + "\n\n")
+                    
+                    # Wait for printer to finish processing first receipt
+                    time.sleep(3)
+                    
+                    # SECOND RECEIPT WITHOUT QR CODE
+                    # Print logo at top middle
+                    if os.path.exists(logo_path):
+                        p.image(logo_path)
+                        p.text("\n")
+                    
+                    # Print header with store information
+                    p.set(align='center')
+                    p.text("LAUNDRYLINK\n")
+                    p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                    p.text("Phone: 0912-345-6789\n")
+                    p.text("est. 2025\n")
+                    p.set(align='left')
+                    p.text("\n")
+                    
+                    p.text(receipt_text)
+                    
+                    # Cut the paper after second receipt
+                    p.cut()
                 
-                # Print header with store information
-                p.set(align='center')
-                p.text("LAUNDRYLINK\n")
-                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
-                p.text("Phone: 0912-345-6789\n")
-                p.text("est. 2025\n")
-                p.set(align='left')
-                p.text("\n")
-                
-                p.text(receipt_text)
+                # Properly close the printer connection
+                p.close()
                 
             except Exception as receipt_error:
                 print(f"Receipt printing error: {receipt_error}")
+                # Try to close printer connection even if error occurred
+                try:
+                    if 'p' in locals():
+                        p.close()
+                except:
+                    pass
                 # Continue even if second receipt fails
                 pass
             
         except Exception as e:
             print("Printer error:", e)
+            # Try to close printer connection even if error occurred
+            try:
+                if 'p' in locals():
+                    p.close()
+            except:
+                pass
         
         return jsonify({'success': True, 'message': 'Order marked as paid and receipt printed'}), 200
         
@@ -1308,11 +1522,6 @@ def admin_order_report():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     
-    # Sales report filter parameters
-    sales_view = request.args.get('sales_view', 'daily')
-    sales_date = request.args.get('sales_date', '')
-    sales_month = request.args.get('sales_month', '')
-
     # Get all orders
     all_orders = dbhelper.get_all_orders_with_priority()
 
@@ -1335,6 +1544,13 @@ def admin_order_report():
                 include = False
         if include:
             filtered_orders.append(order)
+
+    # Show only completed AND paid orders in the report view
+    filtered_orders = [
+        o for o in filtered_orders
+        if (o.get('ORDER_STATUS') or '').lower() == 'completed'
+        and (o.get('PAYMENT_STATUS') or '').lower() == 'paid'
+    ]
 
     # Statistics
     total_orders = len(filtered_orders)
@@ -1393,108 +1609,6 @@ def admin_order_report():
         else:
             order['orderitem_data'] = {'detergents': [], 'fabcons': []}
     
-    # --- Add this block: prepare data for sales report section ---
-    # Sales report data (completed orders only)
-    sales_report_data = []
-    for order in filtered_orders:
-        order_status = (order.get('ORDER_STATUS') or '').lower()
-        if order_status == 'completed':
-            revenue = float(order.get('TOTAL_PRICE', 0) or 0)
-            sales_report_data.append({
-                'ORDER_ID': order.get('ORDER_ID'),
-                'CUSTOMER_NAME': order.get('CUSTOMER_NAME'),
-                'PHONE_NUMBER': order.get('PHONE_NUMBER'),
-                'ORDER_TYPE': order.get('ORDER_TYPE'),
-                'REVENUE': revenue,
-                'COGS': revenue * 0.3,
-                'NET': revenue * 0.7
-            })
-    
-    sales_report_df = pd.DataFrame(sales_report_data)
-
-    # Sales summary (for template display)
-    def parse_date_val(val):
-        if not val:
-            return None
-        if hasattr(val, 'date'):
-            return val
-        if isinstance(val, str):
-            try:
-                # Try full datetime string
-                return datetime.fromisoformat(val.replace('Z', '+00:00'))
-            except Exception:
-                try:
-                    return datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
-                except Exception:
-                    try:
-                        return datetime.strptime(val, '%Y-%m-%d')
-                    except Exception:
-                        return None
-        return None
-
-    # Determine sales period range based on sales_view
-    now = datetime.now()
-    sales_start = sales_end = None
-    sales_period_label = 'All Time'
-    if sales_view == 'daily':
-        base_date = sales_date or now.strftime('%Y-%m-%d')
-        try:
-            day_dt = datetime.strptime(base_date, '%Y-%m-%d')
-        except Exception:
-            day_dt = now
-        sales_start = day_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = day_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = day_dt.strftime('%B %d, %Y')
-    elif sales_view == 'weekly':
-        start_of_week = now - timedelta(days=now.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        sales_start = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = end_of_week.replace(hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = f"{sales_start.strftime('%b %d')} - {sales_end.strftime('%b %d, %Y')}"
-    elif sales_view == 'monthly':
-        base_month = sales_month or now.strftime('%Y-%m')
-        try:
-            year, month = map(int, base_month.split('-'))
-            start_of_month = datetime(year, month, 1)
-        except Exception:
-            start_of_month = now.replace(day=1)
-        if start_of_month.month == 12:
-            next_month = start_of_month.replace(year=start_of_month.year + 1, month=1, day=1)
-        else:
-            next_month = start_of_month.replace(month=start_of_month.month + 1, day=1)
-        sales_start = start_of_month.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = (next_month - timedelta(seconds=1)).replace(microsecond=999999)
-        sales_period_label = start_of_month.strftime('%B %Y')
-    elif sales_view == 'yearly':
-        sales_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        sales_end = now.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = str(now.year)
-
-    sales_completed_orders = []
-    for o in filtered_orders:
-        if (o.get('ORDER_STATUS') or '').lower() != 'completed':
-            continue
-        created_dt = parse_date_val(o.get('DATE_CREATED'))
-        if sales_start and sales_end and created_dt:
-            if created_dt < sales_start or created_dt > sales_end:
-                continue
-        revenue = float(o.get('TOTAL_PRICE', 0) or 0)
-        sales_completed_orders.append({
-            'ORDER_ID': o.get('ORDER_ID'),
-            'CUSTOMER_NAME': o.get('CUSTOMER_NAME', ''),
-            'PHONE_NUMBER': o.get('PHONE_NUMBER', ''),
-            'ORDER_TYPE': o.get('ORDER_TYPE', ''),
-            'Revenue': revenue,
-            'COGS': revenue * 0.3,
-            'Net': revenue * 0.7
-        })
-
-    sales_total_orders = len(sales_completed_orders)
-    sales_total_revenue = sum(item['Revenue'] for item in sales_completed_orders)
-    sales_total_cogs = sum(item['COGS'] for item in sales_completed_orders)
-    sales_total_net = sum(item['Net'] for item in sales_completed_orders)
-    # --- End of sales report data block ---
-
     # BASED ON ROLE
     template_name = 'admin_order_report.html' if session['role'] == 'admin' else 'staff_order_report.html'
     return render_template(template_name, 
@@ -1505,17 +1619,16 @@ def admin_order_report():
                          current_page=page,
                          total_pages=total_pages,
                          total_orders=total_orders,
-                         sales_report_df=sales_report_df,  # Pass sales report DataFrame to template
-                         # Sales summary values for template
-                         sales_completed_orders=sales_completed_orders,
-                         sales_total_orders=sales_total_orders,
-                         sales_total_revenue=sales_total_revenue,
-                         sales_total_cogs=sales_total_cogs,
-                         sales_total_net=sales_total_net,
-                         sales_view=sales_view,
-                         sales_date=sales_date,
-                         sales_month=sales_month,
-                         sales_period_label=sales_period_label
+                         sales_report_df=None,  # Deprecated
+                         sales_completed_orders=[],
+                         sales_total_orders=0,
+                         sales_total_revenue=0,
+                         sales_total_cogs=0,
+                         sales_total_net=0,
+                         sales_view=None,
+                         sales_date=None,
+                         sales_month=None,
+                         sales_period_label=None
     )
 
 # INVENTORY REPORT
@@ -1531,6 +1644,11 @@ def inventory_report():
     if inv_type not in ['detergent', 'fabcon']:
         inv_type = 'detergent'
     period = request.args.get('period', '')
+
+    # Inventory Sales Report filters (period selector inside the sales section)
+    inv_sales_view = request.args.get('inv_sales_view', 'daily')
+    inv_sales_date = request.args.get('inv_sales_date', '')
+    inv_sales_month = request.args.get('inv_sales_month', '')
     
     # Get consumed inventory data
     consumed_detergents_all = dbhelper.get_consumed_detergents_report()
@@ -1733,6 +1851,103 @@ def inventory_report():
     # Re-sort all filtered data by DATE_CREATED (ascending - oldest first, newest last)
     detergents = sorted(detergents, key=get_sort_date, reverse=False)
     fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
+
+    # ---------------- Inventory Sales Report (Completed orders only) ----------------
+    def _parse_consumed_date(value):
+        """Convert stored date/timestamp to naive datetime for comparisons."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.replace(tzinfo=None) if value.tzinfo else value
+        if isinstance(value, str):
+            try:
+                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+            except Exception:
+                try:
+                    return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    return None
+        return None
+
+    def _is_completed(item):
+        return str(item.get('ORDER_STATUS', '')).strip().lower() == 'completed'
+
+    # Determine sales period window (defaults to today)
+    today = datetime.now().date()
+    inv_start_date = datetime.combine(today, datetime.min.time())
+    inv_end_date = datetime.combine(today, datetime.max.time())
+    inv_period_label = today.strftime('%B %d, %Y')
+
+    if inv_sales_view == 'weekly':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        inv_start_date = datetime.combine(start_of_week, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_week, datetime.max.time())
+        inv_period_label = f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d, %Y')}"
+    elif inv_sales_view == 'monthly':
+        if inv_sales_month:
+            try:
+                year, month = map(int, inv_sales_month.split('-'))
+            except Exception:
+                year, month = today.year, today.month
+        else:
+            year, month = today.year, today.month
+        start_of_month = datetime(year, month, 1)
+        if month == 12:
+            end_of_month = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_of_month = datetime(year, month + 1, 1) - timedelta(days=1)
+        inv_start_date = datetime.combine(start_of_month.date(), datetime.min.time())
+        inv_end_date = datetime.combine(end_of_month.date(), datetime.max.time())
+        inv_period_label = start_of_month.strftime('%B %Y')
+    elif inv_sales_view == 'yearly':
+        start_of_year = datetime(today.year, 1, 1)
+        end_of_year = datetime(today.year, 12, 31)
+        inv_start_date = datetime.combine(start_of_year.date(), datetime.min.time())
+        inv_end_date = datetime.combine(end_of_year.date(), datetime.max.time())
+        inv_period_label = str(today.year)
+    else:  # daily (default) with optional explicit date
+        if inv_sales_date:
+            try:
+                selected_date = datetime.strptime(inv_sales_date, '%Y-%m-%d').date()
+                inv_start_date = datetime.combine(selected_date, datetime.min.time())
+                inv_end_date = datetime.combine(selected_date, datetime.max.time())
+                inv_period_label = selected_date.strftime('%B %d, %Y')
+            except Exception:
+                pass
+
+    # Build completed-only consumption lists for the sales tables
+    inv_consumed_detergents = []
+    inv_consumed_fabcons = []
+
+    for d in consumed_detergents_all:
+        if not _is_completed(d):
+            continue
+        item_date = _parse_consumed_date(d.get('DATE_CREATED'))
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_detergents.append({
+                'ITEM_ID': d.get('DETERGENT_ID'),
+                'ITEM_NAME': d.get('DETERGENT_NAME'),
+                'UNIT_PRICE': float(d.get('UNIT_PRICE', 0) or 0),
+                'QUANTITY': int(d.get('QUANTITY', 0) or 0),
+                'TOTAL_VALUE': float(d.get('TOTAL_VALUE', 0) or 0),
+                'ORDER_ID': d.get('ORDER_ID')
+            })
+
+    for f in consumed_fabcons_all:
+        if not _is_completed(f):
+            continue
+        item_date = _parse_consumed_date(f.get('DATE_CREATED'))
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_fabcons.append({
+                'ITEM_ID': f.get('FABCON_ID'),
+                'ITEM_NAME': f.get('FABCON_NAME'),
+                'UNIT_PRICE': float(f.get('UNIT_PRICE', 0) or 0),
+                'QUANTITY': int(f.get('QUANTITY', 0) or 0),
+                'TOTAL_VALUE': float(f.get('TOTAL_VALUE', 0) or 0),
+                'ORDER_ID': f.get('ORDER_ID')
+            })
     
     # PAGINATION LOGIC
     items_per_page = 10
@@ -1765,25 +1980,14 @@ def inventory_report():
         total_pages = 1
         page = 1
 
-    # Calculate inventory sales summary statistics
-    inv_period_label = 'All Time'
-    if period == 'daily':
-        inv_period_label = 'Today'
-    elif period == 'weekly':
-        inv_period_label = 'This Week'
-    elif period == 'monthly':
-        inv_period_label = 'This Month'
-    elif period == 'yearly':
-        inv_period_label = 'This Year'
+    # Calculate inventory sales summary statistics (completed orders only)
+    inv_total_detergent_qty = sum(d.get('QUANTITY', 0) for d in inv_consumed_detergents)
+    inv_total_detergent_items = len(inv_consumed_detergents)
+    inv_total_detergent_cost = sum(float(d.get('TOTAL_VALUE', 0) or 0) for d in inv_consumed_detergents)
     
-    # Calculate totals for the current filtered dataset (before pagination)
-    inv_total_detergent_qty = sum(d.get('QUANTITY', 0) for d in detergents)
-    inv_total_detergent_items = len(detergents)
-    inv_total_detergent_cost = sum(float(d.get('UNIT_PRICE', 0) or 0) * d.get('QUANTITY', 0) for d in detergents)
-    
-    inv_total_fabcon_qty = sum(f.get('QUANTITY', 0) for f in fabric_conditioners)
-    inv_total_fabcon_items = len(fabric_conditioners)
-    inv_total_fabcon_cost = sum(float(f.get('UNIT_PRICE', 0) or 0) * f.get('QUANTITY', 0) for f in fabric_conditioners)
+    inv_total_fabcon_qty = sum(f.get('QUANTITY', 0) for f in inv_consumed_fabcons)
+    inv_total_fabcon_items = len(inv_consumed_fabcons)
+    inv_total_fabcon_cost = sum(float(f.get('TOTAL_VALUE', 0) or 0) for f in inv_consumed_fabcons)
     
     inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
     inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
@@ -1809,7 +2013,13 @@ def inventory_report():
         inv_total_fabcon_items=inv_total_fabcon_items,
         inv_total_fabcon_cost=round(inv_total_fabcon_cost, 2),
         inv_total_qty=inv_total_qty,
-        inv_total_cost=round(inv_total_cost, 2)
+        inv_total_cost=round(inv_total_cost, 2),
+        # Completed-only Inventory Sales Report data
+        inv_consumed_detergents=inv_consumed_detergents,
+        inv_consumed_fabcons=inv_consumed_fabcons,
+        inv_sales_view=inv_sales_view,
+        inv_sales_date=inv_sales_date,
+        inv_sales_month=inv_sales_month
     )
 
 @app.route('/download_order_report/<format>')
@@ -1879,6 +2089,14 @@ def download_order_report(format):
                 match = False
         if match:
             filtered_orders.append(order)
+
+    # For Excel/PDF exports, further restrict to completed & paid only
+    if format in ['excel', 'pdf']:
+        filtered_orders = [
+            o for o in filtered_orders
+            if (o.get('ORDER_STATUS') or '').lower() == 'completed'
+            and (o.get('PAYMENT_STATUS') or '').lower() == 'paid'
+        ]
 
     # Fetch detergent, fabric conditioner, and order item data for export
     for order in filtered_orders:
@@ -2251,16 +2469,13 @@ def download_order_report(format):
 
         pdf.add_page()
 
-        # Add logo at the top left and leave a clear gap before the title bar
-        logo_top = 10
-        logo_height = 26  # explicit height so we can reserve space predictably
+        # Add logo at the top left (slightly larger) then add gap before header
         try:
-            pdf.image('static/images/pdfheader.jpg', x=10, y=logo_top, h=logo_height)
-            # push cursor below the logo plus extra breathing room
-            pdf.set_y(logo_top + logo_height + 4)
+            pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
+            # Ensure there's clear vertical space between logo and header bar
+            pdf.set_y(38)
         except Exception:
-            # even if the logo is missing, keep consistent spacing above the header
-            pdf.ln(logo_height + 8)
+            pass  # Skip logo if not found
 
         add_title_bar('Order Report')
 
@@ -2524,8 +2739,8 @@ def download_inventory_report(format):
                 return '\n'.join(parts)
             return text
 
-        def apply_table_formatting(worksheet, df_for_sheet):
-            header_fmt = worksheet.book.add_format({
+        def apply_table_formatting(workbook, worksheet, df_for_sheet):
+            header_fmt = workbook.add_format({
                 'bold': True,
                 'text_wrap': True,
                 'align': 'center',
@@ -2533,7 +2748,7 @@ def download_inventory_report(format):
                 'border': 1,
                 'font_size': 11
             })
-            body_fmt = worksheet.book.add_format({
+            body_fmt = workbook.add_format({
                 'text_wrap': True,
                 'valign': 'top',
                 'border': 1,
@@ -2784,6 +2999,13 @@ def customer_report():
             if include:
                 filtered_customers.append(customer)
         customers = filtered_customers
+    
+    # Show only customers whose latest order is both Completed and Paid
+    def _is_completed_paid(cust):
+        status = str(cust.get('ORDER_STATUS', '')).strip().lower()
+        payment = str(cust.get('PAYMENT_STATUS', '')).strip().lower()
+        return status == 'completed' and payment == 'paid'
+    customers = [c for c in customers if _is_completed_paid(c)]
     total_customers = len(customers)
     thirty_days_ago = datetime.now() - timedelta(days=30)
     def make_naive(dt):
@@ -3150,6 +3372,8 @@ def download_inventory_sales_report(format):
     # Filter consumed detergents within date range
     inv_consumed_detergents = []
     for d in consumed_detergents_all:
+        if str(d.get('ORDER_STATUS', '')).strip().lower() != 'completed':
+            continue
         item_date = parse_consumed_date(d)
         if item_date and inv_start_date <= item_date <= inv_end_date:
             inv_consumed_detergents.append({
@@ -3165,6 +3389,8 @@ def download_inventory_sales_report(format):
     # Filter consumed fabric conditioners within date range
     inv_consumed_fabcons = []
     for f in consumed_fabcons_all:
+        if str(f.get('ORDER_STATUS', '')).strip().lower() != 'completed':
+            continue
         item_date = parse_consumed_date(f)
         if item_date and inv_start_date <= item_date <= inv_end_date:
             inv_consumed_fabcons.append({
@@ -3227,50 +3453,118 @@ def download_inventory_sales_report(format):
                 return '\n'.join(parts)
             return text
 
-        def apply_table_formatting(worksheet, df_for_sheet):
-            header_fmt = worksheet.book.add_format({
+        def apply_table_formatting(workbook, worksheet, df_for_sheet, table_start_row, title_text):
+            """Apply clean, professional formatting with logo/header to a worksheet."""
+            header_fmt = workbook.add_format({
                 'bold': True,
                 'text_wrap': True,
                 'align': 'center',
                 'valign': 'vcenter',
                 'border': 1,
-                'font_size': 11
+                'font_size': 11,
+                'bg_color': '#122D69',
+                'font_color': 'white'
             })
-            body_fmt = worksheet.book.add_format({
+            text_fmt = workbook.add_format({
                 'text_wrap': True,
                 'valign': 'top',
+                'align': 'center',
                 'border': 1,
                 'font_size': 10
             })
-            for col_num, header in enumerate(df_for_sheet.columns):
-                worksheet.write(0, col_num, header, header_fmt)
-                series_len = df_for_sheet.iloc[:, col_num].astype(str).map(len).max() if not df_for_sheet.empty else 0
-                header_len = max(len(part) for part in str(header).split('\n'))
-                width = min(max(max(series_len, header_len) + 2, 12), 40)
-                worksheet.set_column(col_num, col_num, width, body_fmt)
+            int_fmt = workbook.add_format({
+                'valign': 'top',
+                'align': 'center',
+                'border': 1,
+                'font_size': 10,
+                'num_format': '0'
+            })
+            currency_fmt = workbook.add_format({
+                'valign': 'top',
+                'border': 1,
+                'font_size': 10,
+                'align': 'right',
+                'num_format': '"₱"#,##0.00'
+            })
+
+            title_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': 'white',
+                'bg_color': '#122D69',
+                'align': 'center',
+                'valign': 'vcenter',
+                'font_size': 16,
+                'border': 1
+            })
+            subtitle_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': '#122D69',
+                'align': 'left',
+                'valign': 'vcenter',
+                'font_size': 10
+            })
+
+            last_col = len(df_for_sheet.columns) - 1
+
+            # Logo
             try:
-                worksheet.insert_image(0, len(df_for_sheet.columns) + 1, 'static/images/logo.jpg', {
-                    'x_scale': 0.7,
-                    'y_scale': 0.7
-                })
+                worksheet.insert_image(0, 0, 'static/images/logo.jpg', {'x_scale': 0.4, 'y_scale': 0.4})
             except Exception:
                 pass
 
+            # Header texts
+            title_row = 3
+            if last_col >= 0:
+                worksheet.merge_range(title_row, 0, title_row, last_col, title_text, title_fmt)
+                worksheet.merge_range(title_row + 1, 0, title_row + 1, last_col, 'Laundry Link • Sanciangko St, Cebu City, 6000 Cebu', subtitle_fmt)
+                worksheet.merge_range(title_row + 2, 0, title_row + 2, last_col, 'Phone: 0912-345-6789   •   est. 2025', subtitle_fmt)
+
+            # Rewrite headers with header style
+            for col_num, header in enumerate(df_for_sheet.columns):
+                worksheet.write(table_start_row, col_num, header, header_fmt)
+
+            # Suggested widths and per-column formats
+            width_map = {
+                'Item ID': 12,
+                'Item Name': 26,
+                'Type': 14,
+                'Unit Price': 14,
+                'Quantity': 10,
+                'Total Cost': 16,
+                'Order ID': 12,
+                'Category': 18,
+                'Items Consumed': 16,
+            }
+            for idx, col in enumerate(df_for_sheet.columns):
+                width = width_map.get(col, 14)
+                col_fmt = text_fmt
+                if col in ['Unit Price', 'Total Cost']:
+                    col_fmt = currency_fmt
+                elif col in ['Quantity', 'Items Consumed']:
+                    col_fmt = int_fmt
+                worksheet.set_column(idx, idx, width, col_fmt)
+
+            # Freeze header row
+            worksheet.freeze_panes(table_start_row + 1, 0)
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            table_start_row = 8
+
             # Write detergents sheet
             if not det_df.empty:
                 det_df_excel = det_df.copy()
                 det_df_excel.columns = [break_header(c) for c in det_df_excel.columns]
-                det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False)
-                apply_table_formatting(writer.sheets['Consumed Detergents'], det_df_excel)
+                det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False, startrow=table_start_row + 1, header=False)
+                apply_table_formatting(workbook, writer.sheets['Consumed Detergents'], det_df_excel, table_start_row, 'Inventory Consumption Report')
             
             # Write fabric conditioners sheet
             if not fabcon_df.empty:
                 fabcon_df_excel = fabcon_df.copy()
                 fabcon_df_excel.columns = [break_header(c) for c in fabcon_df_excel.columns]
-                fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
-                apply_table_formatting(writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel)
+                fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False, startrow=table_start_row + 1, header=False)
+                apply_table_formatting(workbook, writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel, table_start_row, 'Inventory Consumption Report')
             
             # Write summary sheet
             summary_data = [
@@ -3281,8 +3575,8 @@ def download_inventory_sales_report(format):
             summary_df = pd.DataFrame(summary_data)
             summary_df_excel = summary_df.copy()
             summary_df_excel.columns = [break_header(c) for c in summary_df_excel.columns]
-            summary_df_excel.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False)
-            apply_table_formatting(writer.sheets[f'Summary ({inv_period_label})'], summary_df_excel)
+            summary_df_excel.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False, startrow=table_start_row + 1, header=False)
+            apply_table_formatting(workbook, writer.sheets[f'Summary ({inv_period_label})'], summary_df_excel, table_start_row, f'Inventory Consumption Summary ({inv_period_label})')
         
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
@@ -4338,7 +4632,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.109.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
@@ -4539,19 +4833,41 @@ def api_pickup_orders():
         o['QR_CODE'] = o.get('QR_CODE', '')
     return jsonify({'orders': pickup_orders})
 
+# COMPLETE PICK-UP API
 @app.route('/api/complete_pickup/<int:order_id>', methods=['POST'])
 def api_complete_pickup(order_id):
     if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
         return jsonify({'status': 'error', 'msg': 'Unauthorized'}), 401
-    # Update order status to Completed
-    docs = dbheldb.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
-    if not docs:
+    
+    # Get order details
+    order = dbhelper.get_order_by_id(order_id)
+    if not order:
         return jsonify({'status': 'error', 'msg': 'Order not found'}), 404
-    dbhelper.db.collection('ORDER').document(docs[0].id).update({
-        'ORDER_STATUS': 'Completed',
-        'DATE_UPDATED': datetime.now()
-    })
+    
+    # Get customer details
+    customer_id = order.get('CUSTOMER_ID')
+    customer = dbhelper.get_customer_by_id(customer_id)
+    if not customer:
+        return jsonify({'status': 'error', 'msg': 'Customer not found'}), 404
+    
+    # Update order status to Completed
+    user_id = session.get('user_id')
+    dbhelper.update_order_status(order_id, 'Completed', user_id)
+    
+    # Send SMS notification to customer
+    phone = customer.get('PHONE_NUMBER')
+    customer_name = customer.get('FULLNAME')
+    if phone:
+        message = f"Hi {customer_name}, your laundry (Order #{order_id}) has been picked up. Thank you for using Laundrylink!"
+        try:
+            esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')
+            esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+            requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
+        except Exception as e:
+            print(f"Error sending SMS: {e}")
+    
     return jsonify({'status': 'success'})
+
 
 
 

@@ -47,7 +47,7 @@
                     <p><strong data-translate="contact_number_label">Contact Number:</strong> {{ customer.PHONE_NUMBER }}</p>
                     <h3 style="font-family: 'Poppins', sans-serif;" data-translate="order_breakdown_title">Order Breakdown</h3>
 
-                    {% set load_amt = order.TOTAL_LOAD * 50 %}
+                    {% set load_amt = order.TOTAL_LOAD * price_per_load %}
                     {% set iron_amt = 50 if orderitem.IRON else 0 %}
                     {% set fold_amt = 70 if orderitem.FOLD_CLOTHES else 0 %}
                     {% set priority_amt = 50 if orderitem.PRIORITIZE_ORDER else 0 %}
@@ -517,22 +517,25 @@
                 }
             }
             
+            let paymentRedirectUrl = '{{ url_for("thank_you_page") }}';
+
             function savePaymentMethodAndShowQR(paymentMethod) {
                 openQRModal(paymentMethod);
                 
                 const formData = new FormData();
                 formData.append('payment_method', paymentMethod);
                 
-                fetch('{{ url_for("payments") }}', {
+                fetch('{{ url_for("payments") }}?ajax=1', {
                     method: 'POST',
                     body: formData,
-                    redirect: 'manual' 
+                    redirect: 'manual',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 })
                 .then(response => {
                     if (response.ok) {
-                        return response.json().catch(() => {
-                            return { success: true };
-                        });
+                        return response.json().catch(() => ({ success: true }));
                     } else if (response.status >= 300 && response.status < 400) {
                         console.log('Server redirected, but QR modal is already shown');
                         return { success: true };
@@ -542,6 +545,11 @@
                 })
                 .then(data => {
                     console.log('Payment method saved:', paymentMethod);
+                    if (data && data.redirect) {
+                        paymentRedirectUrl = data.redirect;
+                    } else if (data && data.order_id) {
+                        paymentRedirectUrl = '{{ url_for("thank_you_page") }}' + '?order_id=' + data.order_id;
+                    }
                 })
                 .catch(error => {
                     console.error('Error saving payment method:', error);
@@ -550,29 +558,8 @@
             
             function handleTransactionComplete(paymentMethod) {
                 closeQRModal(paymentMethod);
-                
-                const thankYouModal = document.getElementById('thankYouModal');
-                if (thankYouModal) {
-                    thankYouModal.style.display = 'block';
-                }
-                
-                let countdown = 10;
-                const countdownElement = document.getElementById('countdown');
-                const countdownTextElement = document.getElementById('countdownText');
-                
-                if (countdownElement) countdownElement.textContent = countdown;
-                if (countdownTextElement) countdownTextElement.textContent = countdown;
-                
-                const countdownInterval = setInterval(() => {
-                    countdown--;
-                    if (countdownElement) countdownElement.textContent = countdown;
-                    if (countdownTextElement) countdownTextElement.textContent = countdown;
-                    
-                    if (countdown <= 0) {
-                        clearInterval(countdownInterval);
-                        window.location.href = '{{ url_for("home") }}';
-                    }
-                }, 1000);
+                const target = paymentRedirectUrl || '{{ url_for("thank_you_page") }}';
+                window.location.href = target;
             }
             
             document.querySelectorAll('.payment-method-option').forEach(option => {
