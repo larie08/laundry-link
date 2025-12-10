@@ -269,6 +269,8 @@
         function closeScannerModal() {
             document.getElementById('scannerModal').style.display = 'none';
             stopScanner();
+            // Refresh the page after closing scanner modal
+            setTimeout(() => location.reload(), 500);
         }
 
         async function startScanner() {
@@ -342,7 +344,7 @@
         }
 
         function fetchOrderDetailsAndNotify(orderId) {
-            fetch(`/order_details/${orderId}`)
+            fetch(`/order_scan/${orderId}`)
                 .then(response => response.json())
                 .then(data => {
                     displayScannedOrderDetails(data);
