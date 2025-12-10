@@ -188,9 +188,9 @@
                 </div>
                 
                 <!-- ADD NOTE -->
-                <div class="v244_285"></div>
-                <div class="v245_296"></div>
-                <button class="v244_290" type="button" onclick="document.getElementById('noteModal').style.display='block'" data-translate="add_note_btn">ADD NOTE</button>
+                <div class="v244_285" {% if order_type == 'Self-service' %}style="visibility:hidden;"{% endif %}></div>
+                <div class="v245_296" {% if order_type == 'Self-service' %}style="visibility:hidden;"{% endif %}></div>
+                <button class="v244_290" type="button" {% if order_type == 'Self-service' %}style="visibility:hidden; pointer-events:none;"{% endif %} onclick="document.getElementById('noteModal').style.display='block'" data-translate="add_note_btn">ADD NOTE</button>
                 <div id="noteModal" class="modal">
                     <div class="modal-content note-modal">
                         <span class="close" onclick="document.getElementById('noteModal').style.display='none'">&times;</span>
