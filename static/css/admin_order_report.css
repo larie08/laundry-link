@@ -126,6 +126,33 @@ body {
     z-index: 1;
 }
 
+.w3-sidebar .w3-button:hover {
+    background-color: #ffffff !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button:hover a {
+    color: #122D69;
+}
+
+/* ACTIVE STATE - keep highlighted even on hover and anchor targets */
+.w3-sidebar .w3-button.active,
+.w3-sidebar .w3-button.active:hover,
+.w3-sidebar a.active,
+.w3-sidebar a.active:hover {
+    background-color: #122D69 !important;
+    border-radius: 8px;
+    margin: 0 10px;
+}
+
+.w3-sidebar .w3-button.active a,
+.w3-sidebar .w3-button.active:hover a,
+.w3-sidebar a.active,
+.w3-sidebar a.active:hover {
+    color: #ffffff !important;
+}
+
 /* MAIN TITLE */
 .main-title {
     padding: 16px 24px;
