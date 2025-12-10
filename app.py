@@ -40,6 +40,16 @@ def datetimeformat(value, format='%B %d, %Y, %I:%M %p'):
 # Register built-in functions for Jinja2 templates
 app.jinja_env.globals.update(max=max, min=min)
 
+def get_price_per_load(order_type: str) -> float:
+    """
+    Return price per load based on service type.
+    Self-service: 50; Drop-off (or others): 80.
+    """
+    norm = str(order_type or '').strip().lower().replace('_', '-')
+    if 'drop' in norm:
+        return 80.0
+    return 50.0
+
 # CUSTOMER ROUTES
 @app.route('/')
 def home():
@@ -156,12 +166,13 @@ def submit_others():
     # Get weight and load from session
     total_weight = session.get('total_weight', 0.0)
     total_load = session.get('total_load', 0)
+    price_per_load = get_price_per_load(session.get('order_type', 'Drop-off'))
 
     # Calculate totals
     total_price = 0.0
 
     # Load price (50 per load)
-    total_price += total_load * 50
+    total_price += total_load * price_per_load
 
     # Store detergent details
     detergent_details = []
@@ -203,6 +214,7 @@ def submit_others():
         'total_weight': total_weight,
         'total_load': total_load,
         'total_price': total_price,
+        'price_per_load': price_per_load,
         'order_note': order_note,
         'pickup_schedule': pickup_schedule,
         'own_detergent': own_detergent,
@@ -424,8 +436,9 @@ def payments():
         'PRIORITIZE_ORDER': order_data['priority']
     }
     
-    # Calculate load price
-    load_price = order_data['total_load'] * 50.00
+    # Calculate load price based on service type
+    price_per_load = get_price_per_load(order_data['order_type'])
+    load_price = order_data['total_load'] * price_per_load
     
     # Get detergent and fabcon details for display
     orderitem_detergents = []
@@ -473,6 +486,7 @@ def payments():
                          order=order,
                          customer=customer,
                          orderitem=orderitem,
+                         price_per_load=price_per_load,
                          load_price=load_price,
                          orderitem_detergents=orderitem_detergents,
                          orderitem_fabcons=orderitem_fabcons,
@@ -908,6 +922,21 @@ def customers():
     
     # Get customers with their orders
     customers_data = get_customers_with_orders()
+
+    # Keep only customers whose latest order is not completed (pending or pick-up)
+    def _norm_status(val: str) -> str:
+        if not val:
+            return ''
+        s = str(val).strip().lower().replace('_', '-')
+        # Normalize pickup variations
+        if s == 'pickup':
+            s = 'pick-up'
+        return s
+
+    customers_data = [
+        c for c in customers_data
+        if _norm_status(c.get('ORDER_STATUS')) in ['pending', 'pick-up']
+    ]
     
     # Get statistics
     stats = get_customer_statistics()
@@ -920,10 +949,13 @@ def customers():
             search_query in c['FULLNAME'].lower() or
             (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'].lower())]
     
-    # Filter by payment status if provided
-    payment_status = request.args.get('payment_status')
-    if payment_status:
-        customers_data = [c for c in customers_data if c['PAYMENT_STATUS'].lower() == payment_status.lower()]
+    # Filter by order status (pending / pick-up) if provided
+    status_filter = request.args.get('status', '').strip().lower()
+    if status_filter:
+        customers_data = [
+            c for c in customers_data
+            if _norm_status(c.get('ORDER_STATUS')) == status_filter
+        ]
     
     # PAGINATION
     page = request.args.get('page', 1, type=int)
@@ -995,6 +1027,14 @@ def orders():
         return redirect(url_for('admin_login'))
     
     orders_data = dbhelper.get_all_orders_with_priority()
+
+    # Show only orders that are pending or not yet paid.
+    def _is_pending_or_unpaid(o):
+        status = (o.get('ORDER_STATUS') or '').strip().lower()
+        payment = (o.get('PAYMENT_STATUS') or '').strip().lower()
+        return status == 'pending' or payment != 'paid'
+
+    orders_data = [o for o in orders_data if _is_pending_or_unpaid(o)]
 
     # Filtering
     order_type = request.args.get('order_type', '').strip().lower()
@@ -1080,6 +1120,7 @@ def order_details(order_id):
     # Calculate total price breakdown
     total_price = 0.0
     breakdown = {}
+    price_per_load = get_price_per_load(order.get('ORDER_TYPE'))
 
     # Priority
     if orderitem and orderitem.get('PRIORITIZE_ORDER'):
@@ -1105,7 +1146,7 @@ def order_details(order_id):
     # Total Load (₱50 per load)
     load_price = 0.0
     if order.get('TOTAL_LOAD'):
-        load_price = float(order['TOTAL_LOAD']) * 50.0
+        load_price = float(order['TOTAL_LOAD']) * price_per_load
         breakdown['load'] = load_price
         total_price += load_price
     else:
@@ -1278,6 +1319,15 @@ def mark_order_as_paid():
         # Update the payment status to PAID
         dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
         
+        # Get updated order details
+        order = dbhelper.get_order_by_id(order_id)
+        customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+        orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+        detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+        fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+        price_per_load = get_price_per_load(order.get('ORDER_TYPE'))
+        
+        # Print the full receipt (twice - second one without QR)
         # Print the full receipt (twice - with QR and without QR)
         try:
             from escpos.printer import Usb
@@ -1307,7 +1357,7 @@ def mark_order_as_paid():
             
             # Load
             if order.get('TOTAL_LOAD'):
-                lines.append(f"Loads: {order.get('TOTAL_LOAD')} x Php50 = Php{order.get('TOTAL_LOAD') * 50:.2f}\n")
+                lines.append(f"Loads: {order.get('TOTAL_LOAD')} x Php{price_per_load:.0f} = Php{order.get('TOTAL_LOAD') * price_per_load:.2f}\n")
             
             # Priority
             if orderitem and orderitem.get('PRIORITIZE_ORDER'):
@@ -1441,11 +1491,6 @@ def admin_order_report():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     
-    # Sales report filter parameters
-    sales_view = request.args.get('sales_view', 'daily')
-    sales_date = request.args.get('sales_date', '')
-    sales_month = request.args.get('sales_month', '')
-
     # Get all orders
     all_orders = dbhelper.get_all_orders_with_priority()
 
@@ -1533,113 +1578,6 @@ def admin_order_report():
         else:
             order['orderitem_data'] = {'detergents': [], 'fabcons': []}
     
-    # --- Add this block: prepare data for sales report section ---
-    # Sales report data (completed orders only)
-    sales_report_data = []
-    for order in filtered_orders:
-        order_status = (order.get('ORDER_STATUS') or '').lower()
-        if order_status == 'completed':
-            revenue = float(order.get('TOTAL_PRICE', 0) or 0)
-            sales_report_data.append({
-                'ORDER_ID': order.get('ORDER_ID'),
-                'CUSTOMER_NAME': order.get('CUSTOMER_NAME'),
-                'PHONE_NUMBER': order.get('PHONE_NUMBER'),
-                'ORDER_TYPE': order.get('ORDER_TYPE'),
-                'REVENUE': revenue,
-                'COGS': revenue * 0.3,
-                'NET': revenue * 0.7
-            })
-    
-    sales_report_df = pd.DataFrame(sales_report_data)
-
-    # Sales summary (for template display)
-    def parse_date_val(val):
-        """Return a timezone-naive datetime for comparisons."""
-        if not val:
-            return None
-        dt = None
-        if hasattr(val, 'date'):
-            dt = val
-        elif isinstance(val, str):
-            try:
-                # Try full datetime string (may be offset-aware)
-                dt = datetime.fromisoformat(val.replace('Z', '+00:00'))
-            except Exception:
-                try:
-                    dt = datetime.strptime(val, '%Y-%m-%d %H:%M:%S')
-                except Exception:
-                    try:
-                        dt = datetime.strptime(val, '%Y-%m-%d')
-                    except Exception:
-                        dt = None
-        # Normalize to naive datetime for safe comparisons
-        if dt and getattr(dt, 'tzinfo', None) is not None:
-            dt = dt.replace(tzinfo=None)
-        return dt
-
-    # Determine sales period range based on sales_view
-    now = datetime.now()
-    sales_start = sales_end = None
-    sales_period_label = 'All Time'
-    if sales_view == 'daily':
-        base_date = sales_date or now.strftime('%Y-%m-%d')
-        try:
-            day_dt = datetime.strptime(base_date, '%Y-%m-%d')
-        except Exception:
-            day_dt = now
-        sales_start = day_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = day_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = day_dt.strftime('%B %d, %Y')
-    elif sales_view == 'weekly':
-        start_of_week = now - timedelta(days=now.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        sales_start = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = end_of_week.replace(hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = f"{sales_start.strftime('%b %d')} - {sales_end.strftime('%b %d, %Y')}"
-    elif sales_view == 'monthly':
-        base_month = sales_month or now.strftime('%Y-%m')
-        try:
-            year, month = map(int, base_month.split('-'))
-            start_of_month = datetime(year, month, 1)
-        except Exception:
-            start_of_month = now.replace(day=1)
-        if start_of_month.month == 12:
-            next_month = start_of_month.replace(year=start_of_month.year + 1, month=1, day=1)
-        else:
-            next_month = start_of_month.replace(month=start_of_month.month + 1, day=1)
-        sales_start = start_of_month.replace(hour=0, minute=0, second=0, microsecond=0)
-        sales_end = (next_month - timedelta(seconds=1)).replace(microsecond=999999)
-        sales_period_label = start_of_month.strftime('%B %Y')
-    elif sales_view == 'yearly':
-        sales_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        sales_end = now.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
-        sales_period_label = str(now.year)
-
-    sales_completed_orders = []
-    for o in filtered_orders:
-        if (o.get('ORDER_STATUS') or '').lower() != 'completed':
-            continue
-        created_dt = parse_date_val(o.get('DATE_CREATED'))
-        if sales_start and sales_end and created_dt:
-            if created_dt < sales_start or created_dt > sales_end:
-                continue
-        revenue = float(o.get('TOTAL_PRICE', 0) or 0)
-        sales_completed_orders.append({
-            'ORDER_ID': o.get('ORDER_ID'),
-            'CUSTOMER_NAME': o.get('CUSTOMER_NAME', ''),
-            'PHONE_NUMBER': o.get('PHONE_NUMBER', ''),
-            'ORDER_TYPE': o.get('ORDER_TYPE', ''),
-            'Revenue': revenue,
-            'COGS': revenue * 0.3,
-            'Net': revenue * 0.7
-        })
-
-    sales_total_orders = len(sales_completed_orders)
-    sales_total_revenue = sum(item['Revenue'] for item in sales_completed_orders)
-    sales_total_cogs = sum(item['COGS'] for item in sales_completed_orders)
-    sales_total_net = sum(item['Net'] for item in sales_completed_orders)
-    # --- End of sales report data block ---
-
     # BASED ON ROLE
     template_name = 'admin_order_report.html' if session['role'] == 'admin' else 'staff_order_report.html'
     return render_template(template_name, 
@@ -1650,17 +1588,16 @@ def admin_order_report():
                          current_page=page,
                          total_pages=total_pages,
                          total_orders=total_orders,
-                         sales_report_df=sales_report_df,  # Pass sales report DataFrame to template
-                         # Sales summary values for template
-                         sales_completed_orders=sales_completed_orders,
-                         sales_total_orders=sales_total_orders,
-                         sales_total_revenue=sales_total_revenue,
-                         sales_total_cogs=sales_total_cogs,
-                         sales_total_net=sales_total_net,
-                         sales_view=sales_view,
-                         sales_date=sales_date,
-                         sales_month=sales_month,
-                         sales_period_label=sales_period_label
+                         sales_report_df=None,  # Deprecated
+                         sales_completed_orders=[],
+                         sales_total_orders=0,
+                         sales_total_revenue=0,
+                         sales_total_cogs=0,
+                         sales_total_net=0,
+                         sales_view=None,
+                         sales_date=None,
+                         sales_month=None,
+                         sales_period_label=None
     )
 
 # INVENTORY REPORT
@@ -1676,6 +1613,11 @@ def inventory_report():
     if inv_type not in ['detergent', 'fabcon']:
         inv_type = 'detergent'
     period = request.args.get('period', '')
+
+    # Inventory Sales Report filters (period selector inside the sales section)
+    inv_sales_view = request.args.get('inv_sales_view', 'daily')
+    inv_sales_date = request.args.get('inv_sales_date', '')
+    inv_sales_month = request.args.get('inv_sales_month', '')
     
     # Get consumed inventory data
     consumed_detergents_all = dbhelper.get_consumed_detergents_report()
@@ -1878,6 +1820,103 @@ def inventory_report():
     # Re-sort all filtered data by DATE_CREATED (ascending - oldest first, newest last)
     detergents = sorted(detergents, key=get_sort_date, reverse=False)
     fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
+
+    # ---------------- Inventory Sales Report (Completed orders only) ----------------
+    def _parse_consumed_date(value):
+        """Convert stored date/timestamp to naive datetime for comparisons."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.replace(tzinfo=None) if value.tzinfo else value
+        if isinstance(value, str):
+            try:
+                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+            except Exception:
+                try:
+                    return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    return None
+        return None
+
+    def _is_completed(item):
+        return str(item.get('ORDER_STATUS', '')).strip().lower() == 'completed'
+
+    # Determine sales period window (defaults to today)
+    today = datetime.now().date()
+    inv_start_date = datetime.combine(today, datetime.min.time())
+    inv_end_date = datetime.combine(today, datetime.max.time())
+    inv_period_label = today.strftime('%B %d, %Y')
+
+    if inv_sales_view == 'weekly':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        inv_start_date = datetime.combine(start_of_week, datetime.min.time())
+        inv_end_date = datetime.combine(end_of_week, datetime.max.time())
+        inv_period_label = f"{start_of_week.strftime('%b %d')} - {end_of_week.strftime('%b %d, %Y')}"
+    elif inv_sales_view == 'monthly':
+        if inv_sales_month:
+            try:
+                year, month = map(int, inv_sales_month.split('-'))
+            except Exception:
+                year, month = today.year, today.month
+        else:
+            year, month = today.year, today.month
+        start_of_month = datetime(year, month, 1)
+        if month == 12:
+            end_of_month = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_of_month = datetime(year, month + 1, 1) - timedelta(days=1)
+        inv_start_date = datetime.combine(start_of_month.date(), datetime.min.time())
+        inv_end_date = datetime.combine(end_of_month.date(), datetime.max.time())
+        inv_period_label = start_of_month.strftime('%B %Y')
+    elif inv_sales_view == 'yearly':
+        start_of_year = datetime(today.year, 1, 1)
+        end_of_year = datetime(today.year, 12, 31)
+        inv_start_date = datetime.combine(start_of_year.date(), datetime.min.time())
+        inv_end_date = datetime.combine(end_of_year.date(), datetime.max.time())
+        inv_period_label = str(today.year)
+    else:  # daily (default) with optional explicit date
+        if inv_sales_date:
+            try:
+                selected_date = datetime.strptime(inv_sales_date, '%Y-%m-%d').date()
+                inv_start_date = datetime.combine(selected_date, datetime.min.time())
+                inv_end_date = datetime.combine(selected_date, datetime.max.time())
+                inv_period_label = selected_date.strftime('%B %d, %Y')
+            except Exception:
+                pass
+
+    # Build completed-only consumption lists for the sales tables
+    inv_consumed_detergents = []
+    inv_consumed_fabcons = []
+
+    for d in consumed_detergents_all:
+        if not _is_completed(d):
+            continue
+        item_date = _parse_consumed_date(d.get('DATE_CREATED'))
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_detergents.append({
+                'ITEM_ID': d.get('DETERGENT_ID'),
+                'ITEM_NAME': d.get('DETERGENT_NAME'),
+                'UNIT_PRICE': float(d.get('UNIT_PRICE', 0) or 0),
+                'QUANTITY': int(d.get('QUANTITY', 0) or 0),
+                'TOTAL_VALUE': float(d.get('TOTAL_VALUE', 0) or 0),
+                'ORDER_ID': d.get('ORDER_ID')
+            })
+
+    for f in consumed_fabcons_all:
+        if not _is_completed(f):
+            continue
+        item_date = _parse_consumed_date(f.get('DATE_CREATED'))
+        if item_date and inv_start_date <= item_date <= inv_end_date:
+            inv_consumed_fabcons.append({
+                'ITEM_ID': f.get('FABCON_ID'),
+                'ITEM_NAME': f.get('FABCON_NAME'),
+                'UNIT_PRICE': float(f.get('UNIT_PRICE', 0) or 0),
+                'QUANTITY': int(f.get('QUANTITY', 0) or 0),
+                'TOTAL_VALUE': float(f.get('TOTAL_VALUE', 0) or 0),
+                'ORDER_ID': f.get('ORDER_ID')
+            })
     
     # PAGINATION LOGIC
     items_per_page = 10
@@ -1910,25 +1949,14 @@ def inventory_report():
         total_pages = 1
         page = 1
 
-    # Calculate inventory sales summary statistics
-    inv_period_label = 'All Time'
-    if period == 'daily':
-        inv_period_label = 'Today'
-    elif period == 'weekly':
-        inv_period_label = 'This Week'
-    elif period == 'monthly':
-        inv_period_label = 'This Month'
-    elif period == 'yearly':
-        inv_period_label = 'This Year'
+    # Calculate inventory sales summary statistics (completed orders only)
+    inv_total_detergent_qty = sum(d.get('QUANTITY', 0) for d in inv_consumed_detergents)
+    inv_total_detergent_items = len(inv_consumed_detergents)
+    inv_total_detergent_cost = sum(float(d.get('TOTAL_VALUE', 0) or 0) for d in inv_consumed_detergents)
     
-    # Calculate totals for the current filtered dataset (before pagination)
-    inv_total_detergent_qty = sum(d.get('QUANTITY', 0) for d in detergents)
-    inv_total_detergent_items = len(detergents)
-    inv_total_detergent_cost = sum(float(d.get('UNIT_PRICE', 0) or 0) * d.get('QUANTITY', 0) for d in detergents)
-    
-    inv_total_fabcon_qty = sum(f.get('QUANTITY', 0) for f in fabric_conditioners)
-    inv_total_fabcon_items = len(fabric_conditioners)
-    inv_total_fabcon_cost = sum(float(f.get('UNIT_PRICE', 0) or 0) * f.get('QUANTITY', 0) for f in fabric_conditioners)
+    inv_total_fabcon_qty = sum(f.get('QUANTITY', 0) for f in inv_consumed_fabcons)
+    inv_total_fabcon_items = len(inv_consumed_fabcons)
+    inv_total_fabcon_cost = sum(float(f.get('TOTAL_VALUE', 0) or 0) for f in inv_consumed_fabcons)
     
     inv_total_qty = inv_total_detergent_qty + inv_total_fabcon_qty
     inv_total_cost = inv_total_detergent_cost + inv_total_fabcon_cost
@@ -1954,7 +1982,13 @@ def inventory_report():
         inv_total_fabcon_items=inv_total_fabcon_items,
         inv_total_fabcon_cost=round(inv_total_fabcon_cost, 2),
         inv_total_qty=inv_total_qty,
-        inv_total_cost=round(inv_total_cost, 2)
+        inv_total_cost=round(inv_total_cost, 2),
+        # Completed-only Inventory Sales Report data
+        inv_consumed_detergents=inv_consumed_detergents,
+        inv_consumed_fabcons=inv_consumed_fabcons,
+        inv_sales_view=inv_sales_view,
+        inv_sales_date=inv_sales_date,
+        inv_sales_month=inv_sales_month
     )
 
 @app.route('/download_order_report/<format>')
@@ -2674,8 +2708,8 @@ def download_inventory_report(format):
                 return '\n'.join(parts)
             return text
 
-        def apply_table_formatting(worksheet, df_for_sheet):
-            header_fmt = worksheet.book.add_format({
+        def apply_table_formatting(workbook, worksheet, df_for_sheet):
+            header_fmt = workbook.add_format({
                 'bold': True,
                 'text_wrap': True,
                 'align': 'center',
@@ -2683,7 +2717,7 @@ def download_inventory_report(format):
                 'border': 1,
                 'font_size': 11
             })
-            body_fmt = worksheet.book.add_format({
+            body_fmt = workbook.add_format({
                 'text_wrap': True,
                 'valign': 'top',
                 'border': 1,
@@ -2934,6 +2968,13 @@ def customer_report():
             if include:
                 filtered_customers.append(customer)
         customers = filtered_customers
+    
+    # Show only customers whose latest order is both Completed and Paid
+    def _is_completed_paid(cust):
+        status = str(cust.get('ORDER_STATUS', '')).strip().lower()
+        payment = str(cust.get('PAYMENT_STATUS', '')).strip().lower()
+        return status == 'completed' and payment == 'paid'
+    customers = [c for c in customers if _is_completed_paid(c)]
     total_customers = len(customers)
     thirty_days_ago = datetime.now() - timedelta(days=30)
     def make_naive(dt):
@@ -3300,6 +3341,8 @@ def download_inventory_sales_report(format):
     # Filter consumed detergents within date range
     inv_consumed_detergents = []
     for d in consumed_detergents_all:
+        if str(d.get('ORDER_STATUS', '')).strip().lower() != 'completed':
+            continue
         item_date = parse_consumed_date(d)
         if item_date and inv_start_date <= item_date <= inv_end_date:
             inv_consumed_detergents.append({
@@ -3315,6 +3358,8 @@ def download_inventory_sales_report(format):
     # Filter consumed fabric conditioners within date range
     inv_consumed_fabcons = []
     for f in consumed_fabcons_all:
+        if str(f.get('ORDER_STATUS', '')).strip().lower() != 'completed':
+            continue
         item_date = parse_consumed_date(f)
         if item_date and inv_start_date <= item_date <= inv_end_date:
             inv_consumed_fabcons.append({
@@ -3377,50 +3422,118 @@ def download_inventory_sales_report(format):
                 return '\n'.join(parts)
             return text
 
-        def apply_table_formatting(worksheet, df_for_sheet):
-            header_fmt = worksheet.book.add_format({
+        def apply_table_formatting(workbook, worksheet, df_for_sheet, table_start_row, title_text):
+            """Apply clean, professional formatting with logo/header to a worksheet."""
+            header_fmt = workbook.add_format({
                 'bold': True,
                 'text_wrap': True,
                 'align': 'center',
                 'valign': 'vcenter',
                 'border': 1,
-                'font_size': 11
+                'font_size': 11,
+                'bg_color': '#122D69',
+                'font_color': 'white'
             })
-            body_fmt = worksheet.book.add_format({
+            text_fmt = workbook.add_format({
                 'text_wrap': True,
                 'valign': 'top',
+                'align': 'center',
                 'border': 1,
                 'font_size': 10
             })
-            for col_num, header in enumerate(df_for_sheet.columns):
-                worksheet.write(0, col_num, header, header_fmt)
-                series_len = df_for_sheet.iloc[:, col_num].astype(str).map(len).max() if not df_for_sheet.empty else 0
-                header_len = max(len(part) for part in str(header).split('\n'))
-                width = min(max(max(series_len, header_len) + 2, 12), 40)
-                worksheet.set_column(col_num, col_num, width, body_fmt)
+            int_fmt = workbook.add_format({
+                'valign': 'top',
+                'align': 'center',
+                'border': 1,
+                'font_size': 10,
+                'num_format': '0'
+            })
+            currency_fmt = workbook.add_format({
+                'valign': 'top',
+                'border': 1,
+                'font_size': 10,
+                'align': 'right',
+                'num_format': '"₱"#,##0.00'
+            })
+
+            title_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': 'white',
+                'bg_color': '#122D69',
+                'align': 'center',
+                'valign': 'vcenter',
+                'font_size': 16,
+                'border': 1
+            })
+            subtitle_fmt = workbook.add_format({
+                'bold': True,
+                'font_color': '#122D69',
+                'align': 'left',
+                'valign': 'vcenter',
+                'font_size': 10
+            })
+
+            last_col = len(df_for_sheet.columns) - 1
+
+            # Logo
             try:
-                worksheet.insert_image(0, len(df_for_sheet.columns) + 1, 'static/images/logo.jpg', {
-                    'x_scale': 0.7,
-                    'y_scale': 0.7
-                })
+                worksheet.insert_image(0, 0, 'static/images/logo.jpg', {'x_scale': 0.4, 'y_scale': 0.4})
             except Exception:
                 pass
 
+            # Header texts
+            title_row = 3
+            if last_col >= 0:
+                worksheet.merge_range(title_row, 0, title_row, last_col, title_text, title_fmt)
+                worksheet.merge_range(title_row + 1, 0, title_row + 1, last_col, 'Laundry Link • Sanciangko St, Cebu City, 6000 Cebu', subtitle_fmt)
+                worksheet.merge_range(title_row + 2, 0, title_row + 2, last_col, 'Phone: 0912-345-6789   •   est. 2025', subtitle_fmt)
+
+            # Rewrite headers with header style
+            for col_num, header in enumerate(df_for_sheet.columns):
+                worksheet.write(table_start_row, col_num, header, header_fmt)
+
+            # Suggested widths and per-column formats
+            width_map = {
+                'Item ID': 12,
+                'Item Name': 26,
+                'Type': 14,
+                'Unit Price': 14,
+                'Quantity': 10,
+                'Total Cost': 16,
+                'Order ID': 12,
+                'Category': 18,
+                'Items Consumed': 16,
+            }
+            for idx, col in enumerate(df_for_sheet.columns):
+                width = width_map.get(col, 14)
+                col_fmt = text_fmt
+                if col in ['Unit Price', 'Total Cost']:
+                    col_fmt = currency_fmt
+                elif col in ['Quantity', 'Items Consumed']:
+                    col_fmt = int_fmt
+                worksheet.set_column(idx, idx, width, col_fmt)
+
+            # Freeze header row
+            worksheet.freeze_panes(table_start_row + 1, 0)
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            table_start_row = 8
+
             # Write detergents sheet
             if not det_df.empty:
                 det_df_excel = det_df.copy()
                 det_df_excel.columns = [break_header(c) for c in det_df_excel.columns]
-                det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False)
-                apply_table_formatting(writer.sheets['Consumed Detergents'], det_df_excel)
+                det_df_excel.to_excel(writer, sheet_name='Consumed Detergents', index=False, startrow=table_start_row + 1, header=False)
+                apply_table_formatting(workbook, writer.sheets['Consumed Detergents'], det_df_excel, table_start_row, 'Inventory Consumption Report')
             
             # Write fabric conditioners sheet
             if not fabcon_df.empty:
                 fabcon_df_excel = fabcon_df.copy()
                 fabcon_df_excel.columns = [break_header(c) for c in fabcon_df_excel.columns]
-                fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False)
-                apply_table_formatting(writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel)
+                fabcon_df_excel.to_excel(writer, sheet_name='Consumed Fabric Conditioners', index=False, startrow=table_start_row + 1, header=False)
+                apply_table_formatting(workbook, writer.sheets['Consumed Fabric Conditioners'], fabcon_df_excel, table_start_row, 'Inventory Consumption Report')
             
             # Write summary sheet
             summary_data = [
@@ -3431,8 +3544,8 @@ def download_inventory_sales_report(format):
             summary_df = pd.DataFrame(summary_data)
             summary_df_excel = summary_df.copy()
             summary_df_excel.columns = [break_header(c) for c in summary_df_excel.columns]
-            summary_df_excel.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False)
-            apply_table_formatting(writer.sheets[f'Summary ({inv_period_label})'], summary_df_excel)
+            summary_df_excel.to_excel(writer, sheet_name=f'Summary ({inv_period_label})', index=False, startrow=table_start_row + 1, header=False)
+            apply_table_formatting(workbook, writer.sheets[f'Summary ({inv_period_label})'], summary_df_excel, table_start_row, f'Inventory Consumption Summary ({inv_period_label})')
         
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)

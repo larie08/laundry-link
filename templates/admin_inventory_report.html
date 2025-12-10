@@ -192,11 +192,6 @@
                 <div id="detergentTableSection" class="table-container" {% if request.args.get('type', 'detergent') != 'detergent' %}style="display:none;"{% endif %}>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Consumed Detergent Report</h3>
-                        <div class="download-btns" style="display:flex; gap:10px;">
-                            <a href="{{ url_for('download_inventory_report', format='excel') }}?type=detergent{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                            <a href="{{ url_for('download_inventory_report', format='csv') }}?type=detergent{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                            <a href="{{ url_for('download_inventory_report', format='pdf') }}?type=detergent{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
-                        </div>
                     </div>
                     {% if detergents|length > 0 %}
                     <table class="inventory-table">
@@ -247,11 +242,6 @@
                 <div id="fabconTableSection" class="table-container" style="margin-top: 40px; {% if request.args.get('type', 'detergent') != 'fabcon' %}display:none;{% endif %}">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Consumed Fabric Conditioner Report</h3>
-                        <div class="download-btns" style="display:flex; gap:10px;">
-                            <a href="{{ url_for('download_inventory_report', format='excel') }}?type=fabcon{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                            <a href="{{ url_for('download_inventory_report', format='csv') }}?type=fabcon{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                            <a href="{{ url_for('download_inventory_report', format='pdf') }}?type=fabcon{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('period') %}&period={{ request.args.get('period') }}{% endif %}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
-                        </div>
                     </div>
                     {% if fabric_conditioners|length > 0 %}
                     <table class="inventory-table">

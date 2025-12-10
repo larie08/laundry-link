@@ -195,8 +195,8 @@
                             <label for="status-filter">Filter by Status:</label>
                             <select name="status" id="status-filter">
                                 <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
+                                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="pick-up" {% if request.args.get('status') == 'pick-up' %}selected{% endif %}>Pick-up</option>
                             </select>
                         </div>
                         <button type="submit" class="filter-btn">Apply Filter</button>
