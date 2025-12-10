@@ -16,10 +16,10 @@ body {
 }
 
 .w3-sidebar {
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
     color: #122D69;
     padding: 20px 0;
-    box-shadow: 5px 0 3px -1px rgba(0, 0, 0, 0.05);
+    /* box-shadow: 5px 0 3px -1px rgba(0, 0, 0, 0.05); */
     z-index: 1;
 }
 
