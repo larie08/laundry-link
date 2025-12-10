@@ -282,6 +282,7 @@ def payments():
                 )
         
         # Create ORDER record
+        order_status_value = 'Completed' if str(order_data.get('order_type', '')).lower() == 'self-service' else 'Pending'
         order_id = dbhelper.add_order(
             customer_id=customer_id,
             orderitem_id=orderitem_id,
@@ -292,7 +293,7 @@ def payments():
             total_price=order_data['total_price'],
             order_note=order_data['order_note'],
             pickup_schedule=order_data['pickup_schedule'],
-            order_status='Pending',
+            order_status=order_status_value,
             payment_method=payment_method,
             payment_status='Pending'
         )
@@ -395,10 +396,11 @@ def payments():
     }
     
     # Create order dict for template
+    order_status_value = 'Completed' if str(order_data.get('order_type', '')).lower() == 'self-service' else 'Pending'
     order = {
         'ORDER_ID': 'Pending',  # Will be assigned when saved
         'ORDER_TYPE': order_data['order_type'],
-        'ORDER_STATUS': 'Pending',
+        'ORDER_STATUS': order_status_value,
         'PAYMENT_STATUS': 'Unpaid',
         'TOTAL_WEIGHT': order_data['total_weight'],
         'TOTAL_LOAD': order_data['total_load'],
@@ -1062,12 +1064,6 @@ def order_details(order_id):
     order = dbhelper.get_order_by_id(order_id)
     if not order:
         return jsonify({'error': 'Order not found'}), 404
-
-    # Always update order status to "Pick-up" after QR scan
-    dbhelper.db.collection('ORDER').document(
-        dbhelper.db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()[0].id
-    ).update({'ORDER_STATUS': 'Pick-up', 'DATE_UPDATED': datetime.now()})
-    order['ORDER_STATUS'] = 'Pick-up'
 
     customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
     orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
