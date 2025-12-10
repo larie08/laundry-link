@@ -69,14 +69,7 @@
                         </a>
                     </li>
                 </ul>
-                <!-- LOGOUT
-                <ul class="w3-margin-left w3-margin-top">
-                    <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('logout') }}">
-                            <span>Logout</span>
-                        </a>
-                    </li>
-                </ul> -->
+                
                 <!-- REPORTS -->
                 <div class="section-title w3-padding w3-text-gray">Reports</div>
                 <ul class="w3-margin-left">
@@ -93,7 +86,7 @@
                     </li>
                     
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="#">
+                        <a href="{{ url_for('income_statement') }}">
                             <span>Sales Report</span>
                         </a>
                     </li>
@@ -103,6 +96,14 @@
                             <span>Transaction Reports</span>
                         </a>
                     </li>
+                    <!-- LOGOUT -->
+                    <ul class="w3-margin-left w3-margin-top">
+                        <li class="w3-padding w3-bar-item w3-button">
+                            <a href="{{ url_for('logout') }}">
+                                <span>Logout</span>
+                            </a>
+                        </li>
+                    </ul>
                 </ul>
             </nav>
         </aside>

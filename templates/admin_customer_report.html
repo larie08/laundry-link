@@ -35,7 +35,7 @@
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button"><a href="{{ url_for('admin_order_report')}}"><span>Order Reports</span></a></li>
                     <li class="w3-padding w3-bar-item w3-button"><a href="{{ url_for('inventory_report') }}"><span>Inventory Reports</span></a></li>
-                    <li class="w3-padding w3-bar-item w3-button"><a href="#"><span>Sales Report</span></a></li>
+                    <li class="w3-padding w3-bar-item w3-button"><a href="{{ url_for('income_statement') }}"><span>Sales Report</span></a></li>
                     <li class="w3-padding w3-bar-item w3-button active"><a href="{{ url_for('customer_report') }}"><span>Transaction Reports</span></a></li>
                 </ul>
                 <ul class="w3-margin-left w3-margin-top">
@@ -79,8 +79,9 @@
                     </div>
                 </div>
                 <!-- FILTER/SEARCH SECTION (copied and adapted from admin_order_report.html) -->
-                <div class="filter-search-row card flex-row align-center">
-                    <form id="customerSearchForm" method="GET" action="{{ url_for('customer_report') }}" class="search-container search-form-self-service">
+                <!-- FILTER/SEARCH (match Order Report layout) -->
+                <form class="filter-search-row card flex-row align-center" method="GET" action="{{ url_for('customer_report') }}">
+                    <div class="search-container search-form-self-service" style="width:350px; display:flex;">
                         <input type="text" class="search-box" name="q" placeholder="Search customers by name or ID..." value="{{ request.args.get('q', '') }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
                         {% if request.args.get('q', '') %}
@@ -88,18 +89,22 @@
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
-                    </form>
-                    <div class="date-filter flex-row align-center">
-                        <div class="date-label">Date Range:</div>
-                        <input type="date" id="startDate" name="date_from" class="w3-input w3-border date-input" value="{{ request.args.get('date_from', '') }}">
-                        <span>to</span>
-                        <input type="date" id="endDate" name="date_to" class="w3-input w3-border date-input" value="{{ request.args.get('date_to', '') }}">
-                        <div style="display: flex; gap: 8px;">
-                            <button id="applyDateFilter" type="button" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
-                            <button id="clearDateFilter" type="button" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
-                        </div>
                     </div>
-                </div>
+                    <div class="date-filter flex-row align-center">
+                        <div class="date-label">Filter by Period:</div>
+                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px;">
+                            <option value="">All Time</option>
+                            <option value="daily">Today</option>
+                            <option value="weekly">This Week</option>
+                            <option value="monthly">This Month</option>
+                            <option value="yearly">This Year</option>
+                        </select>
+                        <button id="applyPeriodFilter" type="button" class="w3-button w3-blue-gray rounded-btn w3-radius filter-btn">Apply</button>
+                        <button id="clearPeriodFilter" type="button" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                        <input type="hidden" name="date_from" id="hiddenDateFrom" value="{{ request.args.get('date_from', '') }}">
+                        <input type="hidden" name="date_to" id="hiddenDateTo" value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                </form>
                 <div class="table-container">
                     <div class="table-header">
                         <h3>Transaction List</h3>
@@ -201,53 +206,117 @@
             document.querySelector('main').classList.toggle('expanded');
         };
 
-        // DATE FILTER (copied and adapted from admin_order_report.html)
+        // Period filter (match Order Report behaviour)
         document.addEventListener('DOMContentLoaded', function() {
-            const startDateInput = document.getElementById('startDate');
-            const endDateInput = document.getElementById('endDate');
-            const applyDateFilterBtn = document.getElementById('applyDateFilter');
-            const clearDateFilterBtn = document.getElementById('clearDateFilter');
+            const periodSelect = document.getElementById('periodFilter');
+            const applyBtn = document.getElementById('applyPeriodFilter');
+            const clearBtn = document.getElementById('clearPeriodFilter');
+            const hiddenFrom = document.getElementById('hiddenDateFrom');
+            const hiddenTo = document.getElementById('hiddenDateTo');
+            const searchBox = document.querySelector('input[name="q"]');
 
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('date_from')) {
-                startDateInput.value = urlParams.get('date_from');
+            const fmt = (d) => d.toISOString().split('T')[0];
+
+            function setSelectFromParams() {
+                const from = hiddenFrom.value;
+                const to = hiddenTo.value;
+                if (!from || !to) {
+                    periodSelect.value = '';
+                    return;
+                }
+                const today = new Date();
+                const todayStr = fmt(today);
+
+                if (from === todayStr && to === todayStr) {
+                    periodSelect.value = 'daily';
+                    return;
+                }
+
+                const startMonth = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+                const endMonth = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+                if (from === startMonth && to === endMonth) {
+                    periodSelect.value = 'monthly';
+                    return;
+                }
+
+                const startYear = fmt(new Date(today.getFullYear(), 0, 1));
+                const endYear = fmt(new Date(today.getFullYear(), 11, 31));
+                if (from === startYear && to === endYear) {
+                    periodSelect.value = 'yearly';
+                    return;
+                }
+
+                // Weekly (Mon-Sun)
+                const day = today.getDay(); // 0=Sun
+                const monday = new Date(today);
+                monday.setDate(today.getDate() - ((day + 6) % 7));
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                if (from === fmt(monday) && to === fmt(sunday)) {
+                    periodSelect.value = 'weekly';
+                    return;
+                }
+
+                periodSelect.value = '';
             }
-            if (urlParams.has('date_to')) {
-                endDateInput.value = urlParams.get('date_to');
+
+            function buildRange(period) {
+                const now = new Date();
+                if (!period) return { from: '', to: '' };
+                if (period === 'daily') {
+                    const d = fmt(now);
+                    return { from: d, to: d };
+                }
+                if (period === 'weekly') {
+                    const day = now.getDay(); // 0=Sun
+                    const monday = new Date(now);
+                    monday.setDate(now.getDate() - ((day + 6) % 7));
+                    const sunday = new Date(monday);
+                    sunday.setDate(monday.getDate() + 6);
+                    return { from: fmt(monday), to: fmt(sunday) };
+                }
+                if (period === 'monthly') {
+                    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    return { from: fmt(start), to: fmt(end) };
+                }
+                if (period === 'yearly') {
+                    const start = new Date(now.getFullYear(), 0, 1);
+                    const end = new Date(now.getFullYear(), 11, 31);
+                    return { from: fmt(start), to: fmt(end) };
+                }
+                return { from: '', to: '' };
             }
 
-            applyDateFilterBtn.addEventListener('click', function() {
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
-                const searchQuery = urlParams.get('q') || '';
-                
-                let url = new URL(window.location);
-                if (searchQuery) {
-                    url.searchParams.set('q', searchQuery);
+            function applyFilters() {
+                const period = periodSelect.value;
+                const { from, to } = buildRange(period);
+                hiddenFrom.value = from;
+                hiddenTo.value = to;
+                // Reset to first page on new filter
+                const form = periodSelect.closest('form');
+                if (form) {
+                    form.submit();
                 }
-                if (startDate) {
-                    url.searchParams.set('date_from', startDate);
-                }
-                if (endDate) {
-                    url.searchParams.set('date_to', endDate);
-                }
-                window.location.href = url;
-            });
+            }
 
-            clearDateFilterBtn.addEventListener('click', function() {
-                startDateInput.value = '';
-                endDateInput.value = '';
-                
-                const searchQuery = urlParams.get('q') || '';
-                
-                let url = new URL(window.location);
-                if (searchQuery) {
-                    url.searchParams.set('q', searchQuery);
-                }
+            applyBtn.addEventListener('click', applyFilters);
+
+            clearBtn.addEventListener('click', function() {
+                hiddenFrom.value = '';
+                hiddenTo.value = '';
+                if (searchBox) searchBox.value = '';
+                periodSelect.value = '';
+                const url = new URL(window.location);
+                url.searchParams.delete('q');
                 url.searchParams.delete('date_from');
                 url.searchParams.delete('date_to');
+                url.searchParams.delete('page');
                 window.location.href = url;
             });
+
+            // Set select state on load based on existing date_from/date_to
+            setSelectFromParams();
         });
     </script>
 </body>

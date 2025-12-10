@@ -26,7 +26,6 @@ body {
 .w3-sidebar .w3-button:hover {
     background-color: #ffffff !important;
     border-radius: 8px;
-    margin: 0 10px;
 }
 
 .w3-sidebar .w3-button:hover a {
