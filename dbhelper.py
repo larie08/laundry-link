@@ -632,17 +632,27 @@ def get_orderitem_fabcons(orderitem_id):
         out.append({'FABCON_NAME': name, 'QUANTITY': jd.get('QUANTITY', 0), 'UNIT_PRICE': jd.get('UNIT_PRICE', 0), 'total_price': total_price})
     return out
 
-def update_order_payment(order_id, payment_method, payment_status):
+def update_order_payment(order_id, payment_method, payment_status, user_id: int = None):
     """Update payment method/status for an order and bump DATE_UPDATED."""
     _require_db()
     docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
     if not docs:
         return False
+    
+    # Get old payment status for logging
+    old_data = docs[0].to_dict()
+    old_payment_status = old_data.get('PAYMENT_STATUS', 'Unknown')
+    
     db.collection('ORDER').document(docs[0].id).update({
         'PAYMENT_METHOD': payment_method,
         'PAYMENT_STATUS': payment_status,
         'DATE_UPDATED': _now(),
     })
+    
+    # Log the payment status change
+    detail = f"{old_payment_status} -> {payment_status}"
+    add_order_log(order_id, 'Payment Update', detail, user_id)
+    
     return True
 
 def update_order_qr_code(order_id, qr_code_path):
@@ -671,16 +681,26 @@ def update_order_note(order_id, order_note):
     })
     return True
 
-def update_order_status(order_id, status):
+def update_order_status(order_id, status, user_id: int = None):
     """Update ORDER_STATUS field for an order."""
     _require_db()
     docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
     if not docs:
         return False
+    
+    # Get old status for logging
+    old_data = docs[0].to_dict()
+    old_status = old_data.get('ORDER_STATUS', 'Unknown')
+    
     db.collection('ORDER').document(docs[0].id).update({
         'ORDER_STATUS': status,
         'DATE_UPDATED': _now(),
     })
+    
+    # Log the status change
+    detail = f"{old_status} -> {status}"
+    add_order_log(order_id, 'Status Update', detail, user_id)
+    
     return True
 
 def get_customers_with_orders() -> list:
@@ -931,6 +951,17 @@ def get_all_orders_with_priority():
 
     out.sort(key=lambda x: (x['PRIORITY'] != 'Priority', x['DATE_CREATED'] if x['DATE_CREATED'] else 0), reverse=False)
     return out
+
+def add_order_log(order_id: int, action: str, detail: str, user_id: int = None):
+    """Log order updates (status/payment changes)."""
+    _require_db()
+    db.collection('ORDER_LOG').add({
+        'ORDER_ID': order_id,
+        'ACTION': action,  # 'Status Update', 'Payment Update'
+        'DETAIL': detail,  # e.g., 'Pending -> Pick-up' or 'Unpaid -> PAID'
+        'USER_ID': user_id,
+        'DATE': _now(),
+    })
 
 def add_inventory_log(user_id: int, action: str, item_type: str, item_id: int, name: str, qty: int, price: float):
     """Add an inventory log entry for detergent/fabcon actions."""

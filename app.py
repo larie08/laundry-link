@@ -374,7 +374,8 @@ def payments():
                     p.text(f"Order ID: {order.get('ORDER_ID')}\n")
                     p.set(height=1, width=1)  # Reset font
 
-                # DO NOT close/cut printer - will be used again in mark_order_as_paid()
+                # CLOSE printer connection to free it up for mark_order_as_paid()
+                p.close()
             except Exception as e:
                 print("Printer error:", e)
         
@@ -1211,7 +1212,8 @@ def order_scan(order_id):
 
     # Update order status to Pickup (best-effort)
     try:
-        dbhelper.update_order_status(order_id, 'Pick-up')
+        user_id = session.get('user_id')
+        dbhelper.update_order_status(order_id, 'Pick-up', user_id)
         # also update local variable so response reflects change
         order['ORDER_STATUS'] = 'Pick-up'
     except Exception:
@@ -1316,8 +1318,11 @@ def mark_order_as_paid():
         if not order:
             return jsonify({'success': False, 'error': 'Order not found'}), 404
         
+        # Get logged in user ID
+        user_id = session.get('user_id')
+        
         # Update the payment status to PAID
-        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
+        dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID', user_id)
         
         # Get updated order details
         order = dbhelper.get_order_by_id(order_id)
@@ -1333,6 +1338,9 @@ def mark_order_as_paid():
             from escpos.printer import Usb
             from PIL import Image, ImageDraw, ImageFont
             import time
+            
+            # Add a small delay to ensure previous connection is fully closed
+            time.sleep(1)
             
             p = Usb(0x0483, 0x5743, encoding='GB18030')
 
@@ -1394,16 +1402,10 @@ def mark_order_as_paid():
 
             receipt_text = "".join(lines)
             
-            # Generate QR code dynamically based on order ID
-            qr_data = str(order.get('ORDER_ID', order_id))
-            qr = qrcode.QRCode(version=1, box_size=10, border=1)
-            qr.add_data(qr_data)
-            qr.make(fit=True)
-            qr_image = qr.make_image(fill_color='black', back_color='white')
-            qr_image = qr_image.convert('RGB')
+            # Check if order is self-service
+            is_self_service = str(order.get('ORDER_TYPE', '')).lower() == 'self-service'
             
             try:
-                # FIRST RECEIPT WITH QR CODE
                 # Print logo at top middle
                 logo_path = os.path.join(app.static_folder, 'images', 'logo.jpg')
                 if os.path.exists(logo_path):
@@ -1421,45 +1423,74 @@ def mark_order_as_paid():
                 
                 p.text(receipt_text)
                 
-                # Print dynamically generated QR code
-                p.image(qr_image)
-                p.text("\n")
-
-                # Add separator between receipts
-                p.text("\n" + "=" * 32 + "\n")
-                p.text("CUT HERE - MANUAL CUT REQUIRED\n")
-                p.text("=" * 32 + "\n\n")
-                
-                # Wait for printer to finish processing first receipt
-                time.sleep(3)
-                
-                # SECOND RECEIPT WITHOUT QR CODE
-                # Print logo at top middle
-                if os.path.exists(logo_path):
-                    p.image(logo_path)
+                # SELF-SERVICE: Only print one receipt without QR code
+                if is_self_service:
+                    # Cut the paper after single receipt
+                    p.cut()
+                else:
+                    # DROP-OFF: Print two receipts (first with QR, second without)
+                    # Generate QR code dynamically based on order ID
+                    qr_data = str(order.get('ORDER_ID', order_id))
+                    qr = qrcode.QRCode(version=1, box_size=10, border=1)
+                    qr.add_data(qr_data)
+                    qr.make(fit=True)
+                    qr_image = qr.make_image(fill_color='black', back_color='white')
+                    qr_image = qr_image.convert('RGB')
+                    
+                    # Print dynamically generated QR code on first receipt
+                    p.image(qr_image)
                     p.text("\n")
+
+                    # Add separator between receipts
+                    p.text("\n" + "=" * 32 + "\n")
+                    p.text("CUT HERE - MANUAL CUT REQUIRED\n")
+                    p.text("=" * 32 + "\n\n")
+                    
+                    # Wait for printer to finish processing first receipt
+                    time.sleep(3)
+                    
+                    # SECOND RECEIPT WITHOUT QR CODE
+                    # Print logo at top middle
+                    if os.path.exists(logo_path):
+                        p.image(logo_path)
+                        p.text("\n")
+                    
+                    # Print header with store information
+                    p.set(align='center')
+                    p.text("LAUNDRYLINK\n")
+                    p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
+                    p.text("Phone: 0912-345-6789\n")
+                    p.text("est. 2025\n")
+                    p.set(align='left')
+                    p.text("\n")
+                    
+                    p.text(receipt_text)
+                    
+                    # Cut the paper after second receipt
+                    p.cut()
                 
-                # Print header with store information
-                p.set(align='center')
-                p.text("LAUNDRYLINK\n")
-                p.text("Sanciangko St, Cebu City, 6000 Cebu\n")
-                p.text("Phone: 0912-345-6789\n")
-                p.text("est. 2025\n")
-                p.set(align='left')
-                p.text("\n")
-                
-                p.text(receipt_text)
-                
-                # Cut the paper after second receipt
-                p.cut()
+                # Properly close the printer connection
+                p.close()
                 
             except Exception as receipt_error:
                 print(f"Receipt printing error: {receipt_error}")
+                # Try to close printer connection even if error occurred
+                try:
+                    if 'p' in locals():
+                        p.close()
+                except:
+                    pass
                 # Continue even if second receipt fails
                 pass
             
         except Exception as e:
             print("Printer error:", e)
+            # Try to close printer connection even if error occurred
+            try:
+                if 'p' in locals():
+                    p.close()
+            except:
+                pass
         
         return jsonify({'success': True, 'message': 'Order marked as paid and receipt printed'}), 200
         
@@ -4601,7 +4632,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
@@ -4820,7 +4851,8 @@ def api_complete_pickup(order_id):
         return jsonify({'status': 'error', 'msg': 'Customer not found'}), 404
     
     # Update order status to Completed
-    dbhelper.update_order_status(order_id, 'Completed')
+    user_id = session.get('user_id')
+    dbhelper.update_order_status(order_id, 'Completed', user_id)
     
     # Send SMS notification to customer
     phone = customer.get('PHONE_NUMBER')
@@ -4828,7 +4860,7 @@ def api_complete_pickup(order_id):
     if phone:
         message = f"Hi {customer_name}, your laundry (Order #{order_id}) has been picked up. Thank you for using Laundrylink!"
         try:
-            esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')
+            esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')
             esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
             requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
         except Exception as e:
