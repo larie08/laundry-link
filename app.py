@@ -313,7 +313,7 @@ def payments():
         qr_code_path = f"qr/{qr_filename}"
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
-        # Receipt printing for all payment methods
+        # Receipt printing for all payment methods - ONLY PRINT ORDER ID
         if payment_method and payment_method.lower() in ['cash', 'gcash', 'maya']:
             try:
                 from escpos.printer import Usb
@@ -362,7 +362,7 @@ def payments():
                     p.text(f"Order ID: {order.get('ORDER_ID')}\n")
                     p.set(height=1, width=1)  # Reset font
 
-                p.cut()
+                # DO NOT close/cut printer - will be used again in mark_order_as_paid()
             except Exception as e:
                 print("Printer error:", e)
         
@@ -1262,7 +1262,7 @@ def order_scan(order_id):
 
 @app.route('/mark_order_as_paid', methods=['POST'])
 def mark_order_as_paid():
-    """Mark an order as paid and print the full receipt."""
+    """Mark an order as paid and print the full receipt (with and without QR code)."""
     data = request.get_json()
     order_id = data.get('order_id')
     
@@ -1275,23 +1275,23 @@ def mark_order_as_paid():
         if not order:
             return jsonify({'success': False, 'error': 'Order not found'}), 404
         
-        # Update the payment status
+        # Update the payment status to PAID
         dbhelper.update_order_payment(order_id, order.get('PAYMENT_METHOD'), 'PAID')
         
-        # Get updated order details
-        order = dbhelper.get_order_by_id(order_id)
-        customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
-        orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
-        detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
-        fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
-        
-        # Print the full receipt (twice - second one without QR)
+        # Print the full receipt (twice - with QR and without QR)
         try:
             from escpos.printer import Usb
             from PIL import Image, ImageDraw, ImageFont
-            import qrcode
-            import io
+            import time
+            
             p = Usb(0x0483, 0x5743, encoding='GB18030')
+
+            # Get updated order details
+            order = dbhelper.get_order_by_id(order_id)
+            customer = dbhelper.get_customer_by_id(order['CUSTOMER_ID']) if order.get('CUSTOMER_ID') else None
+            orderitem = dbhelper.get_orderitem_by_id(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else None
+            detergents = dbhelper.get_orderitem_detergents(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
+            fabcons = dbhelper.get_orderitem_fabcons(order['ORDERITEM_ID']) if order.get('ORDERITEM_ID') else []
 
             # Create receipt lines
             lines = []
@@ -1381,7 +1381,6 @@ def mark_order_as_paid():
                 p.text("=" * 32 + "\n\n")
                 
                 # Wait for printer to finish processing first receipt
-                import time
                 time.sleep(3)
                 
                 # SECOND RECEIPT WITHOUT QR CODE
@@ -1400,6 +1399,9 @@ def mark_order_as_paid():
                 p.text("\n")
                 
                 p.text(receipt_text)
+                
+                # Cut the paper after second receipt
+                p.cut()
                 
             except Exception as receipt_error:
                 print(f"Receipt printing error: {receipt_error}")
