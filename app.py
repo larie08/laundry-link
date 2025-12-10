@@ -2250,14 +2250,14 @@ def download_order_report(format):
                 pdf.ln(row_height)
 
         pdf.add_page()
-        
-        # Add logo at the top left
+
+        # Add logo at the top left (slightly larger) then thin header, then table
         try:
-            pdf.image('static/images/pdfheader.jpg', x=10, y=10, w=50)
-            pdf.ln(20)  # Move down after logo
-        except:
+            pdf.image('static/images/pdfheader.jpg', x=10, y=8, w=78)
+            pdf.ln(18)
+        except Exception:
             pass  # Skip logo if not found
-        
+
         add_title_bar('Order Report')
 
         # Format dataframe for display
