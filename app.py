@@ -65,7 +65,6 @@ def contact():
             'phone_number': phone_number
         }
         
-        flash('Customer information saved!')
         return redirect(url_for('weight_laundry'))
 
     # Pre-fill form with session data if user goes back
@@ -367,8 +366,15 @@ def payments():
         session.pop('total_load', None)
         session.pop('order_type', None)
         
-        flash('Order confirmed successfully!')
-        return redirect(url_for('home'))
+        # If the request came from an AJAX call (QR flows), return JSON for client-side redirect
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True,
+                'order_id': order_id,
+                'redirect': url_for('thank_you_page', order_id=order_id)
+            })
+
+        return redirect(url_for('thank_you_page', order_id=order_id))
     
     # GET request - display payment page using session data
     # Check if all required session data exists
@@ -481,10 +487,17 @@ def save_order_note():
     
         return jsonify({'success': True, 'message': 'Note saved successfully'})
     
+@app.route('/thank_you')
+def thank_you_page():
+    order_id = request.args.get('order_id')
+    return render_template('thank_you.html', order_id=order_id)
+
+
 @app.route('/new_order', methods=['GET'])
 def new_order():
+    """Backward-compatible route that now points to the thank you page."""
     order_id = request.args.get('order_id', 'N/A')
-    return render_template('thankyou.html', order_id=order_id)
+    return redirect(url_for('thank_you_page', order_id=order_id))
 
 
 
