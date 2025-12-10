@@ -115,49 +115,41 @@
             </header>
             <div class="w3-container w3-padding w3-margin">
 
-                <!-- SUMMARY CARDS -->
-                <div class="stats-cards stats-cards-layout">
-                    <div class="stat-card stat-card-layout">
-                        <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
-                        <div class="stat-card-title">Total Orders</div>
-                        <div class="stat-card-number">{{ total_orders if total_orders is not none else 0 }}</div>
-                    </div>
-                    <div class="stat-card stat-card-layout">
-                        <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
-                        <div class="stat-card-title">Total Revenue</div>
-                        <div class="stat-card-number">₱{{ total_revenue if total_revenue is not none else 0 }}</div>
-                    </div>
-                    <div class="stat-card stat-card-layout">
-                        <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
-                        <div class="stat-card-title">Pending Orders</div>
-                        <div class="stat-card-number">{{ pending_count if pending_count is not none else 0 }}</div>
-                    </div>
-                    <div class="stat-card stat-card-layout">
-                        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-card-title">Completed Orders</div>
-                        <div class="stat-card-number">{{ completed_count if completed_count is not none else 0 }}</div>
-                    </div>
-                </div>
-
                 <!-- FILTER/SEARCH -->
                 <div class="filter-search-row card flex-row align-center">
-                    <form id="ordersSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container search-form-self-service">
-                        <input type="text" class="search-box" name="q" placeholder="Search orders by ID or customer name..." value="{{ request.args.get('q', '') }}">
+                    <form id="detergentSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container" style="width:350px; display: flex;">
+                        <input type="hidden" name="type" value="detergent">
+                        <input type="text" class="search-box" name="q" placeholder="Search orders by ID or customer name..." value="{{ request.args.get('q', '') if request.args.get('type') == 'detergent' else '' }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
-                        {% if request.args.get('q', '') %}
-                        <a href="{{ url_for('admin_order_report') }}" class="clear-search-btn" title="Clear search">
+                        {% if request.args.get('q', '') and request.args.get('type') == 'detergent' %}
+                        <a href="{{ url_for('admin_order_report') }}?type=detergent" class="clear-search-btn" title="Clear search">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                    </form>
+
+                    <form id="fabconSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container" style="width:350px; display: none;">
+                        <input type="hidden" name="type" value="fabcon">
+                        <input type="text" class="search-box" name="q" placeholder="Search fabric conditioner by name or ID..." value="{{ request.args.get('q', '') if request.args.get('type') == 'fabcon' else '' }}">
+                        <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
+                        {% if request.args.get('q', '') and request.args.get('type') == 'fabcon' %}
+                        <a href="{{ url_for('admin_order_report') }}?type=fabcon" class="clear-search-btn" title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
                     </form>
 
                     <div class="date-filter flex-row align-center">
-                        <div class="date-label">Date Range:</div>
-                        <input type="date" id="startDate" name="start_date" class="w3-input w3-border date-input" value="{{ request.args.get('start_date', '') }}">
-                        <span>to</span>
-                        <input type="date" id="endDate" name="end_date" class="w3-input w3-border date-input" value="{{ request.args.get('end_date', '') }}">
-                        <button id="applyDateFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
-                        <button id="clearDateFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                        <div class="date-label">Filter by Period:</div>
+                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px;">
+                            <option value="">All Time</option>
+                            <option value="daily">Today</option>
+                            <option value="weekly">This Week</option>
+                            <option value="monthly">This Month</option>
+                            <option value="yearly">This Year</option>
+                        </select>
+                        <button id="applyPeriodFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
+                        <button id="clearPeriodFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
                     </div>
                 </div>
 
