@@ -467,13 +467,25 @@
     function changeQty(inputId, delta) {
         const input = document.getElementById(inputId);
         if (!input) return;
+
+        // Check if related checkbox is checked
+        const checkboxId = inputId.replace('_qty_', '_');
+        const checkbox = document.getElementById(checkboxId);
+
+        if (!checkbox || !checkbox.checked) {
+            showErrorModal('Please select the item first before adding quantity.');
+            return;
+        }
+
         let val = parseInt(input.value) || 1;
         val += delta;
         if (val < 1) val = 1;
         input.value = val;
+
         enforceAvailable(input);
         input.dispatchEvent(new Event('change'));
     }
+
     
     // Error Modal
     function showErrorModal(message) {
@@ -814,6 +826,47 @@
         }
         {% endif %}
         updateTotals();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+    function setupValidation(type) {
+        const checkboxes = document.querySelectorAll(`.${type}-checkbox`);
+
+        checkboxes.forEach(cb => {
+            const id = cb.value;
+            const qtyInput = document.getElementById(`${type}_qty_${id}`);
+
+            // Disable quantity initially
+            qtyInput.disabled = true;
+
+            // Toggle quantity when checkbox changes
+            cb.addEventListener('change', function () {
+                if (this.checked) {
+                    qtyInput.disabled = false;
+                } else {
+                    qtyInput.disabled = true;
+                    qtyInput.value = 1; // reset quantity
+                }
+            });
+        });
+    }
+
+    setupValidation('detergent');
+    setupValidation('fabcon');
+
+});
+
+    document.querySelectorAll('.quantity input[type="number"]').forEach(input => {
+        input.addEventListener('focus', function () {
+            const checkboxId = this.id.replace('_qty_', '_');
+            const checkbox = document.getElementById(checkboxId);
+
+            if (!checkbox || !checkbox.checked) {
+                showErrorModal('Please select the item first before adding quantity.');
+                this.blur();
+            }
+        });
     });
 </script>
 </html>
