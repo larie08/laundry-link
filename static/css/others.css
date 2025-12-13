@@ -1445,6 +1445,13 @@ button.v245_298:hover {
   transform: translateY(0);
 }
 
+.suggestion-message {
+    font-size: 13px;
+    color: #666;
+    margin: 10px 0 5px 0;
+    text-align: left;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
