@@ -348,19 +348,26 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
+                const startDateStr = urlParams.get('start_date');
+                const endDateStr = urlParams.get('end_date');
+                const todayStr = today.toISOString().split('T')[0];
+                
                 const diffTime = Math.abs(endDate - startDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
                 // Try to detect which period this corresponds to
-                if (diffDays === 0 && startDate.toDateString() === today.toDateString()) {
+                if (diffDays === 0 && startDateStr === todayStr) {
                     periodFilter.value = 'daily';
                 } else if (diffDays <= 7) {
                     periodFilter.value = 'weekly';
                 } else if (diffDays <= 30) {
                     periodFilter.value = 'monthly';
-                } else if (diffDays > 365) {
+                } else if (diffDays >= 365) {
                     periodFilter.value = 'yearly';
                 }
+            } else {
+                // Default to daily (today)
+                periodFilter.value = 'daily';
             }
 
             applyPeriodFilterBtn.addEventListener('click', function() {
@@ -370,6 +377,19 @@
                 let startDate = '';
                 let endDate = '';
                 const today = new Date();
+                
+                if (period === '') {
+                    // All Time - clear filters
+                    let url = new URL(window.location);
+                    url.searchParams.delete('start_date');
+                    url.searchParams.delete('end_date');
+                    if (searchQuery) {
+                        url.searchParams.set('q', searchQuery);
+                    }
+                    url.searchParams.set('page', '1');
+                    window.location.href = url;
+                    return;
+                }
                 
                 if (period) {
                     endDate = today.toISOString().split('T')[0];
@@ -398,9 +418,11 @@
                 if (startDate && endDate) {
                     url.searchParams.set('start_date', startDate);
                     url.searchParams.set('end_date', endDate);
+                    url.searchParams.set('page', '1');
                 } else {
                     url.searchParams.delete('start_date');
                     url.searchParams.delete('end_date');
+                    url.searchParams.set('page', '1');
                 }
                 window.location.href = url;
             });
@@ -414,6 +436,7 @@
                 let url = new URL(window.location);
                 url.searchParams.delete('start_date');
                 url.searchParams.delete('end_date');
+                url.searchParams.set('page', '1');
                 if (searchQuery) {
                     url.searchParams.set('q', searchQuery);
                 }

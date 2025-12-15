@@ -168,11 +168,11 @@ def submit_others():
     total_load = session.get('total_load', 0)
     price_per_load = get_price_per_load(session.get('order_type', 'Drop-off'))
 
-    # Calculate totals
-    total_price = 0.0
+    # Calculate subtotal
+    subtotal = 0.0
 
     # Load price (50 per load)
-    total_price += total_load * price_per_load
+    subtotal += total_load * price_per_load
 
     # Store detergent details
     detergent_details = []
@@ -185,7 +185,7 @@ def submit_others():
                 'quantity': qty,
                 'unit_price': price
             })
-            total_price += qty * price
+            subtotal += qty * price
 
     # Store fabcon details
     fabcon_details = []
@@ -198,21 +198,27 @@ def submit_others():
                 'quantity': qty,
                 'unit_price': price
             })
-            total_price += qty * price
+            subtotal += qty * price
 
     # Additional service costs
     if iron:
-        total_price += 50.00
+        subtotal += 50.00
     if fold:
-        total_price += 70.00
+        subtotal += 70.00
     if priority:
-        total_price += 50.00
+        subtotal += 50.00
+    
+    # Calculate tax and total
+    tax = round(subtotal * 0.12, 2)  # 12% VAT
+    total_price = round(subtotal + tax, 2)
     
     # Store all order data in session instead of saving to DB
     session['order_data'] = {
         'order_type': session.get('order_type', 'Drop-off'),
         'total_weight': total_weight,
         'total_load': total_load,
+        'subtotal': round(subtotal, 2),
+        'tax': tax,
         'total_price': total_price,
         'price_per_load': price_per_load,
         'order_note': order_note,
@@ -309,6 +315,7 @@ def payments():
             total_weight=order_data['total_weight'],
             total_load=order_data['total_load'],
             total_price=order_data['total_price'],
+            tax=order_data.get('tax', 0.0),
             order_note=order_data['order_note'],
             pickup_schedule=order_data['pickup_schedule'],
             order_status=order_status_value,
@@ -1522,6 +1529,12 @@ def admin_order_report():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not start_date and not end_date:
+        start_date = today
+        end_date = today
+    
     # Get all orders
     all_orders = dbhelper.get_all_orders_with_priority()
 
@@ -1790,7 +1803,11 @@ def inventory_report():
     detergents = sorted(detergents, key=get_sort_date, reverse=False)
     fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
     
-    # Apply period filtering if period is provided
+    # Default to daily (today) if no period is provided
+    if not period:
+        period = 'daily'
+    
+    # Apply period filtering
     if period:
         from datetime import date, timedelta
         today = date.today()
@@ -2031,6 +2048,12 @@ def download_order_report(format):
     view = request.args.get('view', '')
     selected_month = request.args.get('month', '')
     customer_id = request.args.get('customer_id', type=int)
+
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not start_date and not end_date:
+        start_date = today
+        end_date = today
 
     # Get all orders
     orders = dbhelper.get_all_orders_with_priority()
@@ -2969,6 +2992,12 @@ def customer_report():
     file_format = request.args.get('format')
     customer_type = request.args.get('type', 'all')
     
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not date_from and not date_to:
+        date_from = today
+        date_to = today
+    
     if file_format:
         return redirect(url_for('download_customer_report', format=file_format, 
                                 type=customer_type, q=search_query, 
@@ -3061,6 +3090,12 @@ def download_customer_report(format):
     search_query = request.args.get('q', '').strip()
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
+    
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not date_from and not date_to:
+        date_from = today
+        date_to = today
     
     # Get all customers with stats (batch)
     customers = dbhelper.get_all_customers_with_order_stats()
@@ -3999,10 +4034,26 @@ def income_statement():
     
     # Calculate metrics
     total_transactions = len(filtered_orders)
-    total_sales = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    total_sales_with_tax = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    
+    # Calculate total tax - if TAX field exists in order, use it; otherwise calculate from TOTAL_PRICE
+    total_tax = 0.0
+    for o in filtered_orders:
+        tax_val = float(o.get('TAX') or 0)
+        if tax_val > 0:
+            # TAX field has value, use it
+            total_tax += tax_val
+        else:
+            # TAX field is missing/0, calculate it as TOTAL_PRICE / 1.12 * 0.12
+            total_price = float(o.get('TOTAL_PRICE', 0) or 0)
+            if total_price > 0:
+                calculated_tax = (total_price / 1.12) * 0.12
+                total_tax += calculated_tax
+    
+    total_sales = total_sales_with_tax - total_tax  # Sales before tax
     
     # Calculate service sales (from orders with ORDER_TYPE)
-    service_sales = 0.0
+    service_sales = total_sales  # This is our revenue before tax
     other_sales = 0.0
     
     # Count services for best/slowest selling
@@ -4015,8 +4066,6 @@ def income_statement():
         order_type = order.get('ORDER_TYPE', '').strip()
         if order_type:
             service_counts[order_type] = service_counts.get(order_type, 0) + 1
-            price = float(order.get('TOTAL_PRICE', 0) or 0)
-            service_sales += price
         
         # Get order item details
         orderitem_id = order.get('ORDERITEM_ID')
@@ -4158,6 +4207,18 @@ def income_statement():
         
         cust_id = order.get('CUSTOMER_ID')
         customer_info = customer_lookup.get(cust_id, {})
+        
+        # Calculate tax - if TAX field exists and is > 0, use it; otherwise calculate from TOTAL_PRICE
+        total_price = float(order.get('TOTAL_PRICE', 0) or 0)
+        tax_value = float(order.get('TAX') or 0)
+        if tax_value <= 0:
+            # TAX field missing/0, calculate it as TOTAL_PRICE / 1.12 * 0.12
+            tax_value = (total_price / 1.12) * 0.12 if total_price > 0 else 0
+        
+        revenue = total_price - tax_value
+        cogs = revenue * 0.3
+        net = revenue * 0.7
+        
         all_orders_breakdown.append({
             'ORDER_ID': order.get('ORDER_ID'),
             'CUSTOMER_ID': cust_id,
@@ -4165,9 +4226,10 @@ def income_statement():
             'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
             'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
             'ORDER_STATUS': order.get('ORDER_STATUS', 'N/A'),
-            'Revenue': float(order.get('TOTAL_PRICE', 0) or 0),
-            'COGS': float(order.get('TOTAL_PRICE', 0) or 0) * 0.3,
-            'Net': float(order.get('TOTAL_PRICE', 0) or 0) * 0.7
+            'Revenue': revenue,
+            'Tax': tax_value,
+            'COGS': cogs,
+            'Net': net
         })
     
     # Calculate completed orders summary totals
@@ -4213,6 +4275,7 @@ def income_statement():
         income_before_tax=income_before_tax,
         net_income=net_income,
         total_transactions=total_transactions,
+        total_tax=total_tax,
         best_selling_service=best_selling_service,
         customers_breakdown=customers_breakdown,
         all_customers_breakdown=all_customers_breakdown,  # For modals

@@ -590,9 +590,11 @@
             const applyPeriodFilterBtn = document.getElementById('applyPeriodFilter');
             const clearPeriodFilterBtn = document.getElementById('clearPeriodFilter');
 
-            // Set initial period value from URL if present
+            // Set initial period value from URL if present, default to 'daily'
             if (urlParams.has('period')) {
                 periodFilterSelect.value = urlParams.get('period');
+            } else {
+                periodFilterSelect.value = 'daily';
             }
 
             applyPeriodFilterBtn.addEventListener('click', function() {
@@ -609,17 +611,17 @@
                 if (period) {
                     url.searchParams.set('period', period);
                 } else {
-                    url.searchParams.delete('period');
+                    url.searchParams.set('period', 'daily');
                 }
                 url.searchParams.delete('page'); // Reset to page 1
                 window.location.href = url;
             });
 
             clearPeriodFilterBtn.addEventListener('click', function() {
-                // Clear period filter
-                periodFilterSelect.value = '';
+                // Reset to default (daily)
+                periodFilterSelect.value = 'daily';
                 
-                // Redirect without period parameter
+                // Redirect with daily period
                 const currentType = urlParams.get('type') || 'detergent';
                 const searchQuery = urlParams.get('q') || '';
                 
@@ -628,7 +630,7 @@
                 if (searchQuery) {
                     url.searchParams.set('q', searchQuery);
                 }
-                url.searchParams.delete('period');
+                url.searchParams.set('period', 'daily');
                 url.searchParams.delete('page'); // Reset to page 1
                 window.location.href = url;
             });

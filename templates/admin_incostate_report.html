@@ -178,6 +178,11 @@
                         <div class="label">Net Income</div>
                         <div class="value">₱ {{ '{:,.2f}'.format(net_income) }}</div>
                     </div>
+                    <div class="card tax">
+                        <div class="label">VAT Collected (12%)</div>
+                        <div class="value">₱ {{ '{:,.2f}'.format(total_tax if total_tax else 0) }}</div>
+                        <div class="hint">Tax Payable to BIR</div>
+                    </div>
                 </section>
 
                 <!-- COMBINED REPORT TABLE -->
@@ -204,8 +209,16 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Total Sales (Completed Orders)</td>
-                                <td class="right">₱ {{ '{:,.2f}'.format(completed_total_revenue) }}</td>
+                                <td>Total Sales Before Tax</td>
+                                <td class="right">₱ {{ '{:,.2f}'.format(completed_total_revenue if completed_total_revenue else 0) }}</td>
+                            </tr>
+                            <tr>
+                                <td>VAT (12%)</td>
+                                <td class="right">₱ {{ '{:,.2f}'.format(total_tax if total_tax else 0) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Total Sales (After Tax)</td>
+                                <td class="right">₱ {{ '{:,.2f}'.format((completed_total_revenue if completed_total_revenue else 0) + (total_tax if total_tax else 0)) }}</td>
                             </tr>
                             <tr>
                                 <td>Total Transactions (Completed)</td>
@@ -220,7 +233,7 @@
                                 <td class="right">{{ best_selling_service }}</td>
                             </tr>
                             <tr class="total">
-                                <td>Net Revenue</td>
+                                <td>Net Revenue (After Tax)</td>
                                 <td class="right">₱ {{ '{:,.2f}'.format(completed_total_net) }}</td>
                             </tr>
                         </tbody>

@@ -10,6 +10,9 @@ from firebase_admin import credentials, firestore
 # PLACEHOLDER PALANG NIS FIRESTORE CLIENT (LAZY INITIALIZATION)
 db = None
 
+# TAX RATE FOR PHILIPPINES (12% VAT)
+TAX_RATE = 0.12
+
 # ARI NA JUD MAGSUGOD A TUNG HELPERS HAHHAHAH
 # GLOBAL FIRESTORE CLIENT s
 '''
@@ -553,7 +556,7 @@ def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str
               total_weight: float, total_load: int, total_price: float, 
               order_note: str = None, pickup_schedule: str = None,
               order_status: str = 'Pending', payment_method: str = None, 
-              payment_status: str = 'Unpaid') -> int:
+              payment_status: str = 'Unpaid', tax: float = 0.0) -> int:
     """Create a new ORDER row and return its ORDER_ID."""
     _require_db()
     transaction = db.transaction()
@@ -566,6 +569,7 @@ def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str
         'ORDER_TYPE': order_type,
         'TOTAL_WEIGHT': float(total_weight),
         'TOTAL_LOAD': int(total_load),
+        'TAX': float(tax),
         'TOTAL_PRICE': float(total_price),
         'QR_CODE': None,
         'RECEIPT_PATH': None,
