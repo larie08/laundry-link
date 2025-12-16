@@ -83,6 +83,10 @@
                             </label>
                         </div>
                         {% endfor %}
+
+                        <!--weight suggestion message-->
+                        <div class="suggestion-message" id="detergentSuggestion"></div>
+
                         <div class="modal-buttons">
                             <button type="button" class="submit" onclick="closeDetergentModal()" data-translate="done_btn">Done</button>
                             <button type="button" class="cancel" onclick="closeDetergentModal()" data-translate="cancel_btn">Cancel</button>
@@ -130,6 +134,10 @@
                             </label>
                         </div>
                         {% endfor %}
+
+                        <!--weight suggestion message-->
+                        <div class="suggestion-message" id="fabconSuggestion"></div>
+
                         <div class="modal-buttons">
                             <button type="button" class="submit" onclick="closeFabconModal()" data-translate="done_btn">Done</button>
                             <button type="button" class="cancel" onclick="closeFabconModal()" data-translate="cancel_btn">Cancel</button>
@@ -467,13 +475,25 @@
     function changeQty(inputId, delta) {
         const input = document.getElementById(inputId);
         if (!input) return;
+
+        // Check if related checkbox is checked
+        const checkboxId = inputId.replace('_qty_', '_');
+        const checkbox = document.getElementById(checkboxId);
+
+        if (!checkbox || !checkbox.checked) {
+            showErrorModal('Please select the item first before adding quantity.');
+            return;
+        }
+
         let val = parseInt(input.value) || 1;
         val += delta;
         if (val < 1) val = 1;
         input.value = val;
+
         enforceAvailable(input);
         input.dispatchEvent(new Event('change'));
     }
+
     
     // Error Modal
     function showErrorModal(message) {
@@ -658,6 +678,48 @@
                 fabconBtn.classList.remove('selected');
             }
         }
+        //weight suggestion message
+        function getLaundryWeight() {
+            let weight = sessionStorage.getItem('laundry_weight');
+
+            if (!weight) {
+                const weightInput = document.getElementById('totalWeight');
+                if (weightInput) {
+                    weight = weightInput.value;
+                }
+            }
+
+            return parseFloat(weight) || 0;
+        }
+
+        function updateSuggestionsByWeight() {
+            const weight = getLaundryWeight();
+
+            const detergentMsg = document.getElementById('detergentSuggestion');
+            const fabconMsg = document.getElementById('fabconSuggestion');
+
+            if (!detergentMsg || !fabconMsg) return;
+
+            if (weight <= 0) {
+                detergentMsg.textContent = '💡 Suggested amount will appear once weight is set.';
+                fabconMsg.textContent = '💡 Suggested amount will appear once weight is set.';
+                return;
+            }
+
+            if (weight <= 5) {
+                detergentMsg.textContent = '💡 Suggested: 1 detergent for light load (≤ 5kg).';
+                fabconMsg.textContent = '💡 Suggested: 1 fabcon for light load (≤ 5kg).';
+            } else if (weight <= 8) {
+                detergentMsg.textContent = '💡 Suggested: 2 detergents for regular load (6–8kg).';
+                fabconMsg.textContent = '💡 Suggested: 1–2 fabcons for regular load (6–8kg).';
+            } else {
+                detergentMsg.textContent = '💡 Suggested: 3 detergents for heavy load (9kg+).';
+                fabconMsg.textContent = '💡 Suggested: 2–3 fabcons for heavy load (9kg+).';
+            }
+        }
+        //weight suggestion message
+        updateSuggestionsByWeight();
+
         function validateInventorySelection() {
             let isValid = true;
 
@@ -814,6 +876,47 @@
         }
         {% endif %}
         updateTotals();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+    function setupValidation(type) {
+        const checkboxes = document.querySelectorAll(`.${type}-checkbox`);
+
+        checkboxes.forEach(cb => {
+            const id = cb.value;
+            const qtyInput = document.getElementById(`${type}_qty_${id}`);
+
+            // Disable quantity initially
+            qtyInput.disabled = true;
+
+            // Toggle quantity when checkbox changes
+            cb.addEventListener('change', function () {
+                if (this.checked) {
+                    qtyInput.disabled = false;
+                } else {
+                    qtyInput.disabled = true;
+                    qtyInput.value = 1; // reset quantity
+                }
+            });
+        });
+    }
+
+    setupValidation('detergent');
+    setupValidation('fabcon');
+
+});
+
+    document.querySelectorAll('.quantity input[type="number"]').forEach(input => {
+        input.addEventListener('focus', function () {
+            const checkboxId = this.id.replace('_qty_', '_');
+            const checkbox = document.getElementById(checkboxId);
+
+            if (!checkbox || !checkbox.checked) {
+                showErrorModal('Please select the item first before adding quantity.');
+                this.blur();
+            }
+        });
     });
 </script>
 </html>

@@ -333,53 +333,129 @@
         </main>
     </div>
     <script>
-        // DATE FILTER
+        // PERIOD FILTER
         document.addEventListener('DOMContentLoaded', function() {
-            const startDateInput = document.getElementById('startDate');
-            const endDateInput = document.getElementById('endDate');
-            const applyDateFilterBtn = document.getElementById('applyDateFilter');
-            const clearDateFilterBtn = document.getElementById('clearDateFilter');
+            const periodFilter = document.getElementById('periodFilter');
+            const applyPeriodFilterBtn = document.getElementById('applyPeriodFilter');
+            const clearPeriodFilterBtn = document.getElementById('clearPeriodFilter');
 
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('start_date')) {
-                startDateInput.value = urlParams.get('start_date');
-            }
-            if (urlParams.has('end_date')) {
-                endDateInput.value = urlParams.get('end_date');
+            
+            // Check if there are existing date filters and set the period accordingly
+            if (urlParams.has('start_date') && urlParams.has('end_date')) {
+                const startDate = new Date(urlParams.get('start_date'));
+                const endDate = new Date(urlParams.get('end_date'));
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const startDateStr = urlParams.get('start_date');
+                const endDateStr = urlParams.get('end_date');
+                const todayStr = today.toISOString().split('T')[0];
+                
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Try to detect which period this corresponds to
+                if (diffDays === 0 && startDateStr === todayStr) {
+                    periodFilter.value = 'daily';
+                } else if (diffDays <= 7) {
+                    periodFilter.value = 'weekly';
+                } else if (diffDays <= 30) {
+                    periodFilter.value = 'monthly';
+                } else if (diffDays >= 365) {
+                    periodFilter.value = 'yearly';
+                }
+            } else {
+                // Default to daily (today)
+                periodFilter.value = 'daily';
             }
 
-            applyDateFilterBtn.addEventListener('click', function() {
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
+            applyPeriodFilterBtn.addEventListener('click', function() {
+                const period = periodFilter.value;
                 const searchQuery = urlParams.get('q') || '';
+                
+                let startDate = '';
+                let endDate = '';
+                const today = new Date();
+                
+                if (period === '') {
+                    // All Time - clear filters
+                    let url = new URL(window.location);
+                    url.searchParams.delete('start_date');
+                    url.searchParams.delete('end_date');
+                    if (searchQuery) {
+                        url.searchParams.set('q', searchQuery);
+                    }
+                    url.searchParams.set('page', '1');
+                    window.location.href = url;
+                    return;
+                }
+                
+                if (period) {
+                    endDate = today.toISOString().split('T')[0];
+                    
+                    if (period === 'daily') {
+                        startDate = endDate;
+                    } else if (period === 'weekly') {
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        startDate = weekAgo.toISOString().split('T')[0];
+                    } else if (period === 'monthly') {
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        startDate = monthAgo.toISOString().split('T')[0];
+                    } else if (period === 'yearly') {
+                        const yearAgo = new Date(today);
+                        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                        startDate = yearAgo.toISOString().split('T')[0];
+                    }
+                }
                 
                 let url = new URL(window.location);
                 if (searchQuery) {
                     url.searchParams.set('q', searchQuery);
                 }
-                if (startDate) {
+                if (startDate && endDate) {
                     url.searchParams.set('start_date', startDate);
-                }
-                if (endDate) {
                     url.searchParams.set('end_date', endDate);
+                    url.searchParams.set('page', '1');
+                } else {
+                    url.searchParams.delete('start_date');
+                    url.searchParams.delete('end_date');
+                    url.searchParams.set('page', '1');
                 }
                 window.location.href = url;
             });
 
-            // CLEAR DATE FILTER
-            clearDateFilterBtn.addEventListener('click', function() {
-                startDateInput.value = '';
-                endDateInput.value = '';
+            // CLEAR PERIOD FILTER
+            clearPeriodFilterBtn.addEventListener('click', function() {
+                periodFilter.value = '';
                 
                 const searchQuery = urlParams.get('q') || '';
                 
                 let url = new URL(window.location);
+                url.searchParams.delete('start_date');
+                url.searchParams.delete('end_date');
+                url.searchParams.set('page', '1');
                 if (searchQuery) {
                     url.searchParams.set('q', searchQuery);
                 }
                 window.location.href = url;
             });
         });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            const main = document.querySelector('main');
+            
+            if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+                sidebar.style.display = 'block';
+                main.style.marginLeft = '250px';
+            } else {
+                sidebar.style.display = 'none';
+                main.style.marginLeft = '0';
+            }
+        }
     </script>
 </body>
 </html>
