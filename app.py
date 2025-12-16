@@ -4999,9 +4999,53 @@ def api_complete_pickup(order_id):
     
     return jsonify({'status': 'success'})
 
+# ============================== SUPER ADMIN ========================
+@app.route('/super_admin_login', methods=['GET', 'POST'])
+def super_admin_login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = authenticate_user(username, password)
 
+        if user and user['ROLE'].lower() == 'super_admin':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['role'] = user['ROLE']
+            return redirect(url_for('super_admin_dashboard')) 
+        else:
+            flash('Invalid username or password, or not a super admin account.', 'danger')
+            return redirect(url_for('super_admin_login'))
 
+    return render_template('super_admin_login.html', error=error)
 
+@app.route('/super_admin_dashboard')
+def super_admin_dashboard():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    orders = dbhelper.get_all_orders_with_priority()
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    monthly_earnings = 0.0
+
+    for order in orders:
+        date_created = order.get('DATE_CREATED')
+        if date_created:
+            if hasattr(date_created, 'date'):
+                order_date = date_created.date()
+            else:
+                order_date = date_created
+
+            order_price = float(order.get('TOTAL_PRICE', 0.0))
+
+            if order_date.month == current_month and order_date.year == current_year:
+                monthly_earnings += order_price
+
+    order_stats = dbhelper.compute_order_stats(orders, days=7)
+    order_status_counts = order_stats.get('status_counts', {})
+    order_trend = order_stats.get('trend', {'labels': [], 'counts': []})
+                
+    return render_template('super_admin_dashboard.html', monthly_earnings=monthly_earnings, order_status_counts=order_status_counts, order_trend=order_trend)
 
     
 if __name__ == '__main__':

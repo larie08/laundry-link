@@ -87,6 +87,20 @@ def _ensure_default_users():
             'DATE_CREATED': _now(),
         })
 
+    # SUPER ADMIN ACCOUNT
+    super_admin_q = users_ref.where('USERNAME', '==', 'super_admin').limit(1).get()
+    if not super_admin_q:
+        transaction = db.transaction()
+        super_admin_id = _get_next_id(transaction, 'USER_ID')
+        users_ref.add({
+            'USER_ID': super_admin_id,
+            'USERNAME': 'superadmin',
+            'PASSWORD': 'superadmin123',
+            'ROLE': 'super_admin',
+            'FULLNAME': 'Super Admin',
+            'DATE_CREATED': _now(),
+        })
+
 # HELPER FUNCTIONS 
 def _now() -> datetime:
     """Return current timestamp as Python datetime (Firestore stores natively)."""
