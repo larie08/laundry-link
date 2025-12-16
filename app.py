@@ -168,11 +168,11 @@ def submit_others():
     total_load = session.get('total_load', 0)
     price_per_load = get_price_per_load(session.get('order_type', 'Drop-off'))
 
-    # Calculate totals
-    total_price = 0.0
+    # Calculate subtotal
+    subtotal = 0.0
 
     # Load price (50 per load)
-    total_price += total_load * price_per_load
+    subtotal += total_load * price_per_load
 
     # Store detergent details
     detergent_details = []
@@ -185,7 +185,7 @@ def submit_others():
                 'quantity': qty,
                 'unit_price': price
             })
-            total_price += qty * price
+            subtotal += qty * price
 
     # Store fabcon details
     fabcon_details = []
@@ -198,21 +198,27 @@ def submit_others():
                 'quantity': qty,
                 'unit_price': price
             })
-            total_price += qty * price
+            subtotal += qty * price
 
     # Additional service costs
     if iron:
-        total_price += 50.00
+        subtotal += 50.00
     if fold:
-        total_price += 70.00
+        subtotal += 70.00
     if priority:
-        total_price += 50.00
+        subtotal += 50.00
+    
+    # Calculate tax and total
+    tax = round(subtotal * 0.12, 2)  # 12% VAT
+    total_price = round(subtotal + tax, 2)
     
     # Store all order data in session instead of saving to DB
     session['order_data'] = {
         'order_type': session.get('order_type', 'Drop-off'),
         'total_weight': total_weight,
         'total_load': total_load,
+        'subtotal': round(subtotal, 2),
+        'tax': tax,
         'total_price': total_price,
         'price_per_load': price_per_load,
         'order_note': order_note,
@@ -309,6 +315,7 @@ def payments():
             total_weight=order_data['total_weight'],
             total_load=order_data['total_load'],
             total_price=order_data['total_price'],
+            tax=order_data.get('tax', 0.0),
             order_note=order_data['order_note'],
             pickup_schedule=order_data['pickup_schedule'],
             order_status=order_status_value,
@@ -1522,6 +1529,12 @@ def admin_order_report():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not start_date and not end_date:
+        start_date = today
+        end_date = today
+    
     # Get all orders
     all_orders = dbhelper.get_all_orders_with_priority()
 
@@ -1790,7 +1803,11 @@ def inventory_report():
     detergents = sorted(detergents, key=get_sort_date, reverse=False)
     fabric_conditioners = sorted(fabric_conditioners, key=get_sort_date, reverse=False)
     
-    # Apply period filtering if period is provided
+    # Default to daily (today) if no period is provided
+    if not period:
+        period = 'daily'
+    
+    # Apply period filtering
     if period:
         from datetime import date, timedelta
         today = date.today()
@@ -2031,6 +2048,12 @@ def download_order_report(format):
     view = request.args.get('view', '')
     selected_month = request.args.get('month', '')
     customer_id = request.args.get('customer_id', type=int)
+
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not start_date and not end_date:
+        start_date = today
+        end_date = today
 
     # Get all orders
     orders = dbhelper.get_all_orders_with_priority()
@@ -2969,6 +2992,12 @@ def customer_report():
     file_format = request.args.get('format')
     customer_type = request.args.get('type', 'all')
     
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not date_from and not date_to:
+        date_from = today
+        date_to = today
+    
     if file_format:
         return redirect(url_for('download_customer_report', format=file_format, 
                                 type=customer_type, q=search_query, 
@@ -2982,6 +3011,14 @@ def customer_report():
                      search_query in str(c['CUSTOMER_ID']) or 
                      (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
     
+    # Define helper function to normalize datetimes
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    
     # Apply date filtering
     if date_from or date_to:
         filtered_customers = []
@@ -2989,12 +3026,12 @@ def customer_report():
             include = True
             if date_from and customer['DATE_CREATED']:
                 from_date = datetime.strptime(date_from, '%Y-%m-%d')
-                if customer['DATE_CREATED'] < from_date:
+                if make_naive(customer['DATE_CREATED']) < from_date:
                     include = False
             if date_to and customer['DATE_CREATED']:
                 to_date = datetime.strptime(date_to, '%Y-%m-%d')
                 to_date = to_date.replace(hour=23, minute=59, second=59)
-                if customer['DATE_CREATED'] > to_date:
+                if make_naive(customer['DATE_CREATED']) > to_date:
                     include = False
             if include:
                 filtered_customers.append(customer)
@@ -3008,12 +3045,6 @@ def customer_report():
     customers = [c for c in customers if _is_completed_paid(c)]
     total_customers = len(customers)
     thirty_days_ago = datetime.now() - timedelta(days=30)
-    def make_naive(dt):
-        if dt is None:
-            return None
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-            return dt.replace(tzinfo=None)
-        return dt
     new_customers_list = [
         c for c in customers
         if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
@@ -3060,6 +3091,12 @@ def download_customer_report(format):
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     
+    # Default to today if no dates provided
+    today = datetime.now().strftime('%Y-%m-%d')
+    if not date_from and not date_to:
+        date_from = today
+        date_to = today
+    
     # Get all customers with stats (batch)
     customers = dbhelper.get_all_customers_with_order_stats()
     
@@ -3069,6 +3106,14 @@ def download_customer_report(format):
                      search_query in str(c['CUSTOMER_ID']) or 
                      (c['PHONE_NUMBER'] and search_query in c['PHONE_NUMBER'])]
     
+    # Define helper function to normalize datetimes
+    def make_naive(dt):
+        if dt is None:
+            return None
+        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+            return dt.replace(tzinfo=None)
+        return dt
+    
     # Apply date filtering
     if date_from or date_to:
         filtered_customers = []
@@ -3076,23 +3121,17 @@ def download_customer_report(format):
             include = True
             if date_from and customer['DATE_CREATED']:
                 from_date = datetime.strptime(date_from, '%Y-%m-%d')
-                if customer['DATE_CREATED'] < from_date:
+                if make_naive(customer['DATE_CREATED']) < from_date:
                     include = False
             if date_to and customer['DATE_CREATED']:
                 to_date = datetime.strptime(date_to, '%Y-%m-%d')
                 to_date = to_date.replace(hour=23, minute=59, second=59)
-                if customer['DATE_CREATED'] > to_date:
+                if make_naive(customer['DATE_CREATED']) > to_date:
                     include = False
             if include:
                 filtered_customers.append(customer)
         customers = filtered_customers
     thirty_days_ago = datetime.now() - timedelta(days=30)
-    def make_naive(dt):
-        if dt is None:
-            return None
-        if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-            return dt.replace(tzinfo=None)
-        return dt
     new_customers_list = [
         c for c in customers
         if c['DATE_CREATED'] and make_naive(c['DATE_CREATED']) >= make_naive(thirty_days_ago)
@@ -3111,18 +3150,40 @@ def download_customer_report(format):
         
         # Create DataFrame
         data = []
+        total_revenue = 0.0
         for customer in customers_to_display:
+            total_price = float(customer.get('TOTAL_PRICE', 0) or 0)
+            total_revenue += total_price
             data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
+                'Customer ID': customer['CUSTOMER_ID'],
+                'Customer Name': customer['FULLNAME'],
                 'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
                 'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+                'Order Type': customer.get('ORDER_TYPE', 'N/A'),
+                'Order Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A'),
+                'Total Price': total_price,
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Date Updated': customer.get('DATE_UPDATED').strftime('%Y-%m-%d') if customer.get('DATE_UPDATED') else 'N/A'
             })
         
         df = pd.DataFrame(data)
+        
+        # Add total row
+        if not df.empty:
+            total_row = pd.DataFrame([{
+                'Customer ID': 'TOTAL',
+                'Customer Name': '',
+                'Phone Number': '',
+                'Order ID': '',
+                'Order Type': '',
+                'Order Status': '',
+                'Payment Status': '',
+                'Total Price': total_revenue,
+                'Date Created': '',
+                'Date Updated': ''
+            }])
+            df = pd.concat([df, total_row], ignore_index=True)
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name=sheet_name, index=False)
             
@@ -3143,26 +3204,41 @@ def download_customer_report(format):
                 worksheet.write(0, col_num, value, header_format)
                 
             worksheet.set_column('A:A', 8)   # ID
-            worksheet.set_column('B:B', 20)  # Full Name
+            worksheet.set_column('B:B', 20)  # Customer Name
             worksheet.set_column('C:C', 15)  # Phone Number
-            worksheet.set_column('D:D', 15)  # Date Created
-            worksheet.set_column('E:E', 10)  # Order ID
-            worksheet.set_column('F:F', 15)  # Status
+            worksheet.set_column('D:D', 12)  # Order ID
+            worksheet.set_column('E:E', 15)  # Order Type
+            worksheet.set_column('F:F', 15)  # Order Status
             worksheet.set_column('G:G', 15)  # Payment Status
+            worksheet.set_column('H:H', 12)  # Total Price
+            worksheet.set_column('I:I', 15)  # Date Created
+            worksheet.set_column('J:J', 15)  # Date Updated
+            
+            # Format the total row (last row)
+            total_fmt = workbook.add_format({
+                'bold': True,
+                'align': 'right',
+                'valign': 'vcenter',
+                'num_format': '0.00',
+                'bg_color': '#f5f7fa',
+                'border': 1
+            })
+            last_row = len(df)
+            worksheet.write(last_row, 7, total_revenue, total_fmt)
             
         output.seek(0)
         return send_file(output, download_name=f"{filename}.xlsx", as_attachment=True)
     
     elif format == 'pdf':
         pdf = FPDF(orientation='L', unit='mm', format='legal')
-        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_auto_page_break(auto=True, margin=8)
         
         def add_title_bar(title):
             pdf.set_fill_color(18, 45, 105)  # #122D69
             pdf.set_text_color(255, 255, 255)
-            pdf.set_font('Arial', 'B', 16)
-            pdf.cell(0, 14, title, ln=True, align='C', fill=True)
-            pdf.ln(2)
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 10, title, ln=True, align='C', fill=True)
+            pdf.ln(1)
 
         def add_table(df):
             if df.empty:
@@ -3171,29 +3247,32 @@ def download_customer_report(format):
                 pdf.cell(0, 7, 'No data available.', ln=True, align='C')
                 return
                 
-            pdf.set_font('Arial', 'B', 8)
+            pdf.set_font('Arial', 'B', 6)
             pdf.set_fill_color(245, 247, 250)  # #f5f7fa
             pdf.set_text_color(35, 56, 114)    # #233872
             
             available_width = pdf.w - 2 * pdf.l_margin
-            columns = ['ID', 'Full Name', 'Phone Number', 'Date Created', 'Order ID', 'Status', 'Payment Status']
+            columns = ['Cust ID', 'Customer Name', 'Phone', 'Order ID', 'Order Type', 'Status', 'Payment', 'Total Price', 'Date Created', 'Date Updated']
             
             col_widths = [
-                available_width * 0.10,  # ID
-                available_width * 0.20,  # Full Name
-                available_width * 0.15,  # Phone Number
-                available_width * 0.15,  # Date Created
-                available_width * 0.15,  # Order ID
-                available_width * 0.12,  # Status
-                available_width * 0.13   # Payment Status
+                available_width * 0.07,  # Cust ID
+                available_width * 0.14,  # Customer Name
+                available_width * 0.10,  # Phone
+                available_width * 0.08,  # Order ID
+                available_width * 0.10,  # Order Type
+                available_width * 0.09,  # Status
+                available_width * 0.09,  # Payment
+                available_width * 0.09,  # Total Price
+                available_width * 0.09,  # Date Created
+                available_width * 0.09   # Date Updated
             ]
             
             # Header
             for i, col in enumerate(columns):
-                pdf.cell(col_widths[i], 7, str(col), border=1, align='C', fill=True)
+                pdf.cell(col_widths[i], 5, str(col), border=1, align='C', fill=True)
             pdf.ln()
             
-            pdf.set_font('Arial', '', 9)
+            pdf.set_font('Arial', '', 6)
             for row_idx, customer in df.iterrows():
                 if row_idx % 2 == 0:
                     pdf.set_fill_color(248, 250, 252)  # #f8fafc
@@ -3201,28 +3280,35 @@ def download_customer_report(format):
                     pdf.set_fill_color(255, 255, 255)  # white
                 pdf.set_text_color(0, 0, 0)
                 
-                date_created = customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A'
-                
-                pdf.cell(col_widths[0], 7, str(customer['CUSTOMER_ID']), border=1, align='C', fill=True)
-                pdf.cell(col_widths[1], 7, customer['FULLNAME'], border=1, align='C', fill=True)
-                pdf.cell(col_widths[2], 7, customer['PHONE_NUMBER'] or 'N/A', border=1, align='C', fill=True)
-                pdf.cell(col_widths[3], 7, date_created, border=1, align='C', fill=True)
-                pdf.cell(col_widths[4], 7, str(customer.get('ORDER_ID', 'N/A')), border=1, align='C', fill=True)
-                pdf.cell(col_widths[5], 7, customer.get('ORDER_STATUS', 'N/A'), border=1, align='C', fill=True)
-                pdf.cell(col_widths[6], 7, customer.get('PAYMENT_STATUS', 'N/A'), border=1, align='C', fill=True)
+                pdf.cell(col_widths[0], 5, str(customer.get('Customer ID', 'N/A')), border=1, align='C', fill=True)
+                pdf.cell(col_widths[1], 5, str(customer.get('Customer Name', 'N/A'))[:20], border=1, align='L', fill=True)
+                pdf.cell(col_widths[2], 5, str(customer.get('Phone Number', 'N/A'))[:12], border=1, align='C', fill=True)
+                pdf.cell(col_widths[3], 5, str(customer.get('Order ID', 'N/A')), border=1, align='C', fill=True)
+                pdf.cell(col_widths[4], 5, str(customer.get('Order Type', 'N/A'))[:10], border=1, align='C', fill=True)
+                pdf.cell(col_widths[5], 5, str(customer.get('Order Status', 'N/A'))[:10], border=1, align='C', fill=True)
+                pdf.cell(col_widths[6], 5, str(customer.get('Payment Status', 'N/A'))[:10], border=1, align='C', fill=True)
+                pdf.cell(col_widths[7], 5, f"P {float(customer.get('Total Price', 0) or 0):.2f}", border=1, align='R', fill=True)
+                pdf.cell(col_widths[8], 5, str(customer.get('Date Created', 'N/A')), border=1, align='C', fill=True)
+                pdf.cell(col_widths[9], 5, str(customer.get('Date Updated', 'N/A')), border=1, align='C', fill=True)
                 pdf.ln()
 
         # Create DataFrame
         data = []
+        total_revenue = 0.0
         for customer in customers_to_display:
+            total_price = float(customer.get('TOTAL_PRICE', 0) or 0)
+            total_revenue += total_price
             data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
+                'Customer ID': customer['CUSTOMER_ID'],
+                'Customer Name': customer['FULLNAME'],
                 'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
                 'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+                'Order Type': customer.get('ORDER_TYPE', 'N/A'),
+                'Order Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A'),
+                'Total Price': total_price,
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Date Updated': customer.get('DATE_UPDATED').strftime('%Y-%m-%d') if customer.get('DATE_UPDATED') else 'N/A'
             })
         df = pd.DataFrame(data)
         
@@ -3238,17 +3324,27 @@ def download_customer_report(format):
         add_title_bar(f"{sheet_name} Report")
         
         if date_from or date_to:
-            pdf.set_font('Arial', '', 10)
+            pdf.set_font('Arial', '', 8)
             pdf.set_text_color(0, 0, 0)
             date_range = "Date Range: "
             if date_from:
                 date_range += f"From {date_from} "
             if date_to:
                 date_range += f"To {date_to}"
-            pdf.cell(0, 7, date_range, ln=True, align='L')
-            pdf.ln(2)
+            pdf.cell(0, 5, date_range, ln=True, align='L')
+            pdf.ln(1)
         
         add_table(df)
+        
+        # Footer summary: total count and total revenue
+        pdf.ln(3)
+        pdf.set_font('Arial', 'B', 8)
+        total_revenue_display = f"PHP {total_revenue:,.2f}"
+        footer_text = f"Total Transactions: {len(df)}    Total Revenue: {total_revenue_display}"
+        pdf.cell(0, 5, footer_text, ln=True, align='R')
+        pdf.set_font('Arial', '', 7)
+        generated_at = datetime.now().strftime('%B %d, %Y %I:%M %p')
+        pdf.cell(0, 4, f"Date Generated: {generated_at}", ln=True, align='R')
         
         output = io.BytesIO(pdf.output(dest='S').encode('latin1'))
         output.seek(0)
@@ -3260,13 +3356,16 @@ def download_customer_report(format):
         data = []
         for customer in customers_to_display:
             data.append({
-                'ID': customer['CUSTOMER_ID'],
-                'Full Name': customer['FULLNAME'],
+                'Customer ID': customer['CUSTOMER_ID'],
+                'Customer Name': customer['FULLNAME'],
                 'Phone Number': customer['PHONE_NUMBER'] or 'N/A',
-                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
                 'Order ID': customer.get('ORDER_ID', 'N/A'),
-                'Status': customer.get('ORDER_STATUS', 'N/A'),
-                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A')
+                'Order Type': customer.get('ORDER_TYPE', 'N/A'),
+                'Order Status': customer.get('ORDER_STATUS', 'N/A'),
+                'Payment Status': customer.get('PAYMENT_STATUS', 'N/A'),
+                'Total Price': float(customer.get('TOTAL_PRICE', 0) or 0),
+                'Date Created': customer['DATE_CREATED'].strftime('%Y-%m-%d') if customer['DATE_CREATED'] else 'N/A',
+                'Date Updated': customer.get('DATE_UPDATED').strftime('%Y-%m-%d') if customer.get('DATE_UPDATED') else 'N/A'
             })
         
         df = pd.DataFrame(data)
@@ -3935,10 +4034,26 @@ def income_statement():
     
     # Calculate metrics
     total_transactions = len(filtered_orders)
-    total_sales = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    total_sales_with_tax = sum(float(o.get('TOTAL_PRICE', 0) or 0) for o in filtered_orders)
+    
+    # Calculate total tax - if TAX field exists in order, use it; otherwise calculate from TOTAL_PRICE
+    total_tax = 0.0
+    for o in filtered_orders:
+        tax_val = float(o.get('TAX') or 0)
+        if tax_val > 0:
+            # TAX field has value, use it
+            total_tax += tax_val
+        else:
+            # TAX field is missing/0, calculate it as TOTAL_PRICE / 1.12 * 0.12
+            total_price = float(o.get('TOTAL_PRICE', 0) or 0)
+            if total_price > 0:
+                calculated_tax = (total_price / 1.12) * 0.12
+                total_tax += calculated_tax
+    
+    total_sales = total_sales_with_tax - total_tax  # Sales before tax
     
     # Calculate service sales (from orders with ORDER_TYPE)
-    service_sales = 0.0
+    service_sales = total_sales  # This is our revenue before tax
     other_sales = 0.0
     
     # Count services for best/slowest selling
@@ -3951,8 +4066,6 @@ def income_statement():
         order_type = order.get('ORDER_TYPE', '').strip()
         if order_type:
             service_counts[order_type] = service_counts.get(order_type, 0) + 1
-            price = float(order.get('TOTAL_PRICE', 0) or 0)
-            service_sales += price
         
         # Get order item details
         orderitem_id = order.get('ORDERITEM_ID')
@@ -4094,6 +4207,18 @@ def income_statement():
         
         cust_id = order.get('CUSTOMER_ID')
         customer_info = customer_lookup.get(cust_id, {})
+        
+        # Calculate tax - if TAX field exists and is > 0, use it; otherwise calculate from TOTAL_PRICE
+        total_price = float(order.get('TOTAL_PRICE', 0) or 0)
+        tax_value = float(order.get('TAX') or 0)
+        if tax_value <= 0:
+            # TAX field missing/0, calculate it as TOTAL_PRICE / 1.12 * 0.12
+            tax_value = (total_price / 1.12) * 0.12 if total_price > 0 else 0
+        
+        revenue = total_price - tax_value
+        cogs = revenue * 0.3
+        net = revenue * 0.7
+        
         all_orders_breakdown.append({
             'ORDER_ID': order.get('ORDER_ID'),
             'CUSTOMER_ID': cust_id,
@@ -4101,9 +4226,10 @@ def income_statement():
             'PHONE_NUMBER': customer_info.get('PHONE_NUMBER', 'N/A'),
             'ORDER_TYPE': order.get('ORDER_TYPE', 'N/A'),
             'ORDER_STATUS': order.get('ORDER_STATUS', 'N/A'),
-            'Revenue': float(order.get('TOTAL_PRICE', 0) or 0),
-            'COGS': float(order.get('TOTAL_PRICE', 0) or 0) * 0.3,
-            'Net': float(order.get('TOTAL_PRICE', 0) or 0) * 0.7
+            'Revenue': revenue,
+            'Tax': tax_value,
+            'COGS': cogs,
+            'Net': net
         })
     
     # Calculate completed orders summary totals
@@ -4149,6 +4275,7 @@ def income_statement():
         income_before_tax=income_before_tax,
         net_income=net_income,
         total_transactions=total_transactions,
+        total_tax=total_tax,
         best_selling_service=best_selling_service,
         customers_breakdown=customers_breakdown,
         all_customers_breakdown=all_customers_breakdown,  # For modals
@@ -4872,9 +4999,53 @@ def api_complete_pickup(order_id):
     
     return jsonify({'status': 'success'})
 
+# ============================== SUPER ADMIN ========================
+@app.route('/super_admin_login', methods=['GET', 'POST'])
+def super_admin_login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = authenticate_user(username, password)
 
+        if user and user['ROLE'].lower() == 'super_admin':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['role'] = user['ROLE']
+            return redirect(url_for('super_admin_dashboard')) 
+        else:
+            flash('Invalid username or password, or not a super admin account.', 'danger')
+            return redirect(url_for('super_admin_login'))
 
+    return render_template('super_admin_login.html', error=error)
 
+@app.route('/super_admin_dashboard')
+def super_admin_dashboard():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    orders = dbhelper.get_all_orders_with_priority()
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    monthly_earnings = 0.0
+
+    for order in orders:
+        date_created = order.get('DATE_CREATED')
+        if date_created:
+            if hasattr(date_created, 'date'):
+                order_date = date_created.date()
+            else:
+                order_date = date_created
+
+            order_price = float(order.get('TOTAL_PRICE', 0.0))
+
+            if order_date.month == current_month and order_date.year == current_year:
+                monthly_earnings += order_price
+
+    order_stats = dbhelper.compute_order_stats(orders, days=7)
+    order_status_counts = order_stats.get('status_counts', {})
+    order_trend = order_stats.get('trend', {'labels': [], 'counts': []})
+                
+    return render_template('super_admin_dashboard.html', monthly_earnings=monthly_earnings, order_status_counts=order_status_counts, order_trend=order_trend)
 
     
 if __name__ == '__main__':

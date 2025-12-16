@@ -10,6 +10,9 @@ from firebase_admin import credentials, firestore
 # PLACEHOLDER PALANG NIS FIRESTORE CLIENT (LAZY INITIALIZATION)
 db = None
 
+# TAX RATE FOR PHILIPPINES (12% VAT)
+TAX_RATE = 0.12
+
 # ARI NA JUD MAGSUGOD A TUNG HELPERS HAHHAHAH
 # GLOBAL FIRESTORE CLIENT s
 '''
@@ -81,6 +84,20 @@ def _ensure_default_users():
             'PASSWORD': 'staff123',
             'ROLE': 'staff',
             'FULLNAME': 'Staff',
+            'DATE_CREATED': _now(),
+        })
+
+    # SUPER ADMIN ACCOUNT
+    super_admin_q = users_ref.where('USERNAME', '==', 'super_admin').limit(1).get()
+    if not super_admin_q:
+        transaction = db.transaction()
+        super_admin_id = _get_next_id(transaction, 'USER_ID')
+        users_ref.add({
+            'USER_ID': super_admin_id,
+            'USERNAME': 'superadmin',
+            'PASSWORD': 'superadmin123',
+            'ROLE': 'super_admin',
+            'FULLNAME': 'Super Admin',
             'DATE_CREATED': _now(),
         })
 
@@ -553,7 +570,7 @@ def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str
               total_weight: float, total_load: int, total_price: float, 
               order_note: str = None, pickup_schedule: str = None,
               order_status: str = 'Pending', payment_method: str = None, 
-              payment_status: str = 'Unpaid') -> int:
+              payment_status: str = 'Unpaid', tax: float = 0.0) -> int:
     """Create a new ORDER row and return its ORDER_ID."""
     _require_db()
     transaction = db.transaction()
@@ -566,6 +583,7 @@ def add_order(customer_id: int, orderitem_id: int, user_id: int, order_type: str
         'ORDER_TYPE': order_type,
         'TOTAL_WEIGHT': float(total_weight),
         'TOTAL_LOAD': int(total_load),
+        'TAX': float(tax),
         'TOTAL_PRICE': float(total_price),
         'QR_CODE': None,
         'RECEIPT_PATH': None,
