@@ -5044,8 +5044,30 @@ def super_admin_dashboard():
     order_stats = dbhelper.compute_order_stats(orders, days=7)
     order_status_counts = order_stats.get('status_counts', {})
     order_trend = order_stats.get('trend', {'labels': [], 'counts': []})
+    
+    # Calculate Shop/Device Stats
+    shops = dbhelper.get_all_shops()
+    installed_shops_count = len(shops)
+    
+    # Kiosk (and implicitly ESP32) offline count
+    offline_kiosk_count = sum(1 for s in shops if s.get('kiosk', {}).get('status') != 'online')
+    total_offline_devices = offline_kiosk_count
                 
-    return render_template('super_admin_dashboard.html', monthly_earnings=monthly_earnings, order_status_counts=order_status_counts, order_trend=order_trend)
+    return render_template('super_admin_dashboard.html', 
+                           monthly_earnings=monthly_earnings, 
+                           order_status_counts=order_status_counts, 
+                           order_trend=order_trend,
+                           installed_shops_count=installed_shops_count,
+                           total_offline_devices=total_offline_devices,
+                           offline_kiosk_count=offline_kiosk_count)
+
+@app.route('/super_admin/shops')
+def laundry_shops():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    
+    shops = dbhelper.get_all_shops()
+    return render_template('super_admin_shops.html', shops=shops)
 
     
 if __name__ == '__main__':
