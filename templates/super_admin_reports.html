@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/super_admin_shops.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="../static/css/super_admin_reports.css">
+    <title>Transactions</title>
+</head>
+
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>LAUNDRYLINK</span>
+            </div>
+
+            <!-- MAIN NAVIGATION -->
+            <div class="w3-bar-block">
+                <a href="{{ url_for('super_admin_dashboard') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
+                <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-store fa-fw"></i> Laundry Shops</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                    Monitoring</a>
+                <a href="" class="w3-bar-item w3-button w3-padding active"><i class="fa fa-exchange-alt fa-fw"></i>
+                    Transactions</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                    Analytics</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
+                    Management</a>
+                <div class="logout-btn">
+                    <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
+                            class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Reports & Analytics</h1>
+                    <div class="breadcrumb">Main / Reports & Analytics</div>
+                </div>
+                
+            </header>
+
+            <div class="export-buttons">
+                    <button class="export-btn pdf-btn" onclick="exportPDF()">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="export-btn csv-btn" onclick="exportCSV()">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+            </div>
+
+            <br>
+            <!-- FILTERS SECTION -->
+            <section class="filters-section">
+                <div class="filter-container">
+                    <div class="filter-group">
+                        <label for="dateRange"><i class="fas fa-calendar-alt"></i> Date Range</label>
+                        <select id="dateRange" class="filter-select">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last7">Last 7 Days</option>
+                            <option value="last30">Last 30 Days</option>
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group custom-date hidden">
+                        <label for="startDate">From</label>
+                        <input type="date" id="startDate" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group custom-date hidden">
+                        <label for="endDate">To</label>
+                        <input type="date" id="endDate" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="shopFilter"><i class="fas fa-store"></i> Shop</label>
+                        <select id="shopFilter" class="filter-select">
+                            <option value="all">All Shops</option>
+                            <option value="shop1">City Center Branch</option>
+                            <option value="shop2">Mall of Asia Branch</option>
+                            <option value="shop3">Quezon City Branch</option>
+                            <option value="shop4">Makati Branch</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="reportType"><i class="fas fa-chart-bar"></i> Report Type</label>
+                        <select id="reportType" class="filter-select">
+                            <option value="all">All Reports</option>
+                            <option value="transaction">Transaction Reports</option>
+                            <option value="device">Device Uptime Reports</option>
+                            <option value="performance">Shop Performance Reports</option>
+                        </select>
+                    </div>
+                    
+                    <button class="apply-btn" onclick="applyFilters()">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <button class="reset-btn" onclick="resetFilters()">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </section>
+
+            <!-- SUMMARY CARDS -->
+            <section class="summary-cards">
+                <div class="card">
+                    <div class="card-icon revenue">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Total Revenue</h3>
+                        <p class="card-value">₱245,780.50</p>
+                        <p class="card-change positive">+12.5% from last month</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon transactions">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Total Transactions</h3>
+                        <p class="card-value">1,245</p>
+                        <p class="card-change positive">+8.3% from last month</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon uptime">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Device Uptime</h3>
+                        <p class="card-value">98.7%</p>
+                        <p class="card-change positive">+0.5% from last month</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon shops">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Active Shops</h3>
+                        <p class="card-value">15/18</p>
+                        <p class="card-change negative">-2 from last month</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPORTS SECTIONS -->
+            <section class="reports-section">
+                <!-- TRANSACTION REPORTS -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h2><i class="fas fa-exchange-alt"></i> Transaction Reports</h2>
+                        <div class="report-actions">
+                            <button class="action-btn" onclick="exportTransactionPDF()">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="action-btn" onclick="exportTransactionCSV()">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <div class="chart-container">
+                            <canvas id="transactionChart" style="width:100%;height:100%;"></canvas>
+                        </div>
+                        <div class="table-container">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Shop</th>
+                                        <th>Transactions</th>
+                                        <th>Revenue</th>
+                                        <th>Avg. Value</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15</td>
+                                        <td>City Center</td>
+                                        <td>85</td>
+                                        <td>₱16,450</td>
+                                        <td>₱193.53</td>
+                                        <td><span class="status-badge success">Success</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-14</td>
+                                        <td>Mall of Asia</td>
+                                        <td>92</td>
+                                        <td>₱18,920</td>
+                                        <td>₱205.65</td>
+                                        <td><span class="status-badge success">Success</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-13</td>
+                                        <td>Quezon City</td>
+                                        <td>78</td>
+                                        <td>₱14,850</td>
+                                        <td>₱190.38</td>
+                                        <td><span class="status-badge warning">Partial</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-12</td>
+                                        <td>Makati</td>
+                                        <td>95</td>
+                                        <td>₱20,150</td>
+                                        <td>₱212.11</td>
+                                        <td><span class="status-badge success">Success</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-11</td>
+                                        <td>City Center</td>
+                                        <td>88</td>
+                                        <td>₱17,300</td>
+                                        <td>₱196.59</td>
+                                        <td><span class="status-badge success">Success</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEVICE UPTIME REPORTS -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h2><i class="fas fa-microchip"></i> Device Uptime Reports</h2>
+                        <div class="report-actions">
+                            <button class="action-btn" onclick="exportDevicePDF()">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="action-btn" onclick="exportDeviceCSV()">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <div class="chart-container">
+                            <canvas id="uptimeChart" style="width:100%;height:100%;"></canvas>
+                        </div>
+                        <div class="table-container">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device ID</th>
+                                        <th>Shop</th>
+                                        <th>Status</th>
+                                        <th>Uptime</th>
+                                        <th>Last Online</th>
+                                        <th>Reliability</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>DEV-001</td>
+                                        <td>City Center</td>
+                                        <td><span class="status-badge success">Online</span></td>
+                                        <td>99.2%</td>
+                                        <td>2024-01-15 14:30</td>
+                                        <td>Excellent</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DEV-002</td>
+                                        <td>Mall of Asia</td>
+                                        <td><span class="status-badge success">Online</span></td>
+                                        <td>98.7%</td>
+                                        <td>2024-01-15 14:28</td>
+                                        <td>Good</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DEV-003</td>
+                                        <td>Quezon City</td>
+                                        <td><span class="status-badge warning">Warning</span></td>
+                                        <td>95.4%</td>
+                                        <td>2024-01-15 13:45</td>
+                                        <td>Fair</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DEV-004</td>
+                                        <td>Makati</td>
+                                        <td><span class="status-badge success">Online</span></td>
+                                        <td>99.5%</td>
+                                        <td>2024-01-15 14:35</td>
+                                        <td>Excellent</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DEV-005</td>
+                                        <td>City Center</td>
+                                        <td><span class="status-badge error">Offline</span></td>
+                                        <td>89.1%</td>
+                                        <td>2024-01-14 22:15</td>
+                                        <td>Poor</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHOP PERFORMANCE REPORTS -->
+                <div class="report-card">
+                    <div class="report-header">
+                        <h2><i class="fas fa-store"></i> Shop Performance Reports</h2>
+                        <div class="report-actions">
+                            <button class="action-btn" onclick="exportPerformancePDF()">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="action-btn" onclick="exportPerformanceCSV()">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <div class="chart-container">
+                            <canvas id="performanceChart" style="width:100%;height:100%;"></canvas>
+                        </div>
+                        <div class="table-container">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Shop</th>
+                                        <th>Transactions</th>
+                                        <th>Revenue</th>
+                                        <th>Avg. Daily</th>
+                                        <th>Device Uptime</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Makati Branch</td>
+                                        <td>1,250</td>
+                                        <td>₱245,780</td>
+                                        <td>₱19,683</td>
+                                        <td>99.5%</td>
+                                        <td><span class="performance-badge excellent">Excellent</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mall of Asia</td>
+                                        <td>1,180</td>
+                                        <td>₱228,450</td>
+                                        <td>₱18,204</td>
+                                        <td>98.7%</td>
+                                        <td><span class="performance-badge good">Good</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>City Center</td>
+                                        <td>980</td>
+                                        <td>₱189,750</td>
+                                        <td>₱15,813</td>
+                                        <td>99.2%</td>
+                                        <td><span class="performance-badge good">Good</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Quezon City</td>
+                                        <td>850</td>
+                                        <td>₱165,420</td>
+                                        <td>₱13,785</td>
+                                        <td>95.4%</td>
+                                        <td><span class="performance-badge fair">Fair</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mandaluyong</td>
+                                        <td>720</td>
+                                        <td>₱142,380</td>
+                                        <td>₱11,865</td>
+                                        <td>97.8%</td>
+                                        <td><span class="performance-badge fair">Fair</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../static/js/super_admin_reports.js"></script>
+        </main>
+    </div>
+
+    <!-- jsPDF and SheetJS for export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+                // Export to PDF
+                function exportToPDF() {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    doc.text('LaundryLink - Transactions', 14, 16);
+                    doc.autoTable({
+                        html: '.transactions-table',
+                        startY: 22,
+                        styles: { font: 'poppins', fontSize: 8 },
+                        headStyles: { fillColor: [18, 45, 105] },
+                        theme: 'grid',
+                    });
+                    doc.save('transactions.pdf');
+                }
+
+                // Export to Excel
+                function exportToExcel() {
+                    const table = document.querySelector('.transactions-table');
+                    if (!table) return;
+                    const wb = XLSX.utils.table_to_book(table, { sheet: 'Transactions' });
+                    XLSX.writeFile(wb, 'transactions.xlsx');
+                }
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                placeholder: "Select date range"
+            });
+        });
+
+        // Filter functions
+        function applyFilters() {
+            const shopFilter = document.getElementById('shopFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            // In a real application, this would make an API call to filter transactions
+            alert(`Filters applied:\nShop: ${shopFilter}\nDate Range: ${dateRange}\nStatus: ${statusFilter}`);
+            
+            // For demo purposes, we'll simulate filtering by highlighting matching rows
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            rows.forEach(row => {
+                const statusBadge = row.querySelector('.status-badge');
+                const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
+                
+                let showRow = true;
+                
+                // Filter by status
+                if (statusFilter !== 'all' && status !== statusFilter) {
+                    showRow = false;
+                }
+                
+                // In a real app, you would also filter by shop and date
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('shopFilter').value = 'all';
+            document.getElementById('dateRange').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            
+            // Show all rows
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            
+            alert('Filters have been reset');
+        }
+
+        // Search function
+        document.querySelector('.search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Transaction actions
+        function viewTransaction(transactionId) {
+            alert(`Viewing transaction: ${transactionId}\nThis would open a detailed view in a real application.`);
+            // In a real app, this would redirect to a transaction detail page or open a modal
+        }
+
+        function editTransaction(transactionId) {
+            alert(`Editing transaction: ${transactionId}\nThis would open an edit form in a real application.`);
+            // In a real app, this would open an edit modal or redirect to an edit page
+        }
+
+        function refreshTable() {
+            // In a real application, this would fetch fresh data from the server
+            alert('Refreshing transaction data...');
+            // Simulate a refresh by adding a loading state
+            const refreshBtn = document.querySelector('.btn-primary i.fa-sync-alt');
+            refreshBtn.classList.add('fa-spin');
+            
+            setTimeout(() => {
+                refreshBtn.classList.remove('fa-spin');
+                alert('Transaction data refreshed successfully!');
+            }, 1000);
+        }
+
+        // Pagination functionality
+        document.querySelectorAll('.pagination-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.disabled) return;
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.pagination-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to clicked button if it's a number button
+                if (!this.querySelector('i')) {
+                    this.classList.add('active');
+                    alert(`Loading page ${this.textContent}...`);
+                    // In a real app, this would fetch data for the selected page
+                } else if (this.querySelector('.fa-chevron-right')) {
+                    alert('Loading next page...');
+                    // In a real app, this would go to the next page
+                } else if (this.querySelector('.fa-chevron-left')) {
+                    alert('Loading previous page...');
+                    // In a real app, this would go to the previous page
+                }
+            });
+        });
+
+        // Responsive adjustments
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/super_admin_shops.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="../static/css/super_admin_transaction.css">
+    <title>Transactions</title>
+</head>
+
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>LAUNDRYLINK</span>
+            </div>
+
+            <!-- MAIN NAVIGATION -->
+            <div class="w3-bar-block">
+                <a href="{{ url_for('super_admin_dashboard') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
+                <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-store fa-fw"></i> Laundry Shops</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                    Monitoring</a>
+                <a href="" class="w3-bar-item w3-button w3-padding active"><i class="fa fa-exchange-alt fa-fw"></i>
+                    Transactions</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                    Analytics</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
+                    Management</a>
+                <div class="logout-btn">
+                    <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
+                            class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Transactions</h1>
+                    <div class="breadcrumb">Main / Transactions</div>
+                </div>
+            </header>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="content-container">
+                <!-- Stats Cards -->
+                <div class="dashboard-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #122D69;">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Transactions</h3>
+                            <div class="value" id="total-transactions">1,247</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #ffc107;">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Revenue</h3>
+                            <div class="value" id="total-amount">₱124,580</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="filters-container">
+                    <h3 class="filters-title">Filter & Sort Transactions</h3>
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Laundry Shop</label>
+                            <select class="filter-select" id="shopFilter">
+                                <option value="all">All Shops</option>
+                                <option value="shop1">Clean & Green Laundry - Main Branch</option>
+                                <option value="shop2">Quick Wash - Downtown</option>
+                                <option value="shop3">Fresh Laundry - Mall Branch</option>
+                                <option value="shop4">Sparkle Clean - Eastwood</option>
+                                <option value="shop5">Eco Wash - Greenfield</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Date Range</label>
+                            <input type="text" class="filter-input" id="dateRange" placeholder="Select date range">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Status</label>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Payment Method</label>
+                            <select class="filter-select" id="paymentFilter">
+                                <option value="all">All Methods</option>
+                                <option value="cash">Cash</option>
+                                <option value="ewallet">E-wallet</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Sort By</label>
+                            <select class="filter-select" id="sortFilter">
+                                <option value="date_desc">Date (Newest)</option>
+                                <option value="date_asc">Date (Oldest)</option>
+                                <option value="amount_desc">Amount (High to Low)</option>
+                                <option value="amount_asc">Amount (Low to High)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                        <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
+                        <button class="btn btn-success" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                        <button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">All Transactions</h3>
+                        <div class="table-actions">
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="search-input" placeholder="Search transactions...">
+                            </div>
+                            <button class="btn btn-primary" onclick="refreshTable()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Laundry Shop</th>
+                                    <th>Service Type</th>
+                                    <th>Total Weight (kg)</th>
+                                    <th>Total Amount</th>
+                                    <th>Payment Method</th>
+                                    <th>Status</th>
+                                    <th>Date & Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-tbody">
+                                <!-- Transaction rows will be dynamically rendered here -->
+                                <tr class="error-row" style="display:none;">
+                                    <td colspan="9" style="text-align:center; color:#dc3545;">No transactions found or failed to load data.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <div class="pagination-info" id="pagination-info">Showing 0 to 0 of 0 transactions</div>
+                        <div class="pagination-controls" id="pagination-controls">
+                            <!-- Pagination buttons will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+            
+            </div>
+        </main>
+    </div>
+
+    <!-- jsPDF and SheetJS for export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+                // Export to PDF
+                function exportToPDF() {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    doc.text('LaundryLink - Transactions', 14, 16);
+                    doc.autoTable({
+                        html: '.transactions-table',
+                        startY: 22,
+                        styles: { font: 'poppins', fontSize: 8 },
+                        headStyles: { fillColor: [18, 45, 105] },
+                        theme: 'grid',
+                    });
+                    doc.save('transactions.pdf');
+                }
+
+                // Export to Excel
+                function exportToExcel() {
+                    const table = document.querySelector('.transactions-table');
+                    if (!table) return;
+                    const wb = XLSX.utils.table_to_book(table, { sheet: 'Transactions' });
+                    XLSX.writeFile(wb, 'transactions.xlsx');
+                }
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                placeholder: "Select date range"
+            });
+        });
+
+        // Filter functions
+        function applyFilters() {
+            const shopFilter = document.getElementById('shopFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            // In a real application, this would make an API call to filter transactions
+            alert(`Filters applied:\nShop: ${shopFilter}\nDate Range: ${dateRange}\nStatus: ${statusFilter}`);
+            
+            // For demo purposes, we'll simulate filtering by highlighting matching rows
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            rows.forEach(row => {
+                const statusBadge = row.querySelector('.status-badge');
+                const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
+                
+                let showRow = true;
+                
+                // Filter by status
+                if (statusFilter !== 'all' && status !== statusFilter) {
+                    showRow = false;
+                }
+                
+                // In a real app, you would also filter by shop and date
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('shopFilter').value = 'all';
+            document.getElementById('dateRange').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            
+            // Show all rows
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            
+            alert('Filters have been reset');
+        }
+
+        // Search function
+        document.querySelector('.search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.transactions-table tbody tr');
+            
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Transaction actions
+        function viewTransaction(transactionId) {
+            alert(`Viewing transaction: ${transactionId}\nThis would open a detailed view in a real application.`);
+            // In a real app, this would redirect to a transaction detail page or open a modal
+        }
+
+        function editTransaction(transactionId) {
+            alert(`Editing transaction: ${transactionId}\nThis would open an edit form in a real application.`);
+            // In a real app, this would open an edit modal or redirect to an edit page
+        }
+
+        function refreshTable() {
+            // In a real application, this would fetch fresh data from the server
+            alert('Refreshing transaction data...');
+            // Simulate a refresh by adding a loading state
+            const refreshBtn = document.querySelector('.btn-primary i.fa-sync-alt');
+            refreshBtn.classList.add('fa-spin');
+            
+            setTimeout(() => {
+                refreshBtn.classList.remove('fa-spin');
+                alert('Transaction data refreshed successfully!');
+            }, 1000);
+        }
+
+        // Pagination functionality
+        document.querySelectorAll('.pagination-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.disabled) return;
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.pagination-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to clicked button if it's a number button
+                if (!this.querySelector('i')) {
+                    this.classList.add('active');
+                    alert(`Loading page ${this.textContent}...`);
+                    // In a real app, this would fetch data for the selected page
+                } else if (this.querySelector('.fa-chevron-right')) {
+                    alert('Loading next page...');
+                    // In a real app, this would go to the next page
+                } else if (this.querySelector('.fa-chevron-left')) {
+                    alert('Loading previous page...');
+                    // In a real app, this would go to the previous page
+                }
+            });
+        });
+
+        // Responsive adjustments
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>
