@@ -5078,13 +5078,6 @@ def device_monitoring():
     shops = dbhelper.get_all_shops()
     return render_template('super_admin_devices.html', shops=shops)
 
-@app.route('/super_admin/transactions')
-def super_admin_transactions():
-    if 'user_id' not in session or session['role'] not in ['super_admin']:
-        return redirect(url_for('super_admin_login'))
-    
-    return render_template('super_admin_transaction.html')
-
 @app.route('/super_admin/reports')
 def super_admin_reports():
     if 'user_id' not in session or session['role'] not in ['super_admin']:

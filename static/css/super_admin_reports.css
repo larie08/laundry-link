@@ -21,23 +21,23 @@
 }
 
 .pdf-btn {
-    background-color: #ff4757;
+    background-color: #dc3545;
     color: white;
 }
 
 .pdf-btn:hover {
-    background-color: #ff3742;
+    background-color: #c82333;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
 }
 
 .csv-btn {
-    background-color: #2ed573;
+    background-color: #2fa35a;
     color: white;
 }
 
 .csv-btn:hover {
-    background-color: #25c464;
+    background-color: #268249;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(46, 213, 115, 0.2);
 }
@@ -73,7 +73,7 @@
 
 .filter-group label i {
     margin-right: 5px;
-    color: #4d7cfe;
+    color: #122D69;
 }
 
 .filter-select, .filter-input {
@@ -113,12 +113,12 @@
 }
 
 .apply-btn {
-    background-color: #4d7cfe;
+    background-color: #122D69;
     color: white;
 }
 
 .apply-btn:hover {
-    background-color: #3a6bfe;
+    background-color: #0c1f4a;
     transform: translateY(-2px);
 }
 
@@ -168,19 +168,19 @@
 }
 
 .card-icon.revenue {
-    background: linear-gradient(135deg, #4d7cfe, #6a93ff);
+    background: linear-gradient(135deg, #122D69, #1a3d99);
 }
 
 .card-icon.transactions {
-    background: linear-gradient(135deg, #2ed573, #42db85);
+    background: linear-gradient(135deg, #2fa35a, #44b870);
 }
 
 .card-icon.uptime {
-    background: linear-gradient(135deg, #ffa502, #ffb732);
+    background: linear-gradient(135deg, #f5c04e, #f7d26f);
 }
 
 .card-icon.shops {
-    background: linear-gradient(135deg, #ff4757, #ff5f6d);
+    background: linear-gradient(135deg, #dc3545, #e55461);
 }
 
 .card-content {
@@ -249,7 +249,27 @@
 }
 
 .report-header h2 i {
-    color: #4d7cfe;
+    color: #122D69;
+}
+
+/* Installation section icon styling */
+.report-card:nth-child(1) .report-header h2 i {
+    color: #f5c04e;
+}
+
+/* Transaction section icon styling */
+.report-card:nth-child(2) .report-header h2 i {
+    color: #2fa35a;
+}
+
+/* Device uptime section icon styling */
+.report-card:nth-child(3) .report-header h2 i {
+    color: #122D69;
+}
+
+/* Shop performance section icon styling */
+.report-card:nth-child(4) .report-header h2 i {
+    color: #dc3545;
 }
 
 .report-actions {
@@ -276,16 +296,34 @@
 .action-btn:hover {
     background-color: #f8f9fa;
     color: #122D69;
-    border-color: #4d7cfe;
+    border-color: #122D69;
 }
 
 .report-content {
     padding: 20px;
 }
 
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
 .chart-container {
-    height: 300px;
-    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    height: 350px;
+    position: relative;
+}
+
+.chart-title {
+    margin: 0 0 15px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #122D69;
+    text-align: center;
 }
 
 .table-container {
@@ -330,18 +368,18 @@
 }
 
 .status-badge.success {
-    background-color: rgba(46, 213, 115, 0.1);
-    color: #2ed573;
+    background-color: rgba(47, 163, 90, 0.1);
+    color: #2fa35a;
 }
 
 .status-badge.warning {
-    background-color: rgba(255, 165, 2, 0.1);
-    color: #ffa502;
+    background-color: rgba(245, 192, 78, 0.1);
+    color: #f5c04e;
 }
 
 .status-badge.error {
-    background-color: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
 }
 
 .performance-badge {
@@ -353,24 +391,28 @@
 }
 
 .performance-badge.excellent {
-    background-color: rgba(46, 213, 115, 0.1);
-    color: #2ed573;
+    background-color: rgba(47, 163, 90, 0.1);
+    color: #2fa35a;
 }
 
 .performance-badge.good {
-    background-color: rgba(77, 124, 254, 0.1);
-    color: #4d7cfe;
+    background-color: rgba(18, 45, 105, 0.1);
+    color: #122D69;
 }
 
 .performance-badge.fair {
-    background-color: rgba(255, 165, 2, 0.1);
-    color: #ffa502;
+    background-color: rgba(245, 192, 78, 0.1);
+    color: #f5c04e;
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
     .summary-cards {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1fr;
     }
 }
 
