@@ -270,7 +270,14 @@
             time_invalid: "Pickup time must be between 6:00 AM and 6:00 PM.",
             tuesday_pickup_unavailable: "Sorry, pickups are not available on Tuesdays. Please select another day.",
             holiday_pickup_unavailable: "Sorry, pickups are not available on holidays. Please select another day.",
-            time_pickup_invalid: "Pickup time must be between 6:00 AM and 6:00 PM."
+            time_pickup_invalid: "Pickup time must be between 6:00 AM and 6:00 PM.",
+            no_weight: '💡 Suggested amount will appear once weight is set.',
+            light_detergent: '💡 Suggested: 1 detergent sachet for light load (≤ 5kg).',
+            light_fabcon: '💡 Suggested: 1 fabcon sachet for light load (≤ 5kg).',
+            regular_detergent: '💡 Suggested: 2 detergent sachets for regular load (6–8kg).',
+            regular_fabcon: '💡 Suggested: 1–2 fabcon sachets for regular load (6–8kg).',
+            heavy_detergent: '💡 Suggested: 3 detergent sachets for heavy load (9kg+).',
+            heavy_fabcon: '💡 Suggested: 2–3 fabcon sachets for heavy load (9kg+).'
         },
         fil: {
             options_title: "PAGPIPILIAN",
@@ -306,7 +313,14 @@
             time_invalid: "Ang pickup time ay dapat maging 6:00 AM at 6:00 PM.",
             tuesday_pickup_unavailable: "Paumanhin, walang pickups sa Martes. Mangyaring pumili ng iba pang araw.",
             holiday_pickup_unavailable: "Paumanhin, walang pickups sa holidays. Mangyaring pumili ng iba pang araw.",
-            time_pickup_invalid: "Ang pickup time ay dapat maging 6:00 AM at 6:00 PM."
+            time_pickup_invalid: "Ang pickup time ay dapat maging 6:00 AM at 6:00 PM.",
+            no_weight: '💡 Ang iminumungkahing dami ay lalabas kapag nakatakda na ang timbang.',
+            light_detergent: '💡 Iminumungkahi: 1 detergent sachet para sa magaan na karga (≤ 5kg).',
+            light_fabcon: '💡 Iminumungkahi: 1 fabcon sachet para sa magaan na karga (≤ 5kg).',
+            regular_detergent: '💡 Iminumungkahi: 2 detergent sachets para sa regular na karga (6–8kg).',
+            regular_fabcon: '💡 Iminumungkahi: 1–2 fabcon sachets para sa regular na karga (6–8kg).',
+            heavy_detergent: '💡 Iminumungkahi: 3 detergent sachets para sa mabigat na karga (9kg+).',
+            heavy_fabcon: '💡 Iminumungkahi: 2–3 fabcon sachets para sa mabigat na karga (9kg+).'
         },
         ja: {
             options_title: "オプション",
@@ -342,7 +356,14 @@
             time_invalid: "ピックアップ時刻は午前6:00から午後6:00の間にしてください。",
             tuesday_pickup_unavailable: "申し訳ございません。火曜日のピックアップはご利用いただけません。別の日をお選びください。",
             holiday_pickup_unavailable: "申し訳ございません。祝日のピックアップはご利用いただけません。別の日をお選びください。",
-            time_pickup_invalid: "ピックアップ時刻は午前6:00から午後6:00の間にしてください。"
+            time_pickup_invalid: "ピックアップ時刻は午前6:00から午後6:00の間にしてください。",
+            no_weight: '💡 重量が設定されると、推奨量が表示されます。',
+            light_detergent: '💡 推奨: 軽い負荷（≤ 5kg）には洗剤サシェ1袋。',
+            light_fabcon: '💡 推奨: 軽い負荷（≤ 5kg）にはファブコンサシェ1袋。',
+            regular_detergent: '💡 推奨: 通常の負荷（6–8kg）には洗剤サシェ2袋。',
+            regular_fabcon: '💡 推奨: 通常の負荷（6–8kg）にはファブコンサシェ1–2袋。',
+            heavy_detergent: '💡 推奨: 重い負荷（9kg+）には洗剤サシェ3袋。',
+            heavy_fabcon: '💡 推奨: 重い負荷（9kg+）にはファブコンサシェ2–3袋。'
         },
         ko: {
             options_title: "옵션",
@@ -378,7 +399,14 @@
             time_invalid: "픽업 시간은 오전 6:00에서 오후 6:00 사이여야 합니다.",
             tuesday_pickup_unavailable: "죄송하지만 화요일 픽업은 이용할 수 없습니다. 다른 날을 선택해주세요.",
             holiday_pickup_unavailable: "죄송하지만 휴일 픽업은 이용할 수 없습니다. 다른 날을 선택해주세요.",
-            time_pickup_invalid: "픽업 시간은 오전 6:00에서 오후 6:00 사이여야 합니다."
+            time_pickup_invalid: "픽업 시간은 오전 6:00에서 오후 6:00 사이여야 합니다.",
+            no_weight: '💡 무게가 설정되면 권장 수량이 표시됩니다.',
+            light_detergent: '💡 권장: 가벼운 하중(≤ 5kg)에는 세제 사셰 1개.',
+            light_fabcon: '💡 권장: 가벼운 하중(≤ 5kg)에는 섬유유연제 사셰 1개.',
+            regular_detergent: '💡 권장: 일반 하중(6–8kg)에는 세제 사셰 2개.',
+            regular_fabcon: '💡 권장: 일반 하중(6–8kg)에는 섬유유연제 사셰 1–2개.',
+            heavy_detergent: '💡 권장: 무거운 하중(9kg+)에는 세제 사셰 3개.',
+            heavy_fabcon: '💡 권장: 무거운 하중(9kg+)에는 섬유유연제 사셰 2–3개.'
         }
     };
 
@@ -706,15 +734,24 @@
                 return;
             }
 
-            if (weight <= 5) {
-                detergentMsg.textContent = '💡 Suggested: 1 detergent for light load (≤ 5kg).';
-                fabconMsg.textContent = '💡 Suggested: 1 fabcon for light load (≤ 5kg).';
+            // Detergent logic
+            if (weight <= 3) {
+                detergentMsg.textContent = '💡 Suggested: 1 detergent for light load (≤ 3kg).';
             } else if (weight <= 8) {
-                detergentMsg.textContent = '💡 Suggested: 2 detergents for regular load (6–8kg).';
-                fabconMsg.textContent = '💡 Suggested: 1–2 fabcons for regular load (6–8kg).';
+                detergentMsg.textContent = '💡 Suggested: 3 detergents for regular load (4–8kg).';
             } else {
-                detergentMsg.textContent = '💡 Suggested: 3 detergents for heavy load (9kg+).';
-                fabconMsg.textContent = '💡 Suggested: 2–3 fabcons for heavy load (9kg+).';
+                const extraDetergents = Math.floor((weight - 8) / 8);
+                const totalDetergents = 4 + extraDetergents;
+                detergentMsg.textContent = `💡 Suggested: ${totalDetergents} detergents for heavy load (${weight}kg).`;
+            }
+
+            // Fabcon logic
+            if (weight <= 8) {
+                fabconMsg.textContent = '💡 Suggested: 2 fabcons maximum for load (≤ 8kg).';
+            } else {
+                const extraFabcons = Math.ceil((weight - 8) / 4);
+                const totalFabcons = 2 + extraFabcons;
+                fabconMsg.textContent = `💡 Suggested: ${totalFabcons} fabcons for heavy load (${weight}kg).`;
             }
         }
         //weight suggestion message

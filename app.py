@@ -113,13 +113,17 @@ def weight_laundry():
             total_load = 0
         session['total_weight'] = weight
         session['total_load'] = total_load
+        # Store weight for JavaScript access in others page
+        session['laundry_weight'] = weight
         return redirect(url_for('other_services'))
     
     weight_page_active = True  # User is on page
-    # Pre-fill with session data if user goes back
+    # Pre-fill with session data if user goes back and pass weight to template
+    current_weight = session.get('total_weight', '')
     return render_template('weight.html',
-                         weight=session.get('total_weight', ''),
-                         total_load=session.get('total_load', ''))
+                         weight=current_weight,
+                         total_load=session.get('total_load', ''),
+                         laundry_weight=current_weight)
 
 @app.route('/other_services')
 def other_services():
