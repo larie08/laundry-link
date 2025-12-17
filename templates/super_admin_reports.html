@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="../static/css/super_admin_reports.css">
-    <title>Transactions</title>
+    <title>Reports</title>
 </head>
 
 <body>
@@ -42,9 +42,6 @@
                 <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding"><i
                         class="fa fa-microchip fa-fw"></i> Devices
                     Monitoring</a>
-                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
-                        class="fa fa-exchange-alt fa-fw"></i>
-                    Transactions</a>
                 <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding active"><i
                         class="fa fa-chart-line fa-fw"></i> Reports &
                     Analytics</a>
@@ -60,22 +57,11 @@
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
-                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Reports & Analytics</h1>
                     <div class="breadcrumb">Main / Reports & Analytics</div>
                 </div>
 
             </header>
-
-            <div class="export-buttons">
-                <button class="export-btn pdf-btn" onclick="exportPDF()">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </button>
-                <button class="export-btn csv-btn" onclick="exportCSV()">
-                    <i class="fas fa-file-csv"></i> Export CSV
-                </button>
-            </div>
 
             <br>
             <!-- FILTERS SECTION -->
@@ -183,75 +169,83 @@
 
             <!-- REPORTS SECTIONS -->
             <section class="reports-section">
-                <!-- TRANSACTION REPORTS -->
+                
+                <!-- 1️⃣ INSTALLATION & DEPLOYMENT OVERVIEW -->
                 <div class="report-card">
                     <div class="report-header">
-                        <h2><i class="fas fa-exchange-alt"></i> Transaction Reports</h2>
+                        <h2><i class="fas fa-tools"></i> Installation & Deployment Overview</h2>
                         <div class="report-actions">
-                            <button class="action-btn" onclick="exportTransactionPDF()">
+                            <button class="action-btn" onclick="exportInstallationPDF()">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
-                            <button class="action-btn" onclick="exportTransactionCSV()">
+                            <button class="action-btn" onclick="exportInstallationCSV()">
                                 <i class="fas fa-file-csv"></i> CSV
                             </button>
                         </div>
                     </div>
                     <div class="report-content">
-                        <div class="chart-container">
-                            <canvas id="transactionChart" style="width:100%;height:100%;"></canvas>
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Devices Installed per Shop</h3>
+                                <canvas id="installationDevicesChart" style="width:100%;height:100%;"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3 class="chart-title">Installation Revenue Distribution</h3>
+                                <canvas id="installationRevenueChart" style="width:100%;height:100%;"></canvas>
+                            </div>
                         </div>
                         <div class="table-container">
                             <table class="report-table">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Shop</th>
-                                        <th>Transactions</th>
-                                        <th>Revenue</th>
-                                        <th>Avg. Value</th>
+                                        <th>Laundry Shop Name</th>
+                                        <th>Number of Devices</th>
+                                        <th>Installation Fee (per Shop)</th>
+                                        <th>Total Installation Fee</th>
+                                        <th>Installation Date</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>2024-01-15</td>
-                                        <td>City Center</td>
-                                        <td>85</td>
-                                        <td>₱16,450</td>
-                                        <td>₱193.53</td>
-                                        <td><span class="status-badge success">Success</span></td>
+                                        <td>Makati Branch</td>
+                                        <td>5</td>
+                                        <td>₱50,000</td>
+                                        <td>₱250,000</td>
+                                        <td>2024-01-10</td>
+                                        <td><span class="status-badge success">Completed</span></td>
                                     </tr>
                                     <tr>
-                                        <td>2024-01-14</td>
                                         <td>Mall of Asia</td>
-                                        <td>92</td>
-                                        <td>₱18,920</td>
-                                        <td>₱205.65</td>
-                                        <td><span class="status-badge success">Success</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-01-13</td>
-                                        <td>Quezon City</td>
-                                        <td>78</td>
-                                        <td>₱14,850</td>
-                                        <td>₱190.38</td>
-                                        <td><span class="status-badge warning">Partial</span></td>
-                                    </tr>
-                                    <tr>
+                                        <td>4</td>
+                                        <td>₱50,000</td>
+                                        <td>₱200,000</td>
                                         <td>2024-01-12</td>
-                                        <td>Makati</td>
-                                        <td>95</td>
-                                        <td>₱20,150</td>
-                                        <td>₱212.11</td>
-                                        <td><span class="status-badge success">Success</span></td>
+                                        <td><span class="status-badge success">Completed</span></td>
                                     </tr>
                                     <tr>
-                                        <td>2024-01-11</td>
                                         <td>City Center</td>
-                                        <td>88</td>
-                                        <td>₱17,300</td>
-                                        <td>₱196.59</td>
-                                        <td><span class="status-badge success">Success</span></td>
+                                        <td>3</td>
+                                        <td>₱50,000</td>
+                                        <td>₱150,000</td>
+                                        <td>2024-01-15</td>
+                                        <td><span class="status-badge success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Quezon City</td>
+                                        <td>4</td>
+                                        <td>₱50,000</td>
+                                        <td>₱200,000</td>
+                                        <td>2024-01-18</td>
+                                        <td><span class="status-badge success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mandaluyong</td>
+                                        <td>2</td>
+                                        <td>₱50,000</td>
+                                        <td>₱100,000</td>
+                                        <td>2024-01-20</td>
+                                        <td><span class="status-badge warning">Pending</span></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -259,22 +253,31 @@
                     </div>
                 </div>
 
-                <!-- DEVICE UPTIME REPORTS -->
+                
+
+                <!-- 3️⃣ DEVICE UPTIME & MONITORING REPORTS -->
                 <div class="report-card">
                     <div class="report-header">
-                        <h2><i class="fas fa-microchip"></i> Device Uptime Reports</h2>
+                        <h2><i class="fas fa-microchip"></i> Device Uptime & Monitoring Reports</h2>
                         <div class="report-actions">
-                            <button class="action-btn" onclick="exportDevicePDF()">
+                            <button class="action-btn" onclick="exportUptimePDF()">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
-                            <button class="action-btn" onclick="exportDeviceCSV()">
+                            <button class="action-btn" onclick="exportUptimeCSV()">
                                 <i class="fas fa-file-csv"></i> CSV
                             </button>
                         </div>
                     </div>
                     <div class="report-content">
-                        <div class="chart-container">
-                            <canvas id="uptimeChart" style="width:100%;height:100%;"></canvas>
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Device Uptime Comparison</h3>
+                                <canvas id="uptimeChart" style="width:100%;height:100%;"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3 class="chart-title">Device Status Distribution</h3>
+                                <canvas id="deviceStatusChart" style="width:100%;height:100%;"></canvas>
+                            </div>
                         </div>
                         <div class="table-container">
                             <table class="report-table">
@@ -282,9 +285,10 @@
                                     <tr>
                                         <th>Device ID</th>
                                         <th>Shop</th>
-                                        <th>Status</th>
-                                        <th>Uptime</th>
+                                        <th>Online/Offline Status</th>
+                                        <th>Uptime %</th>
                                         <th>Last Online</th>
+                                        <th>Error Logs</th>
                                         <th>Reliability</th>
                                     </tr>
                                 </thead>
@@ -295,7 +299,8 @@
                                         <td><span class="status-badge success">Online</span></td>
                                         <td>99.2%</td>
                                         <td>2024-01-15 14:30</td>
-                                        <td>Excellent</td>
+                                        <td>0</td>
+                                        <td><span class="performance-badge excellent">Excellent</span></td>
                                     </tr>
                                     <tr>
                                         <td>DEV-002</td>
@@ -303,7 +308,8 @@
                                         <td><span class="status-badge success">Online</span></td>
                                         <td>98.7%</td>
                                         <td>2024-01-15 14:28</td>
-                                        <td>Good</td>
+                                        <td>1</td>
+                                        <td><span class="performance-badge good">Good</span></td>
                                     </tr>
                                     <tr>
                                         <td>DEV-003</td>
@@ -311,7 +317,8 @@
                                         <td><span class="status-badge warning">Warning</span></td>
                                         <td>95.4%</td>
                                         <td>2024-01-15 13:45</td>
-                                        <td>Fair</td>
+                                        <td>3</td>
+                                        <td><span class="performance-badge fair">Fair</span></td>
                                     </tr>
                                     <tr>
                                         <td>DEV-004</td>
@@ -319,7 +326,8 @@
                                         <td><span class="status-badge success">Online</span></td>
                                         <td>99.5%</td>
                                         <td>2024-01-15 14:35</td>
-                                        <td>Excellent</td>
+                                        <td>0</td>
+                                        <td><span class="performance-badge excellent">Excellent</span></td>
                                     </tr>
                                     <tr>
                                         <td>DEV-005</td>
@@ -327,7 +335,8 @@
                                         <td><span class="status-badge error">Offline</span></td>
                                         <td>89.1%</td>
                                         <td>2024-01-14 22:15</td>
-                                        <td>Poor</td>
+                                        <td>5</td>
+                                        <td><span class="performance-badge fair">Fair</span></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -335,81 +344,7 @@
                     </div>
                 </div>
 
-                <!-- SHOP PERFORMANCE REPORTS -->
-                <div class="report-card">
-                    <div class="report-header">
-                        <h2><i class="fas fa-store"></i> Shop Performance Reports</h2>
-                        <div class="report-actions">
-                            <button class="action-btn" onclick="exportPerformancePDF()">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </button>
-                            <button class="action-btn" onclick="exportPerformanceCSV()">
-                                <i class="fas fa-file-csv"></i> CSV
-                            </button>
-                        </div>
-                    </div>
-                    <div class="report-content">
-                        <div class="chart-container">
-                            <canvas id="performanceChart" style="width:100%;height:100%;"></canvas>
-                        </div>
-                        <div class="table-container">
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Shop</th>
-                                        <th>Transactions</th>
-                                        <th>Revenue</th>
-                                        <th>Avg. Daily</th>
-                                        <th>Device Uptime</th>
-                                        <th>Performance</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Makati Branch</td>
-                                        <td>1,250</td>
-                                        <td>₱245,780</td>
-                                        <td>₱19,683</td>
-                                        <td>99.5%</td>
-                                        <td><span class="performance-badge excellent">Excellent</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Mall of Asia</td>
-                                        <td>1,180</td>
-                                        <td>₱228,450</td>
-                                        <td>₱18,204</td>
-                                        <td>98.7%</td>
-                                        <td><span class="performance-badge good">Good</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>City Center</td>
-                                        <td>980</td>
-                                        <td>₱189,750</td>
-                                        <td>₱15,813</td>
-                                        <td>99.2%</td>
-                                        <td><span class="performance-badge good">Good</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Quezon City</td>
-                                        <td>850</td>
-                                        <td>₱165,420</td>
-                                        <td>₱13,785</td>
-                                        <td>95.4%</td>
-                                        <td><span class="performance-badge fair">Fair</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Mandaluyong</td>
-                                        <td>720</td>
-                                        <td>₱142,380</td>
-                                        <td>₱11,865</td>
-                                        <td>97.8%</td>
-                                        <td><span class="performance-badge fair">Fair</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                
             </section>
         </main>
     </div>
@@ -423,142 +358,290 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
+        // Chart initialization
+        document.addEventListener('DOMContentLoaded', function () {
+            // Installation & Deployment - Devices per Shop Chart
+            const installationDevicesCtx = document.getElementById('installationDevicesChart');
+            if (installationDevicesCtx) {
+                new Chart(installationDevicesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Makati Branch', 'Mall of Asia', 'City Center', 'Quezon City', 'Mandaluyong'],
+                        datasets: [{
+                            label: 'Number of Devices Installed',
+                            data: [5, 4, 3, 4, 2],
+                            backgroundColor: [
+                                '#122D69',
+                                '#2fa35a',
+                                '#f5c04e',
+                                '#dc3545',
+                                '#4cb7d1'
+                            ],
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 6,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Installation & Deployment - Revenue Distribution Chart
+            const installationRevenueCtx = document.getElementById('installationRevenueChart');
+            if (installationRevenueCtx) {
+                new Chart(installationRevenueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Makati Branch', 'Mall of Asia', 'City Center', 'Quezon City', 'Mandaluyong'],
+                        datasets: [{
+                            data: [250000, 200000, 150000, 200000, 100000],
+                            backgroundColor: [
+                                '#122D69',
+                                '#2fa35a',
+                                '#f5c04e',
+                                '#dc3545',
+                                '#4cb7d1'
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 13
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return '₱' + context.parsed.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Device Uptime - Uptime Comparison Chart
+            const uptimeCtx = document.getElementById('uptimeChart');
+            if (uptimeCtx) {
+                new Chart(uptimeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['DEV-001', 'DEV-002', 'DEV-003', 'DEV-004', 'DEV-005'],
+                        datasets: [{
+                            label: 'Uptime Percentage (%)',
+                            data: [99.2, 98.7, 95.4, 99.5, 89.1],
+                            backgroundColor: [
+                                '#2fa35a',
+                                '#2fa35a',
+                                '#f5c04e',
+                                '#2fa35a',
+                                '#dc3545'
+                            ],
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.x.toFixed(2) + '%';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Device Status Distribution Chart
+            const deviceStatusCtx = document.getElementById('deviceStatusChart');
+            if (deviceStatusCtx) {
+                new Chart(deviceStatusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Online', 'Warning', 'Offline'],
+                        datasets: [{
+                            data: [3, 1, 1],
+                            backgroundColor: [
+                                '#2fa35a',
+                                '#f5c04e',
+                                '#dc3545'
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 13
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + ' device(s)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Date filter handling
+            const dateRangeSelect = document.getElementById('dateRange');
+            if (dateRangeSelect) {
+                dateRangeSelect.addEventListener('change', function() {
+                    const customDates = document.querySelectorAll('.custom-date');
+                    if (this.value === 'custom') {
+                        customDates.forEach(el => el.classList.remove('hidden'));
+                    } else {
+                        customDates.forEach(el => el.classList.add('hidden'));
+                    }
+                });
+            }
+        });
+
         // Export to PDF
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text('LaundryLink - Transactions', 14, 16);
+            doc.text('LaundryLink - Reports & Analytics', 14, 16);
             doc.autoTable({
-                html: '.transactions-table',
+                html: '.report-table',
                 startY: 22,
                 styles: { font: 'poppins', fontSize: 8 },
                 headStyles: { fillColor: [18, 45, 105] },
                 theme: 'grid',
             });
-            doc.save('transactions.pdf');
+            doc.save('laundrylink-reports.pdf');
         }
 
-        // Export to Excel
-        function exportToExcel() {
-            const table = document.querySelector('.transactions-table');
-            if (!table) return;
-            const wb = XLSX.utils.table_to_book(table, { sheet: 'Transactions' });
-            XLSX.writeFile(wb, 'transactions.xlsx');
+        // Export Installation & Deployment PDF
+        function exportInstallationPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Installation & Deployment Overview', 14, 16);
+            doc.autoTable({
+                html: '.report-card:nth-of-type(1) .report-table',
+                startY: 22,
+                styles: { font: 'poppins', fontSize: 8 },
+                headStyles: { fillColor: [18, 45, 105] },
+                theme: 'grid',
+            });
+            doc.save('installation-deployment.pdf');
         }
+
+        // Export Installation & Deployment CSV
+        function exportInstallationCSV() {
+            exportTableToCSV('installation-deployment.csv', '.report-card:nth-of-type(1) .report-table');
+        }
+
+        // Export Device Uptime PDF
+        function exportUptimePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Device Uptime & Monitoring Reports', 14, 16);
+            doc.autoTable({
+                html: '.report-card:nth-of-type(2) .report-table',
+                startY: 22,
+                styles: { font: 'poppins', fontSize: 8 },
+                headStyles: { fillColor: [18, 45, 105] },
+                theme: 'grid',
+            });
+            doc.save('device-uptime-reports.pdf');
+        }
+
+        // Export Device Uptime CSV
+        function exportUptimeCSV() {
+            exportTableToCSV('device-uptime-reports.csv', '.report-card:nth-of-type(2) .report-table');
+        }
+
+        // Generic CSV export function
+        function exportTableToCSV(filename, tableSelector) {
+            const table = document.querySelector(tableSelector);
+            if (!table) return;
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'Report' });
+            XLSX.writeFile(wb, filename);
+        }
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.w3-sidebar');
             sidebar.classList.toggle('active');
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            flatpickr("#dateRange", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                placeholder: "Select date range"
-            });
-        });
-
         // Filter functions
         function applyFilters() {
             const shopFilter = document.getElementById('shopFilter').value;
             const dateRange = document.getElementById('dateRange').value;
-            const statusFilter = document.getElementById('statusFilter').value;
+            const reportType = document.getElementById('reportType').value;
 
-            // In a real application, this would make an API call to filter transactions
-            alert(`Filters applied:\nShop: ${shopFilter}\nDate Range: ${dateRange}\nStatus: ${statusFilter}`);
-
-            // For demo purposes, we'll simulate filtering by highlighting matching rows
-            const rows = document.querySelectorAll('.transactions-table tbody tr');
-            rows.forEach(row => {
-                const statusBadge = row.querySelector('.status-badge');
-                const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-
-                let showRow = true;
-
-                // Filter by status
-                if (statusFilter !== 'all' && status !== statusFilter) {
-                    showRow = false;
-                }
-
-                // In a real app, you would also filter by shop and date
-
-                row.style.display = showRow ? '' : 'none';
-            });
+            alert(`Filters applied:\nShop: ${shopFilter}\nDate Range: ${dateRange}\nReport Type: ${reportType}`);
         }
 
         function resetFilters() {
             document.getElementById('shopFilter').value = 'all';
-            document.getElementById('dateRange').value = '';
-            document.getElementById('statusFilter').value = 'all';
-
-            // Show all rows
-            const rows = document.querySelectorAll('.transactions-table tbody tr');
-            rows.forEach(row => {
-                row.style.display = '';
-            });
-
+            document.getElementById('dateRange').value = 'today';
+            document.getElementById('reportType').value = 'all';
+            document.querySelectorAll('.custom-date').forEach(el => el.classList.add('hidden'));
             alert('Filters have been reset');
         }
-
-        // Search function
-        document.querySelector('.search-input').addEventListener('input', function (e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('.transactions-table tbody tr');
-
-            rows.forEach(row => {
-                const rowText = row.textContent.toLowerCase();
-                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
-            });
-        });
-
-        // Transaction actions
-        function viewTransaction(transactionId) {
-            alert(`Viewing transaction: ${transactionId}\nThis would open a detailed view in a real application.`);
-            // In a real app, this would redirect to a transaction detail page or open a modal
-        }
-
-        function editTransaction(transactionId) {
-            alert(`Editing transaction: ${transactionId}\nThis would open an edit form in a real application.`);
-            // In a real app, this would open an edit modal or redirect to an edit page
-        }
-
-        function refreshTable() {
-            // In a real application, this would fetch fresh data from the server
-            alert('Refreshing transaction data...');
-            // Simulate a refresh by adding a loading state
-            const refreshBtn = document.querySelector('.btn-primary i.fa-sync-alt');
-            refreshBtn.classList.add('fa-spin');
-
-            setTimeout(() => {
-                refreshBtn.classList.remove('fa-spin');
-                alert('Transaction data refreshed successfully!');
-            }, 1000);
-        }
-
-        // Pagination functionality
-        document.querySelectorAll('.pagination-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                if (this.disabled) return;
-
-                // Remove active class from all buttons
-                document.querySelectorAll('.pagination-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-
-                // Add active class to clicked button if it's a number button
-                if (!this.querySelector('i')) {
-                    this.classList.add('active');
-                    alert(`Loading page ${this.textContent}...`);
-                    // In a real app, this would fetch data for the selected page
-                } else if (this.querySelector('.fa-chevron-right')) {
-                    alert('Loading next page...');
-                    // In a real app, this would go to the next page
-                } else if (this.querySelector('.fa-chevron-left')) {
-                    alert('Loading previous page...');
-                    // In a real app, this would go to the previous page
-                }
-            });
-        });
 
         // Responsive adjustments
         window.addEventListener('resize', function () {

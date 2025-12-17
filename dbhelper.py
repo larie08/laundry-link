@@ -294,6 +294,15 @@ def update_user(user_id: int, username: str, password: str, role: str, fullname:
     })
     return True
 
+def delete_user(user_id: int) -> bool:
+    """Delete a user by USER_ID."""
+    _require_db()
+    docs = db.collection('USER').where('USER_ID', '==', user_id).limit(1).get()
+    if not docs:
+        return False
+    db.collection('USER').document(docs[0].id).delete()
+    return True
+
 def authenticate_user(username: str, password: str) -> dict:
     """Return the user dict if username/password match, else None.
 

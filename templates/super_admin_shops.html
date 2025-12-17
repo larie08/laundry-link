@@ -39,9 +39,6 @@
                 <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding"><i
                         class="fa fa-microchip fa-fw"></i> Device
                     Monitoring</a>
-                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
-                        class="fa fa-exchange-alt fa-fw"></i>
-                    Transactions</a>
                 <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding"><i
                         class="fa fa-chart-line fa-fw"></i> Reports &
                     Analytics</a>
@@ -57,75 +54,75 @@
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
-                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Laundry Shops</h1>
                     <div class="breadcrumb">Main / List of Laundry Shops</div>
                 </div>
             </header>
 
             <!-- CONTAINER FOR THE MAIN CONTENT -->
-            <div class="w3-container w3-padding w3-margin">
-                <div class="w3-padding-top">
-                    <div class="w3-card w3-white w3-round w3-margin-top">
-                        <header class="w3-container w3-light-grey w3-padding">
-                            <h4>Detailed Shop Status</h4>
-                            <button class="w3-button w3-blue w3-round w3-small" onclick="openAddShopModal()">
+            <div class="content-container">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Detailed Shop Status</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-primary" onclick="openAddShopModal()">
                                 <i class="fa fa-plus"></i> Add New Shop
                             </button>
-                        </header>
-                        <div class="w3-responsive">
-                            <table class="w3-table w3-striped w3-bordered w3-hoverable status-table">
-                                <thead>
-                                    <tr>
-                                        <th>Status</th>
-                                        <th>Shop Name</th>
-                                        <th>Kiosk Status</th>
-                                        <th>Last Seen</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for shop in shops %}
-                                    <tr>
-                                        <td>
-                                            {% if shop.kiosk.status == 'online' %}
-                                            <span class="status-badge status-active">Active</span>
-                                            {% else %}
-                                            <span class="status-badge status-inactive">Inactive</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ shop.SHOP_NAME }}</td>
-                                        <td>
-                                            {% if shop.kiosk.status == 'online' %}
-                                            <span class="status-badge status-online">Online</span>
-                                            {% else %}
-                                            <span class="status-badge status-offline">Offline</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ shop.kiosk.last_seen }}</td>
-                                        <td>
-                                            <button class="w3-button w3-blue w3-small icon-btn" title="View Details"
-                                                onclick="openShopModal(this)" data-shop-name="{{ shop.SHOP_NAME }}"
-                                                data-shop-status="{% if shop.kiosk.status == 'online' %}Active{% else %}Inactive{% endif %}"
-                                                data-shop-location="Cebu City"
-                                                data-kiosk-status="{{ shop.kiosk.status }}"
-                                                data-last-seen="{{ shop.kiosk.last_seen }}"
-                                                data-last-seen="{{ shop.kiosk.last_seen }}"
-                                                data-device-id="KIOSK-{{ '%03d'|format(shop.SHOP_ID) }}"
-                                                data-user-id="{{ shop.SHOP_ID }}">
-                                                <i class="fa fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% if not shops %}
-                                    <tr>
-                                        <td colspan="6" class="w3-center">No shops found.</td>
-                                    </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
                         </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="shops-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Status</th>
+                                    <th>Shop Name</th>
+                                    <th>Kiosk Status</th>
+                                    <th>Last Seen</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops %}
+                                <tr>
+                                    <td>{{ shop.SHOP_ID }}</td>
+                                    <td>
+                                        {% if shop.kiosk.status == 'online' %}
+                                        <span class="status-badge status-active">Active</span>
+                                        {% else %}
+                                        <span class="status-badge status-inactive">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.SHOP_NAME }}</td>
+                                    <td>
+                                        {% if shop.kiosk.status == 'online' %}
+                                        <span class="status-badge status-online">Online</span>
+                                        {% else %}
+                                        <span class="status-badge status-offline">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.kiosk.last_seen }}</td>
+                                    <td>
+                                        <button class="icon-btn" title="View Details" onclick="openShopModal(this)"
+                                            data-shop-name="{{ shop.SHOP_NAME }}"
+                                            data-shop-status="{% if shop.kiosk.status == 'online' %}Active{% else %}Inactive{% endif %}"
+                                            data-shop-location="Cebu City" data-kiosk-status="{{ shop.kiosk.status }}"
+                                            data-last-seen="{{ shop.kiosk.last_seen }}"
+                                            data-last-seen="{{ shop.kiosk.last_seen }}"
+                                            data-device-id="KIOSK-{{ '%03d'|format(shop.SHOP_ID) }}"
+                                            data-user-id="{{ shop.SHOP_ID }}">
+                                            <i class="fa fa-eye"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not shops %}
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 20px; color: #666;">No shops
+                                        found.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -203,9 +200,13 @@
                             <span id="modalDeviceId">Loading...</span>
                         </li>
                     </ul>
-                    <div id="deviceActions" style="margin-top: 15px;">
-                        <button id="toggleDeviceBtn" class="btn-toggle" onclick="toggleDeviceStatus()">Loading
-                            Action...</button>
+                    <div id="deviceActions" style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button id="toggleDeviceBtn" class="btn-toggle" onclick="toggleDeviceStatus()"
+                            style="flex: 1;">Loading Action...</button>
+                        <button id="deleteShopBtn" class="btn btn-danger" onclick="deleteShop()"
+                            style="flex: 1; background-color: var(--danger-color); color: white;">
+                            <i class="fas fa-trash-alt"></i> Delete Shop
+                        </button>
                     </div>
                 </div>
             </div>
@@ -351,6 +352,32 @@
             }
             if (event.target == addModal) {
                 addModal.style.display = "none";
+            }
+        }
+        async function deleteShop() {
+            if (!currentShopId) return;
+
+            if (!confirm('Are you sure you want to DELETE this shop? This action cannot be undone and will remove all associated data.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/super_admin/delete_shop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentShopId })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Shop deleted successfully.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error deleting shop:', error);
+                alert('An error occurred while deleting the shop.');
             }
         }
     </script>
