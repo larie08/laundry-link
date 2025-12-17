@@ -1251,6 +1251,11 @@ def deduct_fabcon_quantity(fabcon_id: int, quantity: int) -> bool:
     initialize_database()
     print("Connected to Firebase Firestore successfully.")
 
+
+# ==================================================
+# SHOP / DEVICE MANAGEMENT
+# ==================================================
+
 def get_all_shops() -> list:
     """
     Fetch all 'shops' (users with role='admin').
@@ -1262,23 +1267,57 @@ def get_all_shops() -> list:
     docs = db.collection('USER').where('ROLE', '==', 'admin').get()
     shops = []
     
-    import random
-    
     for doc in docs:
         user = doc.to_dict()
+        user_id = user.get('USER_ID')
         
-        # Simulate ESP32 signal detection
-        # In real scenario: check if device exists and has heartbeat
-        is_detected = random.choice([True, True, True, False]) # 75% chance detected
+        # In a real deployed scenario, this might check a heartbeat collection.
+        # For now, we persist the "status" in the USER document itself (KIOSK_STATUS).
+        # Detailed "last_seen" could be updated by an actual device heartbeat API.
         
-        if is_detected:
-            # Randomize status for demo purposes
-            status = random.choice(['online', 'online', 'offline'])
-            
-            shops.append({
-                'SHOP_ID': user.get('USER_ID'),
-                'SHOP_NAME': user.get('FULLNAME', 'Unknown Shop'),
-                'kiosk': {'status': status, 'last_seen': _now().strftime('%Y-%m-%d %H:%M')},
-            })
+        # Default to 'offline' if not set
+        status = user.get('KIOSK_STATUS', 'offline')
+        
+        # Mocking last_seen based on status for realism if not present
+        if status == 'online':
+            last_seen = _now().strftime('%Y-%m-%d %H:%M')
+        else:
+             # Just a placeholder for offline devices
+            last_seen = (datetime.now() - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M')
+
+        # If the DB has a real LAST_SEEN field, use it
+        if user.get('LAST_SEEN'):
+             # Handle if it is a firestore datetime
+            ls = user.get('LAST_SEEN')
+            if hasattr(ls, 'strftime'):
+                last_seen = ls.strftime('%Y-%m-%d %H:%M')
+            else:
+                last_seen = str(ls)
+
+        shops.append({
+            'SHOP_ID': user_id,
+            'SHOP_NAME': user.get('FULLNAME', 'Unknown Shop'),
+            'kiosk': {'status': status, 'last_seen': last_seen},
+        })
         
     return shops
+
+def update_device_status(user_id: int, status: str) -> bool:
+    """Update the KIOSK_STATUS for a shop (user_id)."""
+    _require_db()
+    
+    docs = db.collection('USER').where('USER_ID', '==', user_id).limit(1).get()
+    if not docs:
+        return False
+    
+    update_data = {
+        'KIOSK_STATUS': status,
+        'DATE_UPDATED': _now()
+    }
+    
+    # If setting to online, update LAST_SEEN too
+    if status == 'online':
+        update_data['LAST_SEEN'] = _now()
+        
+    db.collection('USER').document(docs[0].id).update(update_data)
+    return True

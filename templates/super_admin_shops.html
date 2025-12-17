@@ -36,15 +36,15 @@
                         class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
                 <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding active"><i
                         class="fa fa-store fa-fw"></i> Laundry Shops</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-microchip fa-fw"></i> Device
                     Monitoring</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-exchange-alt fa-fw"></i>
+                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-exchange-alt fa-fw"></i>
                     Transactions</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-chart-line fa-fw"></i> Reports &
                     Analytics</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
-                    Management</a>
                 <div class="logout-btn">
                     <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
                             class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
@@ -70,6 +70,9 @@
                     <div class="w3-card w3-white w3-round w3-margin-top">
                         <header class="w3-container w3-light-grey w3-padding">
                             <h4>Detailed Shop Status</h4>
+                            <button class="w3-button w3-blue w3-round w3-small" onclick="openAddShopModal()">
+                                <i class="fa fa-plus"></i> Add New Shop
+                            </button>
                         </header>
                         <div class="w3-responsive">
                             <table class="w3-table w3-striped w3-bordered w3-hoverable status-table">
@@ -102,10 +105,16 @@
                                         </td>
                                         <td>{{ shop.kiosk.last_seen }}</td>
                                         <td>
-                                            <button class="w3-button w3-blue w3-small icon-btn" title="View Details"><i
-                                                    class="fa fa-eye"></i></button>
-                                            <!-- <button class="w3-button w3-red w3-small icon-btn" title="Restart Kiosk"><i
-                                                    class="fa fa-power-off"></i></button> -->
+                                            <button class="w3-button w3-blue w3-small icon-btn" title="View Details"
+                                                onclick="openShopModal(this)" data-shop-name="{{ shop.SHOP_NAME }}"
+                                                data-shop-status="{% if shop.kiosk.status == 'online' %}Active{% else %}Inactive{% endif %}"
+                                                data-shop-location="Cebu City"
+                                                data-kiosk-status="{{ shop.kiosk.status }}"
+                                                data-last-seen="{{ shop.kiosk.last_seen }}"
+                                                data-last-seen="{{ shop.kiosk.last_seen }}"
+                                                data-device-id="KIOSK-{{ '%03d'|format(shop.SHOP_ID) }}"
+                                                data-user-id="{{ shop.SHOP_ID }}">
+                                                <i class="fa fa-eye"></i></button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -123,8 +132,91 @@
         </main>
     </div>
 
+
+    <!-- ADD SHOP MODAL -->
+    <div id="addShopModal" class="shop-modal">
+        <div class="shop-modal-content">
+            <div class="shop-modal-header">
+                <h2><i class="fa fa-plus-circle"></i> Add New Shop</h2>
+                <button class="modal-close-btn" onclick="closeAddShopModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="shop-modal-body">
+                <form id="addShopForm" onsubmit="submitAddShopForm(event)">
+                    <div class="form-group">
+                        <label for="shopFullname">Shop Name (Fullname)</label>
+                        <input type="text" id="shopFullname" class="form-control" required
+                            placeholder="e.g. LaundryLink Cebu">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopUsername">Username</label>
+                        <input type="text" id="shopUsername" class="form-control" required placeholder="e.g. shop_cebu">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopPassword">Password</label>
+                        <input type="password" id="shopPassword" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Create Shop</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHOP DETAILS MODAL -->
+    <div id="shopModal" class="shop-modal">
+        <div class="shop-modal-content">
+            <div class="shop-modal-header">
+                <h2><i class="fa fa-store"></i> Shop Info</h2>
+                <button class="modal-close-btn" onclick="closeShopModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="shop-modal-body">
+                <div class="info-section">
+                    <div class="info-title">Shop Details</div>
+                    <ul class="info-list">
+                        <li>
+                            <span class="info-label">Shop Name:</span>
+                            <span id="modalShopName">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="info-label">Shop Status:</span>
+                            <span id="modalShopStatus">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="info-label">Location:</span>
+                            <span id="modalShopLocation">Loading...</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">LaundryLink Kiosk</div>
+                    <ul class="info-list">
+                        <li>
+                            <span class="info-label">Kiosk Status:</span>
+                            <span id="modalKioskStatus">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="info-label">Last Seen:</span>
+                            <span id="modalLastSeen">Loading...</span>
+                        </li>
+                        <li>
+                            <span class="info-label">Device ID:</span>
+                            <span id="modalDeviceId">Loading...</span>
+                        </li>
+                    </ul>
+                    <div id="deviceActions" style="margin-top: 15px;">
+                        <button id="toggleDeviceBtn" class="btn-toggle" onclick="toggleDeviceStatus()">Loading
+                            Action...</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT -->
     <script>
+        let currentShopId = null;
+        let currentKioskStatus = null;
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.w3-sidebar');
             const main = document.querySelector('main');
@@ -137,6 +229,128 @@
                 sidebar.style.display = 'none';
                 main.style.marginLeft = '0';
                 main.classList.remove('sidebar-open');
+            }
+        }
+
+        function openShopModal(button) {
+            const shopName = button.getAttribute('data-shop-name');
+            const shopStatus = button.getAttribute('data-shop-status');
+            const shopLocation = button.getAttribute('data-shop-location');
+            const kioskStatus = button.getAttribute('data-kiosk-status');
+            const lastSeen = button.getAttribute('data-last-seen');
+            const deviceId = button.getAttribute('data-device-id');
+
+            // Set global vars for action
+            currentShopId = button.getAttribute('data-user-id');
+            currentKioskStatus = kioskStatus;
+
+            document.getElementById('modalShopName').textContent = shopName;
+
+            const shopStatusEl = document.getElementById('modalShopStatus');
+            shopStatusEl.textContent = shopStatus;
+            shopStatusEl.className = shopStatus === 'Active' ? 'modal-status-active' : 'modal-status-inactive';
+
+            document.getElementById('modalShopLocation').textContent = shopLocation;
+
+            const kioskStatusEl = document.getElementById('modalKioskStatus');
+            if (kioskStatus === 'online') {
+                kioskStatusEl.innerHTML = '🟢 Online';
+            } else {
+                kioskStatusEl.innerHTML = '🔴 Offline';
+            }
+
+            document.getElementById('modalLastSeen').textContent = lastSeen;
+            document.getElementById('modalDeviceId').textContent = deviceId;
+
+            // Update Toggle Button
+            const toggleBtn = document.getElementById('toggleDeviceBtn');
+            if (kioskStatus === 'online') {
+                toggleBtn.textContent = 'Deactivate Device';
+                toggleBtn.className = 'btn-toggle inactive-action';
+            } else {
+                toggleBtn.textContent = 'Activate Device';
+                toggleBtn.className = 'btn-toggle active-action';
+            }
+
+            document.getElementById('shopModal').style.display = 'block';
+        }
+
+        function closeShopModal() {
+            document.getElementById('shopModal').style.display = 'none';
+        }
+
+        // --- ADD SHOP FUNCTIONS ---
+        function openAddShopModal() {
+            document.getElementById('addShopModal').style.display = 'block';
+        }
+
+        function closeAddShopModal() {
+            document.getElementById('addShopModal').style.display = 'none';
+        }
+
+        async function submitAddShopForm(e) {
+            e.preventDefault();
+            const fullname = document.getElementById('shopFullname').value;
+            const username = document.getElementById('shopUsername').value;
+            const password = document.getElementById('shopPassword').value;
+
+            try {
+                const response = await fetch('/super_admin/add_shop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullname, username, password })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Shop created successfully!');
+                    closeAddShopModal();
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while creating the shop.');
+            }
+        }
+
+        // --- DEVICE TOGGLE FUNCTION ---
+        async function toggleDeviceStatus() {
+            if (!currentShopId) return;
+
+            const newStatus = currentKioskStatus === 'online' ? 'offline' : 'online';
+            const confirmMsg = `Are you sure you want to set this device to ${newStatus.toUpperCase()}?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await fetch('/super_admin/update_device_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentShopId, status: newStatus })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Device status updated to ${newStatus}.`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to update status.');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('shopModal');
+            const addModal = document.getElementById('addShopModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+            if (event.target == addModal) {
+                addModal.style.display = "none";
             }
         }
     </script>
