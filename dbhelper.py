@@ -1248,6 +1248,37 @@ def deduct_fabcon_quantity(fabcon_id: int, quantity: int) -> bool:
 
 
     
-if __name__ == "__main__":
     initialize_database()
     print("Connected to Firebase Firestore successfully.")
+
+def get_all_shops() -> list:
+    """
+    Fetch all 'shops' (users with role='admin').
+    Returns a list of dicts with STATUS fields for display.
+    """
+    _require_db()
+    
+    # Get all users with role 'admin'
+    docs = db.collection('USER').where('ROLE', '==', 'admin').get()
+    shops = []
+    
+    import random
+    
+    for doc in docs:
+        user = doc.to_dict()
+        
+        # Simulate ESP32 signal detection
+        # In real scenario: check if device exists and has heartbeat
+        is_detected = random.choice([True, True, True, False]) # 75% chance detected
+        
+        if is_detected:
+            # Randomize status for demo purposes
+            status = random.choice(['online', 'online', 'offline'])
+            
+            shops.append({
+                'SHOP_ID': user.get('USER_ID'),
+                'SHOP_NAME': user.get('FULLNAME', 'Unknown Shop'),
+                'kiosk': {'status': status, 'last_seen': _now().strftime('%Y-%m-%d %H:%M')},
+            })
+        
+    return shops

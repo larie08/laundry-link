@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/super_admin_shops.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Laundry Shops</title>
+</head>
+
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>LAUNDRYLINK</span>
+            </div>
+
+            <!-- MAIN NAVIGATION -->
+            <div class="w3-bar-block">
+                <a href="{{ url_for('super_admin_dashboard') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
+                <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding active"><i
+                        class="fa fa-store fa-fw"></i> Laundry Shops</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                    Monitoring</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-exchange-alt fa-fw"></i>
+                    Transactions</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                    Analytics</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
+                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
+                    Management</a>
+                <div class="logout-btn">
+                    <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
+                            class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Laundry Shops</h1>
+                    <div class="breadcrumb">Main / List of Laundry Shops</div>
+                </div>
+            </header>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="w3-container w3-padding w3-margin">
+                <div class="w3-padding-top">
+                    <div class="w3-card w3-white w3-round w3-margin-top">
+                        <header class="w3-container w3-light-grey w3-padding">
+                            <h4>Detailed Shop Status</h4>
+                        </header>
+                        <div class="w3-responsive">
+                            <table class="w3-table w3-striped w3-bordered w3-hoverable status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Shop Name</th>
+                                        <th>Kiosk Status</th>
+                                        <th>Last Seen</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for shop in shops %}
+                                    <tr>
+                                        <td>
+                                            {% if shop.kiosk.status == 'online' %}
+                                            <span class="status-badge status-active">Active</span>
+                                            {% else %}
+                                            <span class="status-badge status-inactive">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ shop.SHOP_NAME }}</td>
+                                        <td>
+                                            {% if shop.kiosk.status == 'online' %}
+                                            <span class="status-badge status-online">Online</span>
+                                            {% else %}
+                                            <span class="status-badge status-offline">Offline</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ shop.kiosk.last_seen }}</td>
+                                        <td>
+                                            <button class="w3-button w3-blue w3-small icon-btn" title="View Details"><i
+                                                    class="fa fa-eye"></i></button>
+                                            <!-- <button class="w3-button w3-red w3-small icon-btn" title="Restart Kiosk"><i
+                                                    class="fa fa-power-off"></i></button> -->
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not shops %}
+                                    <tr>
+                                        <td colspan="6" class="w3-center">No shops found.</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            const main = document.querySelector('main');
+
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'block';
+                main.style.marginLeft = '250px';
+                main.classList.add('sidebar-open');
+            } else {
+                sidebar.style.display = 'none';
+                main.style.marginLeft = '0';
+                main.classList.remove('sidebar-open');
+            }
+        }
+    </script>
+</body>
+
+</html>
