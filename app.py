@@ -5069,6 +5069,74 @@ def laundry_shops():
     shops = dbhelper.get_all_shops()
     return render_template('super_admin_shops.html', shops=shops)
 
+@app.route('/super_admin/devices')
+def device_monitoring():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    
+    # Reusing shop data since devices are tied to shops
+    shops = dbhelper.get_all_shops()
+    return render_template('super_admin_devices.html', shops=shops)
+
+@app.route('/super_admin/transactions')
+def super_admin_transactions():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    
+    return render_template('super_admin_transaction.html')
+
+@app.route('/super_admin/reports')
+def super_admin_reports():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return redirect(url_for('super_admin_login'))
+    
+    return render_template('super_admin_reports.html')
+
+@app.route('/super_admin/add_shop', methods=['POST'])
+def add_shop():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        data = request.get_json()
+        fullname = data.get('fullname')
+        username = data.get('username')
+        password = data.get('password')
+
+        if not fullname or not username or not password:
+            return jsonify({'success': False, 'message': 'All fields are required'})
+
+        # Role is always 'admin' for a shop
+        if dbhelper.add_user(username, password, 'admin', fullname):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to create shop'})
+    except Exception as e:
+        print(f"Error adding shop: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/super_admin/update_device_status', methods=['POST'])
+def update_device_status_route():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        data = request.get_json()
+        user_id_val = data.get('user_id')
+        status = data.get('status') # 'online' or 'offline'
+
+        if not user_id_val or not status:
+            return jsonify({'success': False, 'message': 'Missing user_id or status'})
+
+        if dbhelper.update_device_status(int(user_id_val), status):
+            return jsonify({'success': True})
+        else:
+             return jsonify({'success': False, 'message': 'Failed to update status'})
+    except Exception as e:
+        print(f"Error updating device status: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+
     
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

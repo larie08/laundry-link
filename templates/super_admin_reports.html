@@ -39,15 +39,15 @@
                         class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
                 <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding"><i
                         class="fa fa-store fa-fw"></i> Laundry Shops</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-microchip fa-fw"></i> Devices
                     Monitoring</a>
-                <a href="" class="w3-bar-item w3-button w3-padding active"><i class="fa fa-exchange-alt fa-fw"></i>
+                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-exchange-alt fa-fw"></i>
                     Transactions</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding active"><i
+                        class="fa fa-chart-line fa-fw"></i> Reports &
                     Analytics</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
-                    Management</a>
                 <div class="logout-btn">
                     <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
                             class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
@@ -65,16 +65,16 @@
                     <h1 class="page-title">Reports & Analytics</h1>
                     <div class="breadcrumb">Main / Reports & Analytics</div>
                 </div>
-                
+
             </header>
 
             <div class="export-buttons">
-                    <button class="export-btn pdf-btn" onclick="exportPDF()">
-                        <i class="fas fa-file-pdf"></i> Export PDF
-                    </button>
-                    <button class="export-btn csv-btn" onclick="exportCSV()">
-                        <i class="fas fa-file-csv"></i> Export CSV
-                    </button>
+                <button class="export-btn pdf-btn" onclick="exportPDF()">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button class="export-btn csv-btn" onclick="exportCSV()">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
             </div>
 
             <br>
@@ -93,17 +93,17 @@
                             <option value="custom">Custom Range</option>
                         </select>
                     </div>
-                    
+
                     <div class="filter-group custom-date hidden">
                         <label for="startDate">From</label>
                         <input type="date" id="startDate" class="filter-input">
                     </div>
-                    
+
                     <div class="filter-group custom-date hidden">
                         <label for="endDate">To</label>
                         <input type="date" id="endDate" class="filter-input">
                     </div>
-                    
+
                     <div class="filter-group">
                         <label for="shopFilter"><i class="fas fa-store"></i> Shop</label>
                         <select id="shopFilter" class="filter-select">
@@ -114,7 +114,7 @@
                             <option value="shop4">Makati Branch</option>
                         </select>
                     </div>
-                    
+
                     <div class="filter-group">
                         <label for="reportType"><i class="fas fa-chart-bar"></i> Report Type</label>
                         <select id="reportType" class="filter-select">
@@ -124,7 +124,7 @@
                             <option value="performance">Shop Performance Reports</option>
                         </select>
                     </div>
-                    
+
                     <button class="apply-btn" onclick="applyFilters()">
                         <i class="fas fa-filter"></i> Apply Filters
                     </button>
@@ -146,7 +146,7 @@
                         <p class="card-change positive">+12.5% from last month</p>
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-icon transactions">
                         <i class="fas fa-exchange-alt"></i>
@@ -157,7 +157,7 @@
                         <p class="card-change positive">+8.3% from last month</p>
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-icon uptime">
                         <i class="fas fa-microchip"></i>
@@ -168,7 +168,7 @@
                         <p class="card-change positive">+0.5% from last month</p>
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-icon shops">
                         <i class="fas fa-store"></i>
@@ -415,7 +415,7 @@
     </div>
 
     <script src="../static/js/super_admin_reports.js"></script>
-        </main>
+    </main>
     </div>
 
     <!-- jsPDF and SheetJS for export functionality -->
@@ -423,34 +423,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
-                // Export to PDF
-                function exportToPDF() {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    doc.text('LaundryLink - Transactions', 14, 16);
-                    doc.autoTable({
-                        html: '.transactions-table',
-                        startY: 22,
-                        styles: { font: 'poppins', fontSize: 8 },
-                        headStyles: { fillColor: [18, 45, 105] },
-                        theme: 'grid',
-                    });
-                    doc.save('transactions.pdf');
-                }
+        // Export to PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('LaundryLink - Transactions', 14, 16);
+            doc.autoTable({
+                html: '.transactions-table',
+                startY: 22,
+                styles: { font: 'poppins', fontSize: 8 },
+                headStyles: { fillColor: [18, 45, 105] },
+                theme: 'grid',
+            });
+            doc.save('transactions.pdf');
+        }
 
-                // Export to Excel
-                function exportToExcel() {
-                    const table = document.querySelector('.transactions-table');
-                    if (!table) return;
-                    const wb = XLSX.utils.table_to_book(table, { sheet: 'Transactions' });
-                    XLSX.writeFile(wb, 'transactions.xlsx');
-                }
+        // Export to Excel
+        function exportToExcel() {
+            const table = document.querySelector('.transactions-table');
+            if (!table) return;
+            const wb = XLSX.utils.table_to_book(table, { sheet: 'Transactions' });
+            XLSX.writeFile(wb, 'transactions.xlsx');
+        }
         function toggleSidebar() {
             const sidebar = document.querySelector('.w3-sidebar');
             sidebar.classList.toggle('active');
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             flatpickr("#dateRange", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -463,25 +463,25 @@
             const shopFilter = document.getElementById('shopFilter').value;
             const dateRange = document.getElementById('dateRange').value;
             const statusFilter = document.getElementById('statusFilter').value;
-            
+
             // In a real application, this would make an API call to filter transactions
             alert(`Filters applied:\nShop: ${shopFilter}\nDate Range: ${dateRange}\nStatus: ${statusFilter}`);
-            
+
             // For demo purposes, we'll simulate filtering by highlighting matching rows
             const rows = document.querySelectorAll('.transactions-table tbody tr');
             rows.forEach(row => {
                 const statusBadge = row.querySelector('.status-badge');
                 const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-                
+
                 let showRow = true;
-                
+
                 // Filter by status
                 if (statusFilter !== 'all' && status !== statusFilter) {
                     showRow = false;
                 }
-                
+
                 // In a real app, you would also filter by shop and date
-                
+
                 row.style.display = showRow ? '' : 'none';
             });
         }
@@ -490,21 +490,21 @@
             document.getElementById('shopFilter').value = 'all';
             document.getElementById('dateRange').value = '';
             document.getElementById('statusFilter').value = 'all';
-            
+
             // Show all rows
             const rows = document.querySelectorAll('.transactions-table tbody tr');
             rows.forEach(row => {
                 row.style.display = '';
             });
-            
+
             alert('Filters have been reset');
         }
 
         // Search function
-        document.querySelector('.search-input').addEventListener('input', function(e) {
+        document.querySelector('.search-input').addEventListener('input', function (e) {
             const searchTerm = e.target.value.toLowerCase();
             const rows = document.querySelectorAll('.transactions-table tbody tr');
-            
+
             rows.forEach(row => {
                 const rowText = row.textContent.toLowerCase();
                 row.style.display = rowText.includes(searchTerm) ? '' : 'none';
@@ -528,7 +528,7 @@
             // Simulate a refresh by adding a loading state
             const refreshBtn = document.querySelector('.btn-primary i.fa-sync-alt');
             refreshBtn.classList.add('fa-spin');
-            
+
             setTimeout(() => {
                 refreshBtn.classList.remove('fa-spin');
                 alert('Transaction data refreshed successfully!');
@@ -537,14 +537,14 @@
 
         // Pagination functionality
         document.querySelectorAll('.pagination-btn').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 if (this.disabled) return;
-                
+
                 // Remove active class from all buttons
                 document.querySelectorAll('.pagination-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                
+
                 // Add active class to clicked button if it's a number button
                 if (!this.querySelector('i')) {
                     this.classList.add('active');
@@ -561,7 +561,7 @@
         });
 
         // Responsive adjustments
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             const sidebar = document.querySelector('.w3-sidebar');
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');

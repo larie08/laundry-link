@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/super_admin_devices.css">
+    <link rel="stylesheet" href="../static/css/w3.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Device Monitoring</title>
+</head>
+
+<body>
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <!-- SIDEBAR -->
+        <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
+            <!-- LOGO -->
+            <div class="w3-center w3-bar-item logo">
+                <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
+            </div>
+
+            <!-- MAIN TITLE (DASHBOARD)-->
+            <div class="w3-margin w3-margin-top main-title">
+                <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
+                <span>LAUNDRYLINK</span>
+            </div>
+
+            <!-- MAIN NAVIGATION -->
+            <div class="w3-bar-block">
+                <a href="{{ url_for('super_admin_dashboard') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
+                <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-store fa-fw"></i> Laundry Shops</a>
+                <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding active"><i
+                        class="fa fa-microchip fa-fw"></i> Device
+                    Monitoring</a>
+                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-exchange-alt fa-fw"></i>
+                    Transactions</a>
+                <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-chart-line fa-fw"></i> Reports &
+                    Analytics</a>
+                <div class="logout-btn">
+                    <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
+                            class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <div>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
+                    <h1 class="page-title">Device Monitoring</h1>
+                    <div class="breadcrumb">Main / Device Monitoring</div>
+                </div>
+            </header>
+
+            <!-- CONTAINER FOR THE MAIN CONTENT -->
+            <div class="w3-container w3-padding w3-margin">
+                <div class="w3-padding-top">
+                    <div class="w3-card w3-white w3-round w3-margin-top">
+                        <header class="w3-container w3-light-grey w3-padding">
+                            <h4>Real-time Device Status</h4>
+                        </header>
+                        <div class="w3-responsive">
+                            <table class="w3-table w3-striped w3-bordered w3-hoverable status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device Status</th>
+                                        <th>Shop Name</th>
+                                        <th>Device Type</th>
+                                        <th>Last Seen</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for shop in shops %}
+                                    <tr>
+                                        <td>
+                                            {% if shop.kiosk.status == 'online' %}
+                                            <span class="status-badge status-online">Online</span>
+                                            {% else %}
+                                            <span class="status-badge status-offline">Offline</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ shop.SHOP_NAME }}</td>
+                                        <td>Kiosk System</td>
+                                        <td>{{ shop.kiosk.last_seen }}</td>
+                                        <td>
+                                            <button
+                                                onclick="document.getElementById('device_modal_{{ loop.index }}').style.display='block'"
+                                                class="w3-button w3-blue w3-small icon-btn" title="View Details"><i
+                                                    class="fa fa-eye"></i></button>
+
+                                            <!-- DETAILS MODAL -->
+                                            <div id="device_modal_{{ loop.index }}" class="w3-modal">
+                                                <div class="w3-modal-content w3-card-4 w3-animate-zoom w3-round-large"
+                                                    style="max-width:500px">
+                                                    <header class="w3-container w3-white w3-border-bottom w3-padding">
+                                                        <span
+                                                            onclick="document.getElementById('device_modal_{{ loop.index }}').style.display='none'"
+                                                            class="w3-button w3-display-topright w3-hover-red w3-round-large">&times;</span>
+                                                        <h3 class="w3-text-blue-grey"><i class="fa fa-info-circle"></i>
+                                                            Device Details</h3>
+                                                    </header>
+                                                    <div class="w3-container w3-padding-large">
+                                                        <!-- Shop Info -->
+                                                        <div class="w3-margin-bottom">
+                                                            <label class="w3-text-grey w3-small">SHOP INFO</label>
+                                                            <div class="w3-large font-weight-bold">{{ shop.SHOP_NAME }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="w3-row-padding w3-margin-bottom"
+                                                            style="margin:0 -16px">
+                                                            <!-- Kiosk Status -->
+                                                            <div class="w3-half w3-margin-bottom">
+                                                                <label class="w3-text-grey w3-small">KIOSK
+                                                                    STATUS</label>
+                                                                <div>
+                                                                    {% if shop.kiosk.status == 'online' %}
+                                                                    <span class="w3-tag w3-green w3-round">Online</span>
+                                                                    {% else %}
+                                                                    <span class="w3-tag w3-red w3-round">Offline</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <!-- ESP32 Status -->
+                                                            <div class="w3-half w3-margin-bottom">
+                                                                <label class="w3-text-grey w3-small">ESP32
+                                                                    STATUS</label>
+                                                                <div>
+                                                                    {% if shop.kiosk.status == 'online' %}
+                                                                    <span class="w3-tag w3-green w3-round">Active</span>
+                                                                    {% else %}
+                                                                    <span
+                                                                        class="w3-tag w3-orange w3-text-white w3-round">Unreachable</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Last Seen -->
+                                                        <div class="w3-margin-bottom">
+                                                            <label class="w3-text-grey w3-small">LAST SEEN</label>
+                                                            <div class="w3-text-dark-grey">{{ shop.kiosk.last_seen }}
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Recent Alerts -->
+                                                        <div class="w3-margin-bottom">
+                                                            <label class="w3-text-grey w3-small">RECENT ALERTS</label>
+                                                            <ul class="w3-ul w3-border w3-round w3-light-grey w3-small">
+                                                                {% if shop.kiosk.status != 'online' %}
+                                                                <li class="w3-text-red"><i
+                                                                        class="fa fa-exclamation-triangle"></i> Device
+                                                                    Connection Lost</li>
+                                                                {% else %}
+                                                                <li class="w3-text-green"><i
+                                                                        class="fa fa-check-circle"></i> System Operating
+                                                                    Normally</li>
+                                                                {% endif %}
+                                                                <li><i class="fa fa-clock"></i> Daily Sync Completed
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not shops %}
+                                    <tr>
+                                        <td colspan="5" class="w3-center">No devices found.</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.w3-sidebar');
+            const main = document.querySelector('main');
+
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'block';
+                main.style.marginLeft = '250px';
+                main.classList.add('sidebar-open');
+            } else {
+                sidebar.style.display = 'none';
+                main.style.marginLeft = '0';
+                main.classList.remove('sidebar-open');
+            }
+        }
+    </script>
+</body>
+
+</html>

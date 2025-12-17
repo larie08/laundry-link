@@ -18,6 +18,8 @@
     <!-- CONTAINER -->
     <div class="container">
         <!-- SIDEBAR -->
+        <!-- SIDEBAR -->
+        <!-- SIDEBAR -->
         <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
             <!-- LOGO -->
             <div class="w3-center w3-bar-item logo">
@@ -30,22 +32,21 @@
                 <span>LAUNDRYLINK</span>
             </div>
 
-            <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
+            <!-- MAIN NAVIGATION -->
             <div class="w3-bar-block">
                 <a href="{{ url_for('super_admin_dashboard') }}" class="w3-bar-item w3-button w3-padding active"><i
                         class="fa fa-tachometer-alt fa-fw"></i> Dashboard</a>
                 <a href="{{ url_for('laundry_shops') }}" class="w3-bar-item w3-button w3-padding"><i
-                        class="fa fa-store fa-fw"></i> Laundry Shops
-                </a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-microchip fa-fw"></i> Devices
+                        class="fa fa-store fa-fw"></i> Laundry Shops</a>
+                <a href="{{ url_for('device_monitoring') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-microchip fa-fw"></i> Device
                     Monitoring</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-exchange-alt fa-fw"></i>
+                <a href="{{ url_for('super_admin_transactions') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-exchange-alt fa-fw"></i>
                     Transactions</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-chart-line fa-fw"></i> Reports &
+                <a href="{{ url_for('super_admin_reports') }}" class="w3-bar-item w3-button w3-padding"><i
+                        class="fa fa-chart-line fa-fw"></i> Reports &
                     Analytics</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i> Alerts & Logs</a>
-                <a href="" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users-cog fa-fw"></i> User
-                    Management</a>
                 <div class="logout-btn">
                     <a href="{{ url_for('logout') }}" class="w3-bar-item w3-button w3-padding"><i
                             class="fa fa-sign-out-alt fa-fw"></i> Logout</a>
@@ -58,8 +59,7 @@
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
-                            class="fas fa-bars"></i></button>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"></button>
                     <h1 class="page-title">Dashboard</h1>
                     <div class="breadcrumb">Main / Dashboard</div>
                 </div>

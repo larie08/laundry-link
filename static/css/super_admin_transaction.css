@@ -263,7 +263,7 @@ header {
             margin-bottom: 30px;
         }
 
-        .stat-card {
+        .status-card {
             background-color: white;
             border-radius: 10px;
             padding: 20px;
@@ -273,12 +273,12 @@ header {
             align-items: center;
         }
 
-        .stat-card:hover {
+        .status-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--hover-shadow);
         }
 
-        .stat-icon {
+        .status-icon {
             width: 60px;
             height: 60px;
             border-radius: 10px;
@@ -290,20 +290,20 @@ header {
             color: white;
         }
 
-        .stat-info h3 {
+        .status-info h3 {
             margin: 0 0 5px 0;
             font-size: 0.9em;
             color: var(--text-light);
             font-weight: 500;
         }
 
-        .stat-info .value {
+        .status-info .value {
             font-size: 1.8em;
             font-weight: 700;
             color: var(--primary-dark);
         }
 
-        .stat-info .change {
+        .status-info .change {
             font-size: 0.85em;
             margin-top: 5px;
         }
