@@ -54,16 +54,6 @@
                 </div>
             </div>
         
-        <!-- Error Modal
-        <div id="errorModal" class="error-modal">
-            <div class="error-content">
-                <div class="error-icon"></div>
-                <div class="error-title"><b>Weight Required</b></div>
-                <div class="error-message">Please wait for the weight to be detected before proceeding to the next step.</div>
-                <button class="error-button" onclick="closeErrorModal()">Got it</button>
-            </div>
-        </div> -->
-        
         <script>
             const translations = {
                 en: {
@@ -167,34 +157,6 @@
                 closeLanguageModal();
             }
 
-            // // Show error modal
-            // function showErrorModal() {
-            //     document.getElementById('errorModal').classList.add('show');
-            // }
-            
-            // // Close error modal
-            // function closeErrorModal() {
-            //     document.getElementById('errorModal').classList.remove('show');
-            // }
-            
-            // // Close modal when clicking outside
-            // document.getElementById('errorModal').addEventListener('click', function(e) {
-            //     if (e.target === this) {
-            //         closeErrorModal();
-            //     }
-            // });
-            
-            // // Form validation before submit
-            // document.getElementById('weightForm').addEventListener('submit', function(e) {
-            //     const weightInput = document.getElementById('weight_input').value.trim();
-                
-            //     if (!weightInput || parseFloat(weightInput) <= 0) {
-            //         e.preventDefault();
-            //         showErrorModal();
-            //         return false;
-            //     }
-            // });
-
             function pollWeight() {
                 fetch('/get_latest_weight')
                     .then(response => response.json())
@@ -211,6 +173,11 @@
                         totalLoadInput.placeholder = totalLoadLabel;
                         
                         weightInput.classList.toggle('stable-weight', data.is_stable);
+                        
+                        // Store weight in sessionStorage for use in others page
+                        if (weight > 0) {
+                            sessionStorage.setItem('laundry_weight', weight.toFixed(2));
+                        }
                     });
             }
             setInterval(pollWeight, 1000);
