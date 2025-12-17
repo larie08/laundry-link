@@ -18,7 +18,6 @@
     <!-- CONTAINER -->
     <div class="container">
         <!-- SIDEBAR -->
-        <!-- SIDEBAR -->
         <aside class="w3-sidebar w3-bar-block w3-card-2 width" style="width:250px">
             <!-- LOGO -->
             <div class="w3-center w3-bar-item logo">
@@ -55,136 +54,133 @@
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
-                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Device Monitoring</h1>
                     <div class="breadcrumb">Main / Device Monitoring</div>
                 </div>
             </header>
 
             <!-- CONTAINER FOR THE MAIN CONTENT -->
-            <div class="w3-container w3-padding w3-margin">
-                <div class="w3-padding-top">
-                    <div class="w3-card w3-white w3-round w3-margin-top">
-                        <header class="w3-container w3-light-grey w3-padding">
-                            <h4>Real-time Device Status</h4>
-                        </header>
-                        <div class="w3-responsive">
-                            <table class="w3-table w3-striped w3-bordered w3-hoverable status-table">
-                                <thead>
-                                    <tr>
-                                        <th>Device Status</th>
-                                        <th>Shop Name</th>
-                                        <th>Device Type</th>
-                                        <th>Last Seen</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for shop in shops %}
-                                    <tr>
-                                        <td>
-                                            {% if shop.kiosk.status == 'online' %}
-                                            <span class="status-badge status-online">Online</span>
-                                            {% else %}
-                                            <span class="status-badge status-offline">Offline</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ shop.SHOP_NAME }}</td>
-                                        <td>Kiosk System</td>
-                                        <td>{{ shop.kiosk.last_seen }}</td>
-                                        <td>
-                                            <button
-                                                onclick="document.getElementById('device_modal_{{ loop.index }}').style.display='block'"
-                                                class="w3-button w3-blue w3-small icon-btn" title="View Details"><i
-                                                    class="fa fa-eye"></i></button>
+            <div class="content-container">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Real-time Device Status</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="devices-table">
+                            <thead>
+                                <tr>
+                                    <th>Device Status</th>
+                                    <th>Shop Name</th>
+                                    <th>Device Type</th>
+                                    <th>Last Seen</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops %}
+                                <tr>
+                                    <td>
+                                        {% if shop.kiosk.status == 'online' %}
+                                        <span class="status-badge status-online">Online</span>
+                                        {% else %}
+                                        <span class="status-badge status-offline">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.SHOP_NAME }}</td>
+                                    <td>Kiosk System</td>
+                                    <td>{{ shop.kiosk.last_seen }}</td>
+                                    <td>
+                                        <button onclick="openDeviceModal('device_modal_{{ loop.index }}')"
+                                            class="icon-btn" title="View Details"><i class="fa fa-eye"></i></button>
 
-                                            <!-- DETAILS MODAL -->
-                                            <div id="device_modal_{{ loop.index }}" class="w3-modal">
-                                                <div class="w3-modal-content w3-card-4 w3-animate-zoom w3-round-large"
-                                                    style="max-width:500px">
-                                                    <header class="w3-container w3-white w3-border-bottom w3-padding">
-                                                        <span
-                                                            onclick="document.getElementById('device_modal_{{ loop.index }}').style.display='none'"
-                                                            class="w3-button w3-display-topright w3-hover-red w3-round-large">&times;</span>
-                                                        <h3 class="w3-text-blue-grey"><i class="fa fa-info-circle"></i>
-                                                            Device Details</h3>
-                                                    </header>
-                                                    <div class="w3-container w3-padding-large">
-                                                        <!-- Shop Info -->
-                                                        <div class="w3-margin-bottom">
-                                                            <label class="w3-text-grey w3-small">SHOP INFO</label>
-                                                            <div class="w3-large font-weight-bold">{{ shop.SHOP_NAME }}
-                                                            </div>
-                                                        </div>
+                                        <!-- DETAILS MODAL -->
+                                        <div id="device_modal_{{ loop.index }}" class="shop-modal">
+                                            <div class="shop-modal-content">
+                                                <div class="shop-modal-header">
+                                                    <h2><i class="fa fa-info-circle"></i> Device Details</h2>
+                                                    <button class="modal-close-btn"
+                                                        onclick="closeDeviceModal('device_modal_{{ loop.index }}')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="shop-modal-body">
 
-                                                        <div class="w3-row-padding w3-margin-bottom"
-                                                            style="margin:0 -16px">
-                                                            <!-- Kiosk Status -->
-                                                            <div class="w3-half w3-margin-bottom">
-                                                                <label class="w3-text-grey w3-small">KIOSK
-                                                                    STATUS</label>
-                                                                <div>
-                                                                    {% if shop.kiosk.status == 'online' %}
-                                                                    <span class="w3-tag w3-green w3-round">Online</span>
-                                                                    {% else %}
-                                                                    <span class="w3-tag w3-red w3-round">Offline</span>
-                                                                    {% endif %}
-                                                                </div>
-                                                            </div>
-                                                            <!-- ESP32 Status -->
-                                                            <div class="w3-half w3-margin-bottom">
-                                                                <label class="w3-text-grey w3-small">ESP32
-                                                                    STATUS</label>
-                                                                <div>
-                                                                    {% if shop.kiosk.status == 'online' %}
-                                                                    <span class="w3-tag w3-green w3-round">Active</span>
-                                                                    {% else %}
-                                                                    <span
-                                                                        class="w3-tag w3-orange w3-text-white w3-round">Unreachable</span>
-                                                                    {% endif %}
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                    <div class="info-section">
+                                                        <div class="info-title">Shop Info</div>
+                                                        <ul class="info-list">
+                                                            <li>
+                                                                <span class="info-label">Name:</span>
+                                                                {{ shop.SHOP_NAME }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
 
-                                                        <!-- Last Seen -->
-                                                        <div class="w3-margin-bottom">
-                                                            <label class="w3-text-grey w3-small">LAST SEEN</label>
-                                                            <div class="w3-text-dark-grey">{{ shop.kiosk.last_seen }}
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Recent Alerts -->
-                                                        <div class="w3-margin-bottom">
-                                                            <label class="w3-text-grey w3-small">RECENT ALERTS</label>
-                                                            <ul class="w3-ul w3-border w3-round w3-light-grey w3-small">
-                                                                {% if shop.kiosk.status != 'online' %}
-                                                                <li class="w3-text-red"><i
-                                                                        class="fa fa-exclamation-triangle"></i> Device
-                                                                    Connection Lost</li>
+                                                    <div class="info-section">
+                                                        <div class="info-title">Status Overview</div>
+                                                        <ul class="info-list">
+                                                            <li>
+                                                                <span class="info-label">Kiosk:</span>
+                                                                {% if shop.kiosk.status == 'online' %}
+                                                                <span class="status-badge status-online">Online</span>
                                                                 {% else %}
-                                                                <li class="w3-text-green"><i
-                                                                        class="fa fa-check-circle"></i> System Operating
-                                                                    Normally</li>
+                                                                <span class="status-badge status-offline">Offline</span>
                                                                 {% endif %}
-                                                                <li><i class="fa fa-clock"></i> Daily Sync Completed
-                                                                </li>
-                                                            </ul>
-                                                        </div>
+                                                            </li>
+                                                            <li>
+                                                                <span class="info-label">Last Seen:</span>
+                                                                {{ shop.kiosk.last_seen }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <div class="info-section">
+                                                        <div class="info-title">System Health</div>
+                                                        <ul class="info-list">
+                                                            {% if shop.kiosk.status != 'online' %}
+                                                            <li style="color: var(--danger-color);">
+                                                                <i class="fa fa-exclamation-triangle"></i> Device
+                                                                Connection Lost
+                                                            </li>
+                                                            {% else %}
+                                                            <li style="color: var(--success-color);">
+                                                                <i class="fa fa-check-circle"></i> System Operating
+                                                                Normally
+                                                            </li>
+                                                            {% endif %}
+                                                            <li><i class="fa fa-clock"></i> Daily Sync Completed</li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <!-- Device Actions -->
+                                                    <div
+                                                        style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px;">
+                                                        <button
+                                                            onclick="toggleDeviceStatus('{{ shop.SHOP_ID }}', '{{ shop.kiosk.status }}')"
+                                                            class="btn-toggle {% if shop.kiosk.status == 'online' %}inactive-action{% else %}active-action{% endif %}"
+                                                            style="flex: 1;">
+                                                            {% if shop.kiosk.status == 'online' %}Deactivate
+                                                            Device{% else %}Activate Device{% endif %}
+                                                        </button>
+                                                        <button onclick="deleteDevice('{{ shop.SHOP_ID }}')"
+                                                            class="btn btn-danger"
+                                                            style="flex: 1; background-color: var(--danger-color); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                                            <i class="fas fa-trash-alt"></i> Delete
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% if not shops %}
-                                    <tr>
-                                        <td colspan="5" class="w3-center">No devices found.</td>
-                                    </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not shops %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #666;">No devices
+                                        found.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -205,6 +201,71 @@
                 sidebar.style.display = 'none';
                 main.style.marginLeft = '0';
                 main.classList.remove('sidebar-open');
+            }
+        }
+
+        function openDeviceModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeDeviceModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function deleteDevice(shopId) {
+            if (!confirm('Are you sure you want to DELETE this device and its associated shop data? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/super_admin/delete_shop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: shopId })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Device deleted successfully.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error deleting device:', error);
+                alert('An error occurred while deleting the device.');
+            }
+        }
+
+        async function toggleDeviceStatus(shopId, currentStatus) {
+            const newStatus = currentStatus === 'online' ? 'offline' : 'online';
+            const confirmMsg = `Are you sure you want to set this device to ${newStatus.toUpperCase()}?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await fetch('/super_admin/update_device_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: shopId, status: newStatus })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Device status updated to ${newStatus}.`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to update status.');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target.classList.contains('shop-modal')) {
+                event.target.style.display = "none";
             }
         }
     </script>

@@ -5059,7 +5059,8 @@ def super_admin_dashboard():
                            order_trend=order_trend,
                            installed_shops_count=installed_shops_count,
                            total_offline_devices=total_offline_devices,
-                           offline_kiosk_count=offline_kiosk_count)
+                           offline_kiosk_count=offline_kiosk_count,
+                           shops=shops)
 
 @app.route('/super_admin/shops')
 def laundry_shops():
@@ -5106,6 +5107,26 @@ def add_shop():
             return jsonify({'success': False, 'message': 'Failed to create shop'})
     except Exception as e:
         print(f"Error adding shop: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/super_admin/delete_shop', methods=['POST'])
+def delete_shop():
+    if 'user_id' not in session or session['role'] not in ['super_admin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User ID is required'})
+
+        if dbhelper.delete_user(int(user_id)):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to delete shop'})
+    except Exception as e:
+        print(f"Error deleting shop: {e}")
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/super_admin/update_device_status', methods=['POST'])
