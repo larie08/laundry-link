@@ -92,15 +92,15 @@
                     </div>
                     <div class="date-filter flex-row align-center">
                         <div class="date-label">Filter by Period:</div>
-                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px;">
+                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px; border-radius: 6px;">
                             <option value="">All Time</option>
-                            <option value="daily">Today</option>
-                            <option value="weekly">This Week</option>
-                            <option value="monthly">This Month</option>
-                            <option value="yearly">This Year</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
                         </select>
-                        <button id="applyPeriodFilter" type="button" class="w3-button w3-blue-gray rounded-btn w3-radius filter-btn">Apply</button>
-                        <button id="clearPeriodFilter" type="button" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                        <button id="applyPeriodFilter" type="button" class="w3-button w3-blue-gray rounded-btn filter-btn" style="border-radius: 6px;">Apply</button>
+                        <button id="clearPeriodFilter" type="button" class="w3-button w3-light-gray rounded-btn filter-btn" style="border-radius: 6px;">Clear</button>
                         <input type="hidden" name="date_from" id="hiddenDateFrom" value="{{ request.args.get('date_from', '') }}">
                         <input type="hidden" name="date_to" id="hiddenDateTo" value="{{ request.args.get('date_to', '') }}">
                     </div>
@@ -108,7 +108,7 @@
                 <div class="table-container">
                     <div class="table-header">
                         <h3>Transaction List</h3>
-                        <div class="download-btns">
+                        <div class="download-btns" style="display: flex; gap: 10px; margin-top: 10px;">
                             <a href="{{ url_for('download_customer_report', format='excel') }}?q={{ request.args.get('q', '') }}&date_from={{ request.args.get('date_from', '') }}&date_to={{ request.args.get('date_to', '') }}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
                             <a href="{{ url_for('download_customer_report', format='csv') }}?q={{ request.args.get('q', '') }}&date_from={{ request.args.get('date_from', '') }}&date_to={{ request.args.get('date_to', '') }}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
                             <a href="{{ url_for('download_customer_report', format='pdf') }}?q={{ request.args.get('q', '') }}&date_from={{ request.args.get('date_from', '') }}&date_to={{ request.args.get('date_to', '') }}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>

@@ -1535,7 +1535,7 @@ def admin_order_report():
     
     # Default to today if no dates provided
     today = datetime.now().strftime('%Y-%m-%d')
-    if not start_date and not end_date:
+    if not start_date and not end_date and not search_query:
         start_date = today
         end_date = today
     
@@ -4968,6 +4968,14 @@ def api_pickup_orders():
         o['QR_CODE'] = o.get('QR_CODE', '')
     return jsonify({'orders': pickup_orders})
 
+@app.route('/api/get_storage_fee/<int:order_id>', methods=['GET'])
+def get_storage_fee(order_id):
+    if 'user_id' not in session or session['role'] not in ['admin', 'staff']:
+        return jsonify({'status': 'error', 'msg': 'Unauthorized'}), 401
+    
+    fee_data = dbhelper.calculate_storage_fee(order_id)
+    return jsonify({'status': 'success', 'data': fee_data})
+
 # COMPLETE PICK-UP API
 @app.route('/api/complete_pickup/<int:order_id>', methods=['POST'])
 def api_complete_pickup(order_id):
@@ -4984,6 +4992,76 @@ def api_complete_pickup(order_id):
     customer = dbhelper.get_customer_by_id(customer_id)
     if not customer:
         return jsonify({'status': 'error', 'msg': 'Customer not found'}), 404
+        
+    # Calculate Storage Fee
+    fee_data = dbhelper.calculate_storage_fee(order_id)
+    storage_fee = float(fee_data.get('fee', 0.0))
+    days_overdue = int(fee_data.get('days_overdue', 0))
+    schedule = fee_data.get('schedule', '')
+
+    # If there is a storage fee, update the order & print receipt
+    if storage_fee > 0:
+        try:
+            # Update DB with storage fee info
+            # Accessing 'db' from dbhelper imports
+            docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+            if docs:
+                current_total = float(order.get('TOTAL_PRICE', 0.0))
+                new_total = current_total + storage_fee
+                db.collection('ORDER').document(docs[0].id).update({
+                    'TOTAL_PRICE': new_total,
+                    'STORAGE_FEE': storage_fee,
+                    'DAYS_OVERDUE': days_overdue
+                })
+        except Exception as e:
+            print(f"Error updating storage fee in DB: {e}")
+
+        # Print Receipt
+        try:
+            from escpos.printer import Usb
+            
+            # Using same printer details as mark_order_as_paid
+            p = Usb(0x0483, 0x5743, encoding='GB18030')
+            
+            p.set(align='center')
+            p.text("LAUNDRYLINK\n")
+            p.text("STORAGE FEE RECEIPT\n")
+            p.text("Sanciangko St, Cebu City, 6000\n")
+            p.set(align='left')
+            p.text("-" * 32 + "\n")
+            
+            p.text(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+            p.text(f"Order ID: {order_id}\n")
+            p.text(f"Customer: {customer.get('FULLNAME', 'N/A')}\n")
+            p.text(f"Pick-up Sched: {schedule}\n")
+            p.text("-" * 32 + "\n")
+            
+            p.text(f"Days Overdue: {days_overdue}\n")
+            p.text(f"Daily Fee: Php20.00\n")
+            
+            # Format price line
+            price_str = f"Php{storage_fee:.2f}"
+            width = 32
+            desc = "TOTAL FEE:"
+            available = width - len(price_str) - 1
+            line = desc + " " * (available - len(desc)) + price_str
+            
+            p.set(align='right')
+            p.text(line + "\n")
+            p.set(align='left')
+            
+            p.text("-" * 32 + "\n")
+            p.set(align='center')
+            p.text("Thank You!\n\n")
+            
+            p.cut()
+            p.close()
+            
+        except Exception as e:
+            print(f"Printing failed: {e}")
+            try: 
+                if 'p' in locals(): p.close() 
+            except: pass
     
     # Update order status to Completed
     user_id = session.get('user_id')

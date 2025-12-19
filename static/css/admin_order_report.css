@@ -100,6 +100,7 @@
     transform: none;
     box-shadow: 0 2px 6px rgba(35, 56, 114, 0.3);
 }
+
 * {
     margin: 0;
     padding: 0;
@@ -182,17 +183,17 @@ body {
     letter-spacing: 1px;
 }
 
-ul{
+ul {
     list-style-type: none;
-    text-decoration: none; 
+    text-decoration: none;
 }
 
-li{
+li {
     padding: 10px 0;
     text-decoration: none;
 }
 
-a{
+a {
     text-decoration: none;
 }
 
@@ -289,6 +290,7 @@ main {
     padding: 0;
     line-height: 1;
 }
+
 .clear-search-btn:hover {
     color: #233872;
 }
@@ -297,7 +299,7 @@ main {
 .card {
     background: #f8fafc;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(35,56,114,0.06);
+    box-shadow: 0 2px 8px rgba(35, 56, 114, 0.06);
     padding: 18px 24px;
     margin-bottom: 24px;
 }
@@ -318,7 +320,7 @@ main {
     align-items: center;
     background: #f8fafc;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(35,56,114,0.06);
+    box-shadow: 0 2px 8px rgba(35, 56, 114, 0.06);
     padding: 18px 24px;
 }
 
@@ -326,7 +328,7 @@ main {
 .table-container {
     background: #fff;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(35,56,114,0.06);
+    box-shadow: 0 2px 8px rgba(35, 56, 114, 0.06);
     padding: 18px 12px 8px 12px;
     margin-bottom: 32px;
 }
@@ -340,12 +342,15 @@ main {
 }
 
 /* TABLE CONTENT */
-.inventory-table th, .inventory-table td,
-.customers-table th, .customers-table td {
+.inventory-table th,
+.inventory-table td,
+.customers-table th,
+.customers-table td {
     font-size: 1rem;
 }
 
-.inventory-table th, .customers-table th {
+.inventory-table th,
+.customers-table th {
     background: #f5f7fa;
     color: #233872;
     font-weight: 700;
@@ -366,11 +371,12 @@ main {
     width: 100%;
     border-collapse: collapse;
     background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-.inventory-table th, .customers-table th {
+.inventory-table th,
+.customers-table th {
     background: #f5f7fa;
     color: #000000;
     padding: 12px;
@@ -379,7 +385,8 @@ main {
     text-align: center;
 }
 
-.inventory-table td, .customers-table td {
+.inventory-table td,
+.customers-table td {
     padding: 12px;
     border: 1px solid #e0e0e0;
     vertical-align: middle;
@@ -452,7 +459,7 @@ main {
 }
 
 .rounded-btn {
-    border-radius: 4px !important;
+    border-radius: 8px !important;
 }
 
 .filter-btn {
@@ -493,7 +500,7 @@ main {
 .date-input {
     width: 150px;
     height: 42px;
-    border-radius: 6px;
+    border-radius: 10px;
     font-size: 1rem;
     border: 1px solid #d1d5db;
     background: #fff;
@@ -574,6 +581,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
 }
 
 /* DOWNLOAD BUTTONS LAYOUT*/
