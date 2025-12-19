@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/css/staff_scanner.css">
     <link rel="stylesheet" href="../static/css/w3.css">
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <title>Scanner</title>
 </head>
+
 <body>
     <!-- CONTAINER -->
     <div class="container">
@@ -20,13 +23,13 @@
             <div class="w3-center w3-bar-item logo">
                 <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
             </div>
-            
+
             <!-- MAIN TITLE (DASHBOARD)-->
             <div class="w3-margin w3-margin-top main-title">
                 <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
                 <span>Dashboard</span>
             </div>
-            
+
             <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
             <nav class="w3-container w3-padding w3-margin-top">
                 <!-- MAIN -->
@@ -42,9 +45,9 @@
                     <li class="w3-padding w3-bar-item w3-button ">
                         <a href="{{ url_for('detergent_inventory') }}">
                             <span>Detergent</span>
-                        </a>      
+                        </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('fabric_conditioner') }}">
                             <span>Fabric Conditioner</span>
@@ -83,13 +86,13 @@
                             <span>Inventory Reports</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('income_statement') }}">
                             <span>Sales Report</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
                             <span>Transaction Reports</span>
@@ -106,13 +109,14 @@
                 </ul>
             </nav>
         </aside>
-        
+
         <!-- MAIN -->
         <main>
             <!-- HEADER -->
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Scanner</h1>
                     <div class="breadcrumb">Main / Scanner</div>
                 </div>
@@ -148,8 +152,11 @@
                                 <td>{{ order.ORDER_ID }}</td>
                                 <td>{{ order.PHONE_NUMBER }}</td>
                                 <td>
-                                    <button class="pickup-btn" onclick="completePickup('{{ order.ORDER_ID }}', '{{ order.CUSTOMER_ID }}', '{{ order.CUSTOMER_NAME }}', '{{ order.PHONE_NUMBER }}')">Pick-up</button>
-                                    <button class="resend-btn" onclick="resendMessage('{{ order.PHONE_NUMBER }}', '{{ order.CUSTOMER_NAME }}', '{{ order.ORDER_ID }}')">Resend Message</button>
+                                    <button class="pickup-btn"
+                                        onclick="completePickup('{{ order.ORDER_ID }}', '{{ order.CUSTOMER_ID }}', '{{ order.CUSTOMER_NAME }}', '{{ order.PHONE_NUMBER }}')">Pick-up</button>
+                                    <button class="resend-btn"
+                                        onclick="resendMessage('{{ order.PHONE_NUMBER }}', '{{ order.CUSTOMER_NAME }}', '{{ order.ORDER_ID }}')">Resend
+                                        Message</button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -232,9 +239,14 @@
                             <label>Phone Number:</label>
                             <span id="pickupPhone">+63 912 345 6789</span>
                         </div>
+                        <div class="info-item" id="storageFeeContainer" style="display:none;">
+                            <label style="color: #c0392b; font-weight: 600;">Storage Fee:</label>
+                            <span id="storageFeeAmount" style="color: #c0392b; font-weight: bold;">Php 0.00</span>
+                            <div id="storageFeeNote" style="font-size: 0.8em; color: #7f8c8d; margin-top: 2px;"></div>
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="pickup-confirmation">
                     <h3>Confirmation</h3>
                     <p>Are you sure you want to mark this order as completed and picked up?</p>
@@ -246,7 +258,7 @@
                         </label>
                     </div>
                 </div>
-                
+
                 <div class="pickup-actions">
                     <button class="cancel-btn" onclick="closePickupModal()">Cancel</button>
                     <button class="confirm-btn" onclick="confirmPickup()" disabled id="confirmPickupBtn">
@@ -275,21 +287,21 @@
 
         async function startScanner() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
                         facingMode: 'environment',
                         width: { ideal: 640 },
                         height: { ideal: 480 }
-                    } 
+                    }
                 });
-                
+
                 const video = document.getElementById('scanner-video');
                 video.srcObject = stream;
                 scanning = true;
-                
+
                 // START SCANNING
                 scanQRCode();
-                
+
             } catch (error) {
                 console.error('Error accessing camera:', error);
                 alert('Unable to access camera. Please check permissions.');
@@ -302,12 +314,12 @@
                 stream = null;
             }
             scanning = false;
-            
+
             if (scanInterval) {
                 clearInterval(scanInterval);
                 scanInterval = null;
             }
-            
+
             const video = document.getElementById('scanner-video');
             video.srcObject = null;
         }
@@ -332,7 +344,7 @@
                         try {
                             const qrData = JSON.parse(code.data);
                             orderId = qrData.order_id || qrData.ORDER_ID || code.data;
-                        } catch (e) {}
+                        } catch (e) { }
                         fetchOrderDetailsAndNotify(orderId);
                         stopScanner();
                         showSuccessMessage();
@@ -387,18 +399,18 @@
             }
             fetch('/api/send_sms', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     phone: phone,
                     message: message
                 })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showSMSNotificationSuccess();
-                }
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showSMSNotificationSuccess();
+                    }
+                });
         }
 
         function showSMSNotificationSuccess() {
@@ -450,13 +462,14 @@
         document.head.appendChild(style);
 
         // CLOSE MODAL WINK WINK 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('scannerModal');
             if (event.target === modal) {
                 closeScannerModal();
             }
         }
 
+        // COMPLETE PICK-UP FUNCTIONS
         // COMPLETE PICK-UP FUNCTIONS
         function completePickup(orderId, customerId, customerName, phone) {
             document.getElementById('pickupCustomerId').textContent = customerId;
@@ -468,6 +481,27 @@
             document.getElementById('pickupModal').style.display = 'flex';
             // Store orderId for confirmation
             document.getElementById('pickupModal').dataset.orderId = orderId;
+
+            // Fetch Storage Fee
+            const feeContainer = document.getElementById('storageFeeContainer');
+            const feeAmount = document.getElementById('storageFeeAmount');
+            const feeNote = document.getElementById('storageFeeNote');
+
+            // Reset fee display
+            if (feeContainer) feeContainer.style.display = 'none';
+
+            fetch(`/api/get_storage_fee/${orderId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data.fee > 0) {
+                        if (feeContainer) {
+                            feeContainer.style.display = 'block';
+                            feeAmount.textContent = `Php ${data.data.fee.toFixed(2)}`;
+                            feeNote.textContent = `${data.data.days_overdue} days overdue (Sched: ${data.data.schedule})`;
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching fee:", err));
         }
 
         function closePickupModal() {
@@ -484,24 +518,24 @@
             fetch(`/api/complete_pickup/${orderId}`, {
                 method: 'POST'
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Send SMS after successful pick-up
-                    const customerName = document.getElementById('pickupCustomerName').textContent;
-                    const phone = document.getElementById('pickupPhone').textContent;
-                    sendSMSNotification(phone, orderId, customerName, true);
-                    showPickupSuccessMessage(document.getElementById('pickupCustomerId').textContent);
-                    closePickupModal();
-                    // Remove row from table instead of reload for faster UX
-                    removeOrderRow(orderId);
-                } else {
-                    alert("Failed to complete pick-up: " + (data.msg || "Unknown error"));
-                }
-            })
-            .catch(() => {
-                alert("Network error while completing pick-up.");
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Send SMS after successful pick-up
+                        const customerName = document.getElementById('pickupCustomerName').textContent;
+                        const phone = document.getElementById('pickupPhone').textContent;
+                        sendSMSNotification(phone, orderId, customerName, true);
+                        showPickupSuccessMessage(document.getElementById('pickupCustomerId').textContent);
+                        closePickupModal();
+                        // Remove row from table instead of reload for faster UX
+                        removeOrderRow(orderId);
+                    } else {
+                        alert("Failed to complete pick-up: " + (data.msg || "Unknown error"));
+                    }
+                })
+                .catch(() => {
+                    alert("Network error while completing pick-up.");
+                });
         }
 
         // Remove order row from table by orderId
@@ -550,23 +584,23 @@
             if (confirm(`Resend notification message to ${customerName} (${phone})?`)) {
                 fetch('/api/send_sms', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         phone: phone,
                         message: `Hi ${customerName || ''}, your laundry (Order #${orderId}) is ready for pickup. Thank you for using Laundrylink!`
                     })
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showResendSuccessMessage(customerName);
-                    } else {
-                        alert("Failed to send SMS: " + (data.msg || "Unknown error"));
-                    }
-                })
-                .catch(() => {
-                    alert("Failed to send SMS due to network error.");
-                });
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showResendSuccessMessage(customerName);
+                        } else {
+                            alert("Failed to send SMS: " + (data.msg || "Unknown error"));
+                        }
+                    })
+                    .catch(() => {
+                        alert("Failed to send SMS due to network error.");
+                    });
             }
         }
 
@@ -588,19 +622,19 @@
         }
 
         // CHECKBOX EVENT LISTENER FOR PICK-UP CONFIRMATION
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const confirmCheckbox = document.getElementById('confirmPickup');
             const confirmBtn = document.getElementById('confirmPickupBtn');
-            
+
             if (confirmCheckbox && confirmBtn) {
-                confirmCheckbox.addEventListener('change', function() {
+                confirmCheckbox.addEventListener('change', function () {
                     confirmBtn.disabled = !this.checked;
                 });
             }
         });
 
         // CLOSE PICKUP MODAL WHEN CLICKING OUTSIDE
-        window.addEventListener('click', function(event) {
+        window.addEventListener('click', function (event) {
             const pickupModal = document.getElementById('pickupModal');
             if (event.target === pickupModal) {
                 closePickupModal();
@@ -608,4 +642,5 @@
         });
     </script>
 </body>
+
 </html>

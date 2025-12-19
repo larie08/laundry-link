@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/css/admin_inventory_report.css">
     <link rel="stylesheet" href="../static/css/w3.css">
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Inventory Report</title>
 </head>
+
 <body>
     <div class="container">
         <!-- SIDEBAR -->
@@ -19,13 +22,13 @@
             <div class="w3-center w3-bar-item logo">
                 <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
             </div>
-            
+
             <!-- MAIN TITLE (DASHBOARD)-->
             <div class="w3-margin w3-margin-top main-title">
                 <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
                 <span>Dashboard</span>
             </div>
-            
+
             <!-- MAIN NAVIGATION PERO SIDEBAR GIHAPON NA SUD HA **BASTA MAO NANA -->
             <nav class="w3-container w3-padding w3-margin-top">
                 <!-- MAIN -->
@@ -41,9 +44,9 @@
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('detergent_inventory') }}">
                             <span>Detergent</span>
-                        </a>      
+                        </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('fabric_conditioner') }}">
                             <span>Fabric Conditioner</span>
@@ -82,13 +85,13 @@
                             <span>Inventory Reports</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('income_statement') }}">
                             <span>Sales Report</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
                             <span>Transaction Reports</span>
@@ -109,7 +112,8 @@
         <main>
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Inventory Report</h1>
                     <div class="breadcrumb">Main / Inventory Report</div>
                 </div>
@@ -118,25 +122,31 @@
 
                 <!-- SUMMARY CARDS -->
                 <div class="stats-cards" style="display: flex; gap: 20px; margin-bottom: 30px;">
-                    <div class="stat-card" style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
+                    <div class="stat-card"
+                        style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
                         <div style="font-size:2rem; color:#233872;"><i class="fas fa-boxes"></i></div>
                         <div style="font-weight:600; font-size:1.1rem;">Total Detergents Consumed</div>
                         <div style="font-size:1.5rem;">{{ all_consumed_detergents|length }}</div>
                     </div>
-                    <div class="stat-card" style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
+                    <div class="stat-card"
+                        style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
                         <div style="font-size:2rem; color:#233872;"><i class="fas fa-water"></i></div>
                         <div style="font-weight:600; font-size:1.1rem;">Total Fabric Conditioners Consumed</div>
                         <div style="font-size:1.5rem;">{{ all_consumed_fabcons|length }}</div>
                     </div>
-                    <div class="stat-card" style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
+                    <div class="stat-card"
+                        style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
                         <div style="font-size:2rem; color:#233872;"><i class="fas fa-exclamation-triangle"></i></div>
                         <div style="font-weight:600; font-size:1.1rem;">Detergent with Low Stocks</div>
-                        <div style="font-size:1.5rem;">{{ all_detergents|selectattr('QTY', 'le', 10)|list|length }}</div>
+                        <div style="font-size:1.5rem;">{{ all_detergents|selectattr('QTY', 'le', 10)|list|length }}
+                        </div>
                     </div>
-                    <div class="stat-card" style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
+                    <div class="stat-card"
+                        style="flex:1; background:#f5f7fa; border-radius:10px; padding:20px; text-align:center;">
                         <div style="font-size:2rem; color:#233872;"><i class="fas fa-exclamation-triangle"></i></div>
                         <div style="font-weight:600; font-size:1.1rem;">Fabric Conditioner with Low Stocks</div>
-                        <div style="font-size:1.5rem;">{{ all_fabric_conditioners|selectattr('QTY', 'le', 10)|list|length }}</div>
+                        <div style="font-size:1.5rem;">{{ all_fabric_conditioners|selectattr('QTY', 'le',
+                            10)|list|length }}</div>
                     </div>
                 </div>
 
@@ -152,23 +162,30 @@
 
                 <!-- FILTER/SEARCH (now below toggle buttons) -->
                 <div class="filter-search-row card flex-row align-center">
-                    <form id="detergentSearchForm" method="GET" action="{{ url_for('inventory_report') }}" class="search-container" style="width:350px; display: flex;">
+                    <form id="detergentSearchForm" method="GET" action="{{ url_for('inventory_report') }}"
+                        class="search-container" style="width:350px; display: flex;">
                         <input type="hidden" name="type" value="detergent">
-                        <input type="text" class="search-box" name="q" placeholder="Search detergent by name or ID..." value="{{ request.args.get('q', '') if request.args.get('type') == 'detergent' else '' }}">
+                        <input type="text" class="search-box" name="q" placeholder="Search detergent by name or ID..."
+                            value="{{ request.args.get('q', '') if request.args.get('type') == 'detergent' else '' }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
                         {% if request.args.get('q', '') and request.args.get('type') == 'detergent' %}
-                        <a href="{{ url_for('inventory_report') }}?type=detergent" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('inventory_report') }}?type=detergent" class="clear-search-btn"
+                            title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
                     </form>
 
-                    <form id="fabconSearchForm" method="GET" action="{{ url_for('inventory_report') }}" class="search-container" style="width:350px; display: none;">
+                    <form id="fabconSearchForm" method="GET" action="{{ url_for('inventory_report') }}"
+                        class="search-container" style="width:350px; display: none;">
                         <input type="hidden" name="type" value="fabcon">
-                        <input type="text" class="search-box" name="q" placeholder="Search fabric conditioner by name or ID..." value="{{ request.args.get('q', '') if request.args.get('type') == 'fabcon' else '' }}">
+                        <input type="text" class="search-box" name="q"
+                            placeholder="Search fabric conditioner by name or ID..."
+                            value="{{ request.args.get('q', '') if request.args.get('type') == 'fabcon' else '' }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
                         {% if request.args.get('q', '') and request.args.get('type') == 'fabcon' %}
-                        <a href="{{ url_for('inventory_report') }}?type=fabcon" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('inventory_report') }}?type=fabcon" class="clear-search-btn"
+                            title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
@@ -176,20 +193,23 @@
 
                     <div class="date-filter flex-row align-center">
                         <div class="date-label">Filter by Period:</div>
-                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px;">
+                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px; border-radius: 6px;">
                             <option value="">All Time</option>
-                            <option value="daily">Today</option>
-                            <option value="weekly">This Week</option>
-                            <option value="monthly">This Month</option>
-                            <option value="yearly">This Year</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
                         </select>
-                        <button id="applyPeriodFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
-                        <button id="clearPeriodFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                        <button id="applyPeriodFilter"
+                            class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
+                        <button id="clearPeriodFilter"
+                            class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
                     </div>
                 </div>
 
                 <!-- DETERGENT TABLE -->
-                <div id="detergentTableSection" class="table-container" {% if request.args.get('type', 'detergent') != 'detergent' %}style="display:none;"{% endif %}>
+                <div id="detergentTableSection" class="table-container" {% if request.args.get('type', 'detergent' )
+                    !='detergent' %}style="display:none;" {% endif %}>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Consumed Detergent Report</h3>
                     </div>
@@ -216,9 +236,9 @@
                                 <td>₱{{ "%.2f"|format(item.TOTAL_VALUE|float) }}</td>
                                 <td>
                                     {% if item.DATE_CREATED %}
-                                        {{ item.DATE_CREATED|datetimeformat }}
+                                    {{ item.DATE_CREATED|datetimeformat }}
                                     {% else %}
-                                        N/A
+                                    N/A
                                     {% endif %}
                                 </td>
                                 <td>{{ item.ORDER_ID }}</td>
@@ -226,9 +246,11 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <div style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                    <div
+                        style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
                         <div style="font-weight: 600; font-size: 1.1rem;">
-                            Total Cost: <span style="color: #233872;">₱{{ "%.2f"|format(detergents|map(attribute='TOTAL_VALUE')|sum(start=0)) }}</span>
+                            Total Cost: <span style="color: #233872;">₱{{
+                                "%.2f"|format(detergents|map(attribute='TOTAL_VALUE')|sum(start=0)) }}</span>
                         </div>
                     </div>
                     {% else %}
@@ -239,7 +261,8 @@
                 </div>
 
                 <!-- FABRIC CONDITIONER TABLE -->
-                <div id="fabconTableSection" class="table-container" style="margin-top: 40px; {% if request.args.get('type', 'detergent') != 'fabcon' %}display:none;{% endif %}">
+                <div id="fabconTableSection" class="table-container"
+                    style="margin-top: 40px; {% if request.args.get('type', 'detergent') != 'fabcon' %}display:none;{% endif %}">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Consumed Fabric Conditioner Report</h3>
                     </div>
@@ -266,9 +289,9 @@
                                 <td>₱{{ "%.2f"|format(item.TOTAL_VALUE|float) }}</td>
                                 <td>
                                     {% if item.DATE_CREATED %}
-                                        {{ item.DATE_CREATED|datetimeformat }}
+                                    {{ item.DATE_CREATED|datetimeformat }}
                                     {% else %}
-                                        N/A
+                                    N/A
                                     {% endif %}
                                 </td>
                                 <td>{{ item.ORDER_ID }}</td>
@@ -276,9 +299,11 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <div style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                    <div
+                        style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
                         <div style="font-weight: 600; font-size: 1.1rem;">
-                            Total Cost: <span style="color: #233872;">₱{{ "%.2f"|format(fabric_conditioners|map(attribute='TOTAL_VALUE')|sum(start=0)) }}</span>
+                            Total Cost: <span style="color: #233872;">₱{{
+                                "%.2f"|format(fabric_conditioners|map(attribute='TOTAL_VALUE')|sum(start=0)) }}</span>
                         </div>
                     </div>
                     {% else %}
@@ -292,90 +317,107 @@
                     {% set page_window = 2 %}
                     <div class="pagination">
                         {% if current_page > 1 %}
-                            <a href="{{ url_for('inventory_report', page=current_page-1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}" class="pagination-nav-btn">
-                                <i class="fas fa-chevron-left"></i> Prev
-                            </a>
+                        <a href="{{ url_for('inventory_report', page=current_page-1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}"
+                            class="pagination-nav-btn">
+                            <i class="fas fa-chevron-left"></i> Prev
+                        </a>
                         {% else %}
-                            <span class="pagination-nav-btn disabled"><i class="fas fa-chevron-left"></i> Prev</span>
+                        <span class="pagination-nav-btn disabled"><i class="fas fa-chevron-left"></i> Prev</span>
                         {% endif %}
 
                         <div class="pagination-numbers">
                             {% if total_pages > 1 %}
-                                {% if current_page > page_window + 1 %}
-                                    <a href="{{ url_for('inventory_report', page=1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}" class="page-btn">1</a>
-                                    {% if current_page > page_window + 2 %}
-                                        <span class="pagination-dots">...</span>
-                                    {% endif %}
-                                {% endif %}
-
-                                {% for page_num in range(max(1, current_page - page_window), min(total_pages + 1, current_page + page_window + 1)) %}
-                                    {% if page_num == current_page %}
-                                        <span class="page-btn active">{{ page_num }}</span>
-                                    {% else %}
-                                        <a href="{{ url_for('inventory_report', page=page_num, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}" class="page-btn">{{ page_num }}</a>
-                                    {% endif %}
-                                {% endfor %}
-
-                                {% if current_page < total_pages - page_window %}
-                                    {% if current_page < total_pages - page_window - 1 %}
-                                        <span class="pagination-dots">...</span>
-                                    {% endif %}
-                                    <a href="{{ url_for('inventory_report', page=total_pages, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}" class="page-btn">{{ total_pages }}</a>
-                                {% endif %}
+                            {% if current_page > page_window + 1 %}
+                            <a href="{{ url_for('inventory_report', page=1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}"
+                                class="page-btn">1</a>
+                            {% if current_page > page_window + 2 %}
+                            <span class="pagination-dots">...</span>
                             {% endif %}
+                            {% endif %}
+
+                            {% for page_num in range(max(1, current_page - page_window), min(total_pages + 1,
+                            current_page + page_window + 1)) %}
+                            {% if page_num == current_page %}
+                            <span class="page-btn active">{{ page_num }}</span>
+                            {% else %}
+                            <a href="{{ url_for('inventory_report', page=page_num, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}"
+                                class="page-btn">{{ page_num }}</a>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if current_page < total_pages - page_window %} {% if current_page < total_pages -
+                                page_window - 1 %} <span class="pagination-dots">...</span>
+                                {% endif %}
+                                <a href="{{ url_for('inventory_report', page=total_pages, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}"
+                                    class="page-btn">{{ total_pages }}</a>
+                                {% endif %}
+                                {% endif %}
                         </div>
 
-                        {% if current_page < total_pages %}
-                            <a href="{{ url_for('inventory_report', page=current_page+1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}" class="pagination-nav-btn">
-                                Next <i class="fas fa-chevron-right"></i>
+                        {% if current_page < total_pages %} <a
+                            href="{{ url_for('inventory_report', page=current_page+1, type=request.args.get('type', 'detergent'), q=request.args.get('q', ''), period=request.args.get('period', '')) }}"
+                            class="pagination-nav-btn">
+                            Next <i class="fas fa-chevron-right"></i>
                             </a>
-                        {% else %}
+                            {% else %}
                             <span class="pagination-nav-btn disabled">Next <i class="fas fa-chevron-right"></i></span>
-                        {% endif %}
+                            {% endif %}
                     </div>
                 </div>
 
                 <!-- INVENTORY SALES REPORT SECTION (Completed Orders Only) -->
                 <div class="sales-report-section">
                     <h2 class="section-header"><i class="fas fa-chart-bar"></i> Inventory Sales Report</h2>
-                    
+
                     <!-- Sales Filter -->
                     <form class="sales-filter-form" method="get" action="{{ url_for('inventory_report') }}">
                         <input type="hidden" name="type" value="{{ request.args.get('type', 'detergent') }}">
                         <div class="sales-filter-row">
                             <div class="sales-filter-field">
                                 <label>View</label>
-                                <select name="inv_sales_view" id="invSalesViewSelect" onchange="toggleInvSalesDateSelector()">
-                                    <option value="daily" {{ 'selected' if inv_sales_view=='daily' else '' }}>Daily</option>
-                                    <option value="weekly" {{ 'selected' if inv_sales_view=='weekly' else '' }}>Weekly</option>
-                                    <option value="monthly" {{ 'selected' if inv_sales_view=='monthly' else '' }}>Monthly</option>
-                                    <option value="yearly" {{ 'selected' if inv_sales_view=='yearly' else '' }}>Yearly</option>
+                                <select name="inv_sales_view" id="invSalesViewSelect"
+                                    onchange="toggleInvSalesDateSelector()">
+                                    <option value="daily" {{ 'selected' if inv_sales_view=='daily' else '' }}>Daily
+                                    </option>
+                                    <option value="weekly" {{ 'selected' if inv_sales_view=='weekly' else '' }}>Weekly
+                                    </option>
+                                    <option value="monthly" {{ 'selected' if inv_sales_view=='monthly' else '' }}>
+                                        Monthly</option>
+                                    <option value="yearly" {{ 'selected' if inv_sales_view=='yearly' else '' }}>Yearly
+                                    </option>
                                 </select>
                             </div>
-                            <div class="sales-filter-field" id="invSalesDayField" {% if inv_sales_view != 'daily' %}style="display: none;"{% endif %}>
+                            <div class="sales-filter-field" id="invSalesDayField" {% if inv_sales_view !='daily'
+                                %}style="display: none;" {% endif %}>
                                 <label>Date</label>
-                                <input type="date" name="inv_sales_date" value="{{ inv_sales_date if inv_sales_date else '' }}" />
+                                <input type="date" name="inv_sales_date"
+                                    value="{{ inv_sales_date if inv_sales_date else '' }}" />
                             </div>
-                            <div class="sales-filter-field" id="invSalesMonthField" {% if inv_sales_view != 'monthly' %}style="display: none;"{% endif %}>
+                            <div class="sales-filter-field" id="invSalesMonthField" {% if inv_sales_view !='monthly'
+                                %}style="display: none;" {% endif %}>
                                 <label>Month</label>
-                                <input type="month" name="inv_sales_month" value="{{ inv_sales_month if inv_sales_month else '' }}" />
+                                <input type="month" name="inv_sales_month"
+                                    value="{{ inv_sales_month if inv_sales_month else '' }}" />
                             </div>
                             <div class="sales-filter-actions">
                                 <button class="w3-button w3-blue rounded-btn" type="submit">View Report</button>
                             </div>
                         </div>
                     </form>
-                    
+
                     <div class="sales-period-label">Period: {{ inv_period_label }}</div>
-                    
+
                     <!-- Consumed Detergents Table -->
                     <div class="table-container" style="margin-bottom: 20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="report-header-row">
                             <h3><i class="fas fa-soap" style="color:#233872;"></i> Consumed Detergents</h3>
-                            <div class="download-btns" style="display:flex; gap:10px;">
-                                <a href="{{ url_for('download_inventory_sales_report', format='excel') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                                <a href="{{ url_for('download_inventory_sales_report', format='csv') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                                <a href="{{ url_for('download_inventory_sales_report', format='pdf') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <div class="download-btns" style="display: flex; gap: 10px; margin-top: 10px;">
+                                <a href="{{ url_for('download_inventory_sales_report', format='excel') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}"
+                                    class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                                <a href="{{ url_for('download_inventory_sales_report', format='csv') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}"
+                                    class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                                <a href="{{ url_for('download_inventory_sales_report', format='pdf') }}?inv_sales_view={{ inv_sales_view }}{% if inv_sales_date %}&inv_sales_date={{ inv_sales_date }}{% endif %}{% if inv_sales_month %}&inv_sales_month={{ inv_sales_month }}{% endif %}"
+                                    class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
                             </div>
                         </div>
                         <div style="overflow-x: auto;">
@@ -404,22 +446,24 @@
                                     {% endfor %}
                                     {% else %}
                                     <tr>
-                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No detergents consumed for this period</td>
+                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No
+                                            detergents consumed for this period</td>
                                     </tr>
                                     {% endif %}
                                 </tbody>
                             </table>
                         </div>
                         {% if inv_consumed_detergents %}
-                        <div style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                        <div
+                            style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
                             <div style="font-weight: 600; font-size: 1rem;">
-                                Subtotal: <span style="color: #233872;">{{ inv_total_detergent_qty }} items</span> | 
+                                Subtotal: <span style="color: #233872;">{{ inv_total_detergent_qty }} items</span> |
                                 <span style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_detergent_cost) }}</span>
                             </div>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Consumed Fabric Conditioners Table -->
                     <div class="table-container" style="margin-bottom: 20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -451,49 +495,59 @@
                                     {% endfor %}
                                     {% else %}
                                     <tr>
-                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No fabric conditioners consumed for this period</td>
+                                        <td colspan="6" style="text-align: center; color: #6b7aa8; padding: 20px;">No
+                                            fabric conditioners consumed for this period</td>
                                     </tr>
                                     {% endif %}
                                 </tbody>
                             </table>
                         </div>
                         {% if inv_consumed_fabcons %}
-                        <div style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                        <div
+                            style="display: flex; justify-content: flex-end; padding: 15px 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
                             <div style="font-weight: 600; font-size: 1rem;">
-                                Subtotal: <span style="color: #233872;">{{ inv_total_fabcon_qty }} items</span> | 
+                                Subtotal: <span style="color: #233872;">{{ inv_total_fabcon_qty }} items</span> |
                                 <span style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_fabcon_cost) }}</span>
                             </div>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Inventory Summary -->
                     <div class="sales-summary-container">
                         <div class="sales-summary-box" style="min-width: 350px;">
-                            <div class="sales-summary-title">Inventory Consumption Summary ({{ inv_period_label }})</div>
+                            <div class="sales-summary-title">Inventory Consumption Summary ({{ inv_period_label }})
+                            </div>
                             <div class="sales-summary-row">
                                 <span class="sales-summary-label">Detergents Consumed:</span>
-                                <span class="sales-summary-value">{{ inv_total_detergent_qty }} pcs ({{ inv_total_detergent_items }} transactions)</span>
+                                <span class="sales-summary-value">{{ inv_total_detergent_qty }} pcs ({{
+                                    inv_total_detergent_items }} transactions)</span>
                             </div>
                             <div class="sales-summary-row">
                                 <span class="sales-summary-label">Detergent Cost:</span>
-                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_detergent_cost) }}</span>
+                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_detergent_cost)
+                                    }}</span>
                             </div>
                             <div class="sales-summary-row">
                                 <span class="sales-summary-label">Fabric Conditioners Consumed:</span>
-                                <span class="sales-summary-value">{{ inv_total_fabcon_qty }} pcs ({{ inv_total_fabcon_items }} transactions)</span>
+                                <span class="sales-summary-value">{{ inv_total_fabcon_qty }} pcs ({{
+                                    inv_total_fabcon_items }} transactions)</span>
                             </div>
                             <div class="sales-summary-row">
                                 <span class="sales-summary-label">Fabric Conditioner Cost:</span>
-                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_fabcon_cost) }}</span>
+                                <span class="sales-summary-value cogs">₱{{ '{:,.2f}'.format(inv_total_fabcon_cost)
+                                    }}</span>
                             </div>
-                            <div class="sales-summary-row total" style="border-top: 2px solid #233872; margin-top: 8px; padding-top: 12px;">
+                            <div class="sales-summary-row total"
+                                style="border-top: 2px solid #233872; margin-top: 8px; padding-top: 12px;">
                                 <span class="sales-summary-label">Total Items Consumed:</span>
-                                <span class="sales-summary-value" style="color: #233872; font-size: 1.1rem;">{{ inv_total_qty }} pcs</span>
+                                <span class="sales-summary-value" style="color: #233872; font-size: 1.1rem;">{{
+                                    inv_total_qty }} pcs</span>
                             </div>
                             <div class="sales-summary-row total">
                                 <span class="sales-summary-label">Total Inventory Cost:</span>
-                                <span class="sales-summary-value net" style="color: #ef4444;">₱{{ '{:,.2f}'.format(inv_total_cost) }}</span>
+                                <span class="sales-summary-value net" style="color: #ef4444;">₱{{
+                                    '{:,.2f}'.format(inv_total_cost) }}</span>
                             </div>
                         </div>
                     </div>
@@ -508,11 +562,11 @@
             var view = document.getElementById('invSalesViewSelect').value;
             var dayField = document.getElementById('invSalesDayField');
             var monthField = document.getElementById('invSalesMonthField');
-            
+
             // Hide all fields first
             dayField.style.display = 'none';
             monthField.style.display = 'none';
-            
+
             // Show appropriate field based on view
             if (view === 'daily') {
                 dayField.style.display = '';
@@ -522,7 +576,7 @@
         }
 
         // Toggle table sections and search forms
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const detergentBtn = document.getElementById('showDetergentBtn');
             const fabconBtn = document.getElementById('showFabconBtn');
             const detergentSection = document.getElementById('detergentTableSection');
@@ -533,7 +587,7 @@
             // Check URL parameters to set initial state
             const urlParams = new URLSearchParams(window.location.search);
             const type = urlParams.get('type');
-            
+
             // Function to show detergent view
             function showDetergentView() {
                 detergentSection.style.display = '';
@@ -545,7 +599,7 @@
                 fabconBtn.classList.remove('w3-blue');
                 fabconBtn.classList.add('w3-blue-gray');
             }
-            
+
             // Function to show fabric conditioner view
             function showFabconView() {
                 detergentSection.style.display = 'none';
@@ -557,7 +611,7 @@
                 detergentBtn.classList.remove('w3-blue');
                 detergentBtn.classList.add('w3-blue-gray');
             }
-            
+
             // Set initial view based on URL
             if (type === 'fabcon') {
                 showFabconView();
@@ -566,7 +620,7 @@
             }
 
             // Detergent button click handler
-            detergentBtn.addEventListener('click', function(e) {
+            detergentBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 // Update URL and reload page
                 const url = new URL(window.location);
@@ -574,9 +628,9 @@
                 url.searchParams.delete('page'); // Reset to page 1
                 window.location.href = url;
             });
-            
+
             // Fabric conditioner button click handler
-            fabconBtn.addEventListener('click', function(e) {
+            fabconBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 // Update URL and reload page
                 const url = new URL(window.location);
@@ -597,11 +651,11 @@
                 periodFilterSelect.value = 'daily';
             }
 
-            applyPeriodFilterBtn.addEventListener('click', function() {
+            applyPeriodFilterBtn.addEventListener('click', function () {
                 const period = periodFilterSelect.value;
                 const currentType = urlParams.get('type') || 'detergent';
                 const searchQuery = urlParams.get('q') || '';
-                
+
                 // Build URL with all parameters
                 let url = new URL(window.location);
                 url.searchParams.set('type', currentType);
@@ -617,14 +671,14 @@
                 window.location.href = url;
             });
 
-            clearPeriodFilterBtn.addEventListener('click', function() {
+            clearPeriodFilterBtn.addEventListener('click', function () {
                 // Reset to default (daily)
                 periodFilterSelect.value = 'daily';
-                
+
                 // Redirect with daily period
                 const currentType = urlParams.get('type') || 'detergent';
                 const searchQuery = urlParams.get('q') || '';
-                
+
                 let url = new URL(window.location);
                 url.searchParams.set('type', currentType);
                 if (searchQuery) {
@@ -637,4 +691,5 @@
         });
     </script>
 </body>
+
 </html>

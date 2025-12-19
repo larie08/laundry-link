@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/css/admin_order_report.css">
     <link rel="stylesheet" href="../static/css/w3.css">
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Order Report</title>
 </head>
+
 <body>
     <div class="container">
         <!-- SIDEBAR -->
@@ -19,20 +22,20 @@
             <div class="w3-center w3-bar-item logo">
                 <img src="../static/images/logo.jpg" alt="Logo" class="logo" style="width: 90px; height: 100px;">
             </div>
-            
+
             <!-- MAIN TITLE (DASHBOARD)-->
             <div class="w3-margin w3-margin-top main-title">
                 <img src="../static/images/dashboard.png" alt="Dashboard" class="nav-icon">
                 <span>Dashboard</span>
             </div>
-            
+
             <!-- MAIN NAVIGATION -->
             <nav class="w3-container w3-padding w3-margin-top">
                 <!-- MAIN -->
                 <div class="section-title w3-padding w3-text-gray">Main</div>
                 <ul class="w3-margin-left">
                     <li class="w3-padding w3-bar-item w3-button">
-                        <a href="{{ url_for('dashboard') }}" >
+                        <a href="{{ url_for('dashboard') }}">
                             <span>Dashboard</span>
                         </a>
                     </li>
@@ -40,9 +43,9 @@
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('detergent_inventory') }}">
                             <span>Detergent</span>
-                        </a>      
+                        </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('fabric_conditioner') }}">
                             <span>Fabric Conditioner</span>
@@ -81,13 +84,13 @@
                             <span>Inventory Reports</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('income_statement') }}">
                             <span>Sales Report</span>
                         </a>
                     </li>
-                    
+
                     <li class="w3-padding w3-bar-item w3-button">
                         <a href="{{ url_for('customer_report') }}">
                             <span>Transaction Reports</span>
@@ -108,7 +111,8 @@
         <main>
             <header>
                 <div>
-                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <button class="w3-button w3-xlarge hamburger-btn" onclick="toggleSidebar()"><i
+                            class="fas fa-bars"></i></button>
                     <h1 class="page-title">Order Report</h1>
                     <div class="breadcrumb">Main / Order Report</div>
                 </div>
@@ -117,23 +121,31 @@
 
                 <!-- FILTER/SEARCH -->
                 <div class="filter-search-row card flex-row align-center">
-                    <form id="detergentSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container" style="width:350px; display: flex;">
+                    <form id="detergentSearchForm" method="GET" action="{{ url_for('admin_order_report') }}"
+                        class="search-container" style="display: flex;">
                         <input type="hidden" name="type" value="detergent">
-                        <input type="text" class="search-box" name="q" placeholder="Search orders by ID or customer name..." value="{{ request.args.get('q', '') if request.args.get('type') == 'detergent' else '' }}">
+                        <input type="text" class="search-box" name="q"
+                            placeholder="Search orders by ID or customer name..."
+                            value="{{ request.args.get('q', '') if request.args.get('type') == 'detergent' else '' }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
                         {% if request.args.get('q', '') and request.args.get('type') == 'detergent' %}
-                        <a href="{{ url_for('admin_order_report') }}?type=detergent" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('admin_order_report') }}?type=detergent" class="clear-search-btn"
+                            title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
                     </form>
 
-                    <form id="fabconSearchForm" method="GET" action="{{ url_for('admin_order_report') }}" class="search-container" style="width:350px; display: none;">
+                    <form id="fabconSearchForm" method="GET" action="{{ url_for('admin_order_report') }}"
+                        class="search-container" style="width:350px; display: none;">
                         <input type="hidden" name="type" value="fabcon">
-                        <input type="text" class="search-box" name="q" placeholder="Search fabric conditioner by name or ID..." value="{{ request.args.get('q', '') if request.args.get('type') == 'fabcon' else '' }}">
+                        <input type="text" class="search-box" name="q"
+                            placeholder="Search fabric conditioner by name or ID..."
+                            value="{{ request.args.get('q', '') if request.args.get('type') == 'fabcon' else '' }}">
                         <button type="submit" class="search-icon"><i class="fas fa-search"></i></button>
                         {% if request.args.get('q', '') and request.args.get('type') == 'fabcon' %}
-                        <a href="{{ url_for('admin_order_report') }}?type=fabcon" class="clear-search-btn" title="Clear search">
+                        <a href="{{ url_for('admin_order_report') }}?type=fabcon" class="clear-search-btn"
+                            title="Clear search">
                             <i class="fas fa-times-circle"></i>
                         </a>
                         {% endif %}
@@ -141,15 +153,17 @@
 
                     <div class="date-filter flex-row align-center">
                         <div class="date-label">Filter by Period:</div>
-                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px;">
+                        <select id="periodFilter" class="w3-input w3-border" style="width: 150px; border-radius: 6px;">
                             <option value="">All Time</option>
-                            <option value="daily">Today</option>
-                            <option value="weekly">This Week</option>
-                            <option value="monthly">This Month</option>
-                            <option value="yearly">This Year</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
                         </select>
-                        <button id="applyPeriodFilter" class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
-                        <button id="clearPeriodFilter" class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
+                        <button id="applyPeriodFilter"
+                            class="w3-button w3-blue-gray rounded-btn filter-btn">Apply</button>
+                        <button id="clearPeriodFilter"
+                            class="w3-button w3-light-gray rounded-btn filter-btn">Clear</button>
                     </div>
                 </div>
 
@@ -158,9 +172,12 @@
                     <div class="table-header-layout">
                         <h3>Orders</h3>
                         <div class="download-btns download-btns-layout">
-                            <a href="{{ url_for('download_order_report', format='excel') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
-                            <a href="{{ url_for('download_order_report', format='csv') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
-                            <a href="{{ url_for('download_order_report', format='pdf') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}" class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <a href="{{ url_for('download_order_report', format='excel') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}"
+                                class="w3-button w3-green rounded-btn"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="{{ url_for('download_order_report', format='csv') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}"
+                                class="w3-button w3-blue rounded-btn"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="{{ url_for('download_order_report', format='pdf') }}?q={{ request.args.get('q', '') }}&start_date={{ request.args.get('start_date', '') }}&end_date={{ request.args.get('end_date', '') }}"
+                                class="w3-button w3-red rounded-btn"><i class="fas fa-file-pdf"></i> PDF</a>
                         </div>
                     </div>
                     <table class="customers-table">
@@ -184,149 +201,160 @@
                         </thead>
                         <tbody>
                             {% if paginated_orders %}
-        {% for order in paginated_orders %}
-        <tr>
-            <td>{{ order.ORDER_ID }}</td>
-            <td>{{ order.CUSTOMER_NAME }}</td>
-            <td>{{ order.ORDER_TYPE }}</td>
-            <td>
-                <span class="badge-table 
+                            {% for order in paginated_orders %}
+                            <tr>
+                                <td>{{ order.ORDER_ID }}</td>
+                                <td>{{ order.CUSTOMER_NAME }}</td>
+                                <td>{{ order.ORDER_TYPE }}</td>
+                                <td>
+                                    <span class="badge-table 
                     {% if order.ORDER_STATUS|lower == 'pending' %}badge-pending-table
                     {% elif order.ORDER_STATUS|lower == 'completed' %}badge-completed-table
                     {% elif order.ORDER_STATUS|lower == 'pickup' or order.ORDER_STATUS|lower == 'pick-up' %}badge-pickup-table
                     {% endif %}">
-                    {% if order.ORDER_STATUS|lower == 'pick-up' %}Pick-up{% else %}{{ order.ORDER_STATUS|capitalize }}{% endif %}
-                </span>
-            </td>
-            <td>
-                <span class="badge-table {% if order.PAYMENT_STATUS|lower == 'paid' %}badge-paid-table{% else %}badge-unpaid-table{% endif %}">
-                    {{ order.PAYMENT_STATUS|capitalize }}
-                </span>
-            </td>
-            <td>{{ order.TOTAL_PRICE }}</td>
-            <td>{{ order.TOTAL_LOAD }}</td>
-            <td>{{ order.TOTAL_WEIGHT }}</td>
-            <td>
-                {% set orderitem = order.get('orderitem_data') %}
-                {% if orderitem %}
-                    {% set detergents = orderitem.get('detergents', []) %}
-                    {% if detergents and detergents|length > 0 %}
-                        {% for det in detergents %}
-                            {{ det.DETERGENT_NAME }} (x{{ det.QUANTITY }})<br>
-                        {% endfor %}
-                    {% elif orderitem.get('CUSTOMER_OWN_DETERGENT') %}
-                        Own
-                    {% else %}
-                        N/A
-                    {% endif %}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {% set orderitem = order.get('orderitem_data') %}
-                {% if orderitem %}
-                    {% set fabcons = orderitem.get('fabcons', []) %}
-                    {% if fabcons and fabcons|length > 0 %}
-                        {% for fc in fabcons %}
-                            {{ fc.FABCON_NAME }} (x{{ fc.QUANTITY }})<br>
-                        {% endfor %}
-                    {% elif orderitem.get('CUSTOMER_OWN_FABCON') %}
-                        Own
-                    {% else %}
-                        N/A
-                    {% endif %}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {% set orderitem = order.get('orderitem_data') %}
-                {% if orderitem %}
-                    {% set services = [] %}
-                    {% if orderitem.get('IRON') %}{% set _ = services.append('Iron') %}{% endif %}
-                    {% if orderitem.get('FOLD_CLOTHES') %}{% set _ = services.append('Fold') %}{% endif %}
-                    {% if orderitem.get('PRIORITIZE_ORDER') %}{% set _ = services.append('Priority') %}{% endif %}
-                    {% if services %}
-                        {{ services|join(', ') }}
-                    {% else %}
-                        None
-                    {% endif %}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {% if order.PICKUP_SCHEDULE %}
-                    {{ order.PICKUP_SCHEDULE }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {% if order.DATE_CREATED %}
-                    {{ order.DATE_CREATED.strftime('%B %d, %Y, %I:%M %p') if order.DATE_CREATED else order.DATE_CREATED }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>
-                {% if order.DATE_UPDATED %}
-                    {{ order.DATE_UPDATED.strftime('%B %d, %Y, %I:%M %p') if order.DATE_UPDATED else order.DATE_UPDATED }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    {% else %}
-        <tr>
-            <td colspan="14" style="text-align: center; padding: 20px;">No orders found</td>
-        </tr>
-    {% endif %}
+                                        {% if order.ORDER_STATUS|lower == 'pick-up' %}Pick-up{% else %}{{
+                                        order.ORDER_STATUS|capitalize }}{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge-table {% if order.PAYMENT_STATUS|lower == 'paid' %}badge-paid-table{% else %}badge-unpaid-table{% endif %}">
+                                        {{ order.PAYMENT_STATUS|capitalize }}
+                                    </span>
+                                </td>
+                                <td>{{ order.TOTAL_PRICE }}</td>
+                                <td>{{ order.TOTAL_LOAD }}</td>
+                                <td>{{ order.TOTAL_WEIGHT }}</td>
+                                <td>
+                                    {% set orderitem = order.get('orderitem_data') %}
+                                    {% if orderitem %}
+                                    {% set detergents = orderitem.get('detergents', []) %}
+                                    {% if detergents and detergents|length > 0 %}
+                                    {% for det in detergents %}
+                                    {{ det.DETERGENT_NAME }} (x{{ det.QUANTITY }})<br>
+                                    {% endfor %}
+                                    {% elif orderitem.get('CUSTOMER_OWN_DETERGENT') %}
+                                    Own
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set orderitem = order.get('orderitem_data') %}
+                                    {% if orderitem %}
+                                    {% set fabcons = orderitem.get('fabcons', []) %}
+                                    {% if fabcons and fabcons|length > 0 %}
+                                    {% for fc in fabcons %}
+                                    {{ fc.FABCON_NAME }} (x{{ fc.QUANTITY }})<br>
+                                    {% endfor %}
+                                    {% elif orderitem.get('CUSTOMER_OWN_FABCON') %}
+                                    Own
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set orderitem = order.get('orderitem_data') %}
+                                    {% if orderitem %}
+                                    {% set services = [] %}
+                                    {% if orderitem.get('IRON') %}{% set _ = services.append('Iron') %}{% endif %}
+                                    {% if orderitem.get('FOLD_CLOTHES') %}{% set _ = services.append('Fold') %}{% endif
+                                    %}
+                                    {% if orderitem.get('PRIORITIZE_ORDER') %}{% set _ = services.append('Priority')
+                                    %}{% endif %}
+                                    {% if services %}
+                                    {{ services|join(', ') }}
+                                    {% else %}
+                                    None
+                                    {% endif %}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.PICKUP_SCHEDULE %}
+                                    {{ order.PICKUP_SCHEDULE }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.DATE_CREATED %}
+                                    {{ order.DATE_CREATED.strftime('%B %d, %Y, %I:%M %p') if order.DATE_CREATED else
+                                    order.DATE_CREATED }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.DATE_UPDATED %}
+                                    {{ order.DATE_UPDATED.strftime('%B %d, %Y, %I:%M %p') if order.DATE_UPDATED else
+                                    order.DATE_UPDATED }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="14" style="text-align: center; padding: 20px;">No orders found</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
-                    <div style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
+                    <div
+                        style="display: flex; justify-content: flex-end; padding: 20px; background: #f9f9f9; border-top: 2px solid #ddd;">
                         <div style="font-weight: 600; font-size: 1.1rem;">
-                            Total Price for Page: <span style="color: #233872;">₱{{ "%.2f"|format(paginated_orders|map(attribute='TOTAL_PRICE')|map('float')|sum) }}</span>
+                            Total Price for Page: <span style="color: #233872;">₱{{
+                                "%.2f"|format(paginated_orders|map(attribute='TOTAL_PRICE')|map('float')|sum) }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="pagination">
                     {% if page > 1 %}
-                        <a href="{{ url_for('admin_order_report', page=page-1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
-                            <i class="fas fa-chevron-left"></i> Prev
-                        </a>
+                    <a href="{{ url_for('admin_order_report', page=page-1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}"
+                        class="pagination-nav-btn">
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </a>
                     {% else %}
-                        <button class="pagination-nav-btn disabled" disabled>
-                            <i class="fas fa-chevron-left"></i> Prev
-                        </button>
+                    <button class="pagination-nav-btn disabled" disabled>
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </button>
                     {% endif %}
                     <div class="pagination-numbers">
                         {% if total_pages > 0 %}
-                            {% set group_size = 5 %}
-                            {% set current_group = ((page - 1) // group_size) + 1 %}
-                            {% set start_page = (current_group - 1) * group_size + 1 %}
-                            {% set end_page = [start_page + group_size - 1, total_pages] | min %}
-                            {% for page_num in range(start_page, end_page + 1) %}
-                                {% if page_num == page %}
-                                    <span class="page-btn active">{{ page_num }}</span>
-                                {% else %}
-                                    <a href="{{ url_for('admin_order_report', page=page_num, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="page-btn">{{ page_num }}</a>
-                                {% endif %}
-                            {% endfor %}
+                        {% set group_size = 5 %}
+                        {% set current_group = ((page - 1) // group_size) + 1 %}
+                        {% set start_page = (current_group - 1) * group_size + 1 %}
+                        {% set end_page = [start_page + group_size - 1, total_pages] | min %}
+                        {% for page_num in range(start_page, end_page + 1) %}
+                        {% if page_num == page %}
+                        <span class="page-btn active">{{ page_num }}</span>
+                        {% else %}
+                        <a href="{{ url_for('admin_order_report', page=page_num, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}"
+                            class="page-btn">{{ page_num }}</a>
+                        {% endif %}
+                        {% endfor %}
                         {% endif %}
                     </div>
-                    {% if page < total_pages %}
-                        <a href="{{ url_for('admin_order_report', page=page+1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="pagination-nav-btn">
-                            Next <i class="fas fa-chevron-right"></i>
+                    {% if page < total_pages %} <a
+                        href="{{ url_for('admin_order_report', page=page+1, q=request.args.get('q', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}"
+                        class="pagination-nav-btn">
+                        Next <i class="fas fa-chevron-right"></i>
                         </a>
-                    {% else %}
+                        {% else %}
                         <button class="pagination-nav-btn disabled" disabled>
                             Next <i class="fas fa-chevron-right"></i>
                         </button>
-                    {% endif %}
+                        {% endif %}
                 </div>
 
             </div>
@@ -334,27 +362,27 @@
     </div>
     <script>
         // PERIOD FILTER
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const periodFilter = document.getElementById('periodFilter');
             const applyPeriodFilterBtn = document.getElementById('applyPeriodFilter');
             const clearPeriodFilterBtn = document.getElementById('clearPeriodFilter');
 
             const urlParams = new URLSearchParams(window.location.search);
-            
+
             // Check if there are existing date filters and set the period accordingly
             if (urlParams.has('start_date') && urlParams.has('end_date')) {
                 const startDate = new Date(urlParams.get('start_date'));
                 const endDate = new Date(urlParams.get('end_date'));
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 const startDateStr = urlParams.get('start_date');
                 const endDateStr = urlParams.get('end_date');
                 const todayStr = today.toISOString().split('T')[0];
-                
+
                 const diffTime = Math.abs(endDate - startDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 // Try to detect which period this corresponds to
                 if (diffDays === 0 && startDateStr === todayStr) {
                     periodFilter.value = 'daily';
@@ -370,14 +398,14 @@
                 periodFilter.value = 'daily';
             }
 
-            applyPeriodFilterBtn.addEventListener('click', function() {
+            applyPeriodFilterBtn.addEventListener('click', function () {
                 const period = periodFilter.value;
                 const searchQuery = urlParams.get('q') || '';
-                
+
                 let startDate = '';
                 let endDate = '';
                 const today = new Date();
-                
+
                 if (period === '') {
                     // All Time - clear filters
                     let url = new URL(window.location);
@@ -390,10 +418,10 @@
                     window.location.href = url;
                     return;
                 }
-                
+
                 if (period) {
                     endDate = today.toISOString().split('T')[0];
-                    
+
                     if (period === 'daily') {
                         startDate = endDate;
                     } else if (period === 'weekly') {
@@ -410,7 +438,7 @@
                         startDate = yearAgo.toISOString().split('T')[0];
                     }
                 }
-                
+
                 let url = new URL(window.location);
                 if (searchQuery) {
                     url.searchParams.set('q', searchQuery);
@@ -428,11 +456,11 @@
             });
 
             // CLEAR PERIOD FILTER
-            clearPeriodFilterBtn.addEventListener('click', function() {
+            clearPeriodFilterBtn.addEventListener('click', function () {
                 periodFilter.value = '';
-                
+
                 const searchQuery = urlParams.get('q') || '';
-                
+
                 let url = new URL(window.location);
                 url.searchParams.delete('start_date');
                 url.searchParams.delete('end_date');
@@ -447,7 +475,7 @@
         function toggleSidebar() {
             const sidebar = document.querySelector('.w3-sidebar');
             const main = document.querySelector('main');
-            
+
             if (sidebar.style.display === 'none' || sidebar.style.display === '') {
                 sidebar.style.display = 'block';
                 main.style.marginLeft = '250px';
@@ -458,4 +486,5 @@
         }
     </script>
 </body>
+
 </html>

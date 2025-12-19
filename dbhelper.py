@@ -1330,3 +1330,51 @@ def update_device_status(user_id: int, status: str) -> bool:
         
     db.collection('USER').document(docs[0].id).update(update_data)
     return True
+
+def calculate_storage_fee(order_id: int) -> dict:
+    """Calculate storage fee based on pickup schedule.
+    
+    Fee Structure:
+    - 0-1 days overdue: 0
+    - 2 days overdue: 20 pesos
+    - Each additional day: +20 pesos
+    """
+    _require_db()
+    
+    # Get order
+    docs = db.collection('ORDER').where('ORDER_ID', '==', order_id).limit(1).get()
+    if not docs:
+        return {'fee': 0.0, 'days_overdue': 0, 'schedule': None}
+    
+    order = docs[0].to_dict()
+    schedule_str = order.get('PICKUP_SCHEDULE')
+    
+    if not schedule_str:
+        return {'fee': 0.0, 'days_overdue': 0, 'schedule': None}
+        
+    try:
+        # Format: "October 24, 2024, 02:00 PM"
+        schedule_dt = datetime.strptime(schedule_str, '%B %d, %Y, %I:%M %p')
+        now = _now()
+        
+        # Calculate full days overdue
+        diff = now - schedule_dt
+        days_overdue = diff.days
+        
+        fee = 0.0
+        if days_overdue >= 2:
+            # Base fee for 2nd day is 20
+            # Additional days are 20 each
+            # Formula: 20 + (days_overdue - 2) * 20
+            fee = 20.0 + ((days_overdue - 2) * 20.0)
+            
+        return {
+            'fee': fee, 
+            'days_overdue': max(0, days_overdue),
+            'schedule': schedule_str
+        }
+        
+    except ValueError:
+        # Handle parsing errors gracefully
+        print(f"Error parsing date: {schedule_str}")
+        return {'fee': 0.0, 'days_overdue': 0, 'schedule': schedule_str}
