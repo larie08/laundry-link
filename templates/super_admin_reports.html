@@ -128,8 +128,8 @@
                     </div>
                     <div class="card-content">
                         <h3>Total Revenue</h3>
-                        <p class="card-value">₱245,780.50</p>
-                        <p class="card-change positive">+12.5% from last month</p>
+                        <p class="card-value">₱{{ "%.2f"|format(stats.total_revenue) }}</p>
+                        <p class="card-change positive">Total Revenue</p>
                     </div>
                 </div>
 
@@ -139,8 +139,8 @@
                     </div>
                     <div class="card-content">
                         <h3>Total Transactions</h3>
-                        <p class="card-value">1,245</p>
-                        <p class="card-change positive">+8.3% from last month</p>
+                        <p class="card-value">{{ stats.total_transactions }}</p>
+                        <p class="card-change positive">Total Orders</p>
                     </div>
                 </div>
 
@@ -150,8 +150,8 @@
                     </div>
                     <div class="card-content">
                         <h3>Device Uptime</h3>
-                        <p class="card-value">98.7%</p>
-                        <p class="card-change positive">+0.5% from last month</p>
+                        <p class="card-value">{{ stats.uptime_percentage }}%</p>
+                        <p class="card-change positive">Average Uptime</p>
                     </div>
                 </div>
 
@@ -161,15 +161,15 @@
                     </div>
                     <div class="card-content">
                         <h3>Active Shops</h3>
-                        <p class="card-value">15/18</p>
-                        <p class="card-change negative">-2 from last month</p>
+                        <p class="card-value">{{ stats.active_shops_count }}/{{ stats.installed_shops_count }}</p>
+                        <p class="card-change neutral">Active / Installed</p>
                     </div>
                 </div>
             </section>
 
             <!-- REPORTS SECTIONS -->
             <section class="reports-section">
-                
+
                 <!-- 1️⃣ INSTALLATION & DEPLOYMENT OVERVIEW -->
                 <div class="report-card">
                     <div class="report-header">
@@ -207,53 +207,23 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for row in stats.installation_data %}
                                     <tr>
-                                        <td>Makati Branch</td>
-                                        <td>5</td>
-                                        <td>₱50,000</td>
-                                        <td>₱250,000</td>
-                                        <td>2024-01-10</td>
-                                        <td><span class="status-badge success">Completed</span></td>
+                                        <td>{{ row.shop_name }}</td>
+                                        <td>{{ row.device_count }}</td>
+                                        <td>₱{{ "{:,.0f}".format(row.fee_per_shop) }}</td>
+                                        <td>₱{{ "{:,.0f}".format(row.total_fee) }}</td>
+                                        <td>{{ row.date_installed }}</td>
+                                        <td><span class="status-badge success">{{ row.status }}</span></td>
                                     </tr>
-                                    <tr>
-                                        <td>Mall of Asia</td>
-                                        <td>4</td>
-                                        <td>₱50,000</td>
-                                        <td>₱200,000</td>
-                                        <td>2024-01-12</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>City Center</td>
-                                        <td>3</td>
-                                        <td>₱50,000</td>
-                                        <td>₱150,000</td>
-                                        <td>2024-01-15</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Quezon City</td>
-                                        <td>4</td>
-                                        <td>₱50,000</td>
-                                        <td>₱200,000</td>
-                                        <td>2024-01-18</td>
-                                        <td><span class="status-badge success">Completed</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Mandaluyong</td>
-                                        <td>2</td>
-                                        <td>₱50,000</td>
-                                        <td>₱100,000</td>
-                                        <td>2024-01-20</td>
-                                        <td><span class="status-badge warning">Pending</span></td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                
+
 
                 <!-- 3️⃣ DEVICE UPTIME & MONITORING REPORTS -->
                 <div class="report-card">
@@ -293,58 +263,30 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for shop in shops %}
                                     <tr>
-                                        <td>DEV-001</td>
-                                        <td>City Center</td>
-                                        <td><span class="status-badge success">Online</span></td>
-                                        <td>99.2%</td>
-                                        <td>2024-01-15 14:30</td>
-                                        <td>0</td>
-                                        <td><span class="performance-badge excellent">Excellent</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>DEV-002</td>
-                                        <td>Mall of Asia</td>
-                                        <td><span class="status-badge success">Online</span></td>
-                                        <td>98.7%</td>
-                                        <td>2024-01-15 14:28</td>
-                                        <td>1</td>
+                                        <td>DEV-{{ '%03d'|format(shop.SHOP_ID) }}</td>
+                                        <td>{{ shop.SHOP_NAME }}</td>
+                                        <td>
+                                            {% if shop.weighing_scale.status == 'online' %}
+                                            <span class="status-badge success">Online</span>
+                                            {% else %}
+                                            <span class="status-badge error">Offline</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ stats.uptime_percentage }}%</td>
+                                        <td>{{ shop.weighing_scale.last_seen }}</td>
+                                        <td>N/A</td>
                                         <td><span class="performance-badge good">Good</span></td>
                                     </tr>
-                                    <tr>
-                                        <td>DEV-003</td>
-                                        <td>Quezon City</td>
-                                        <td><span class="status-badge warning">Warning</span></td>
-                                        <td>95.4%</td>
-                                        <td>2024-01-15 13:45</td>
-                                        <td>3</td>
-                                        <td><span class="performance-badge fair">Fair</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>DEV-004</td>
-                                        <td>Makati</td>
-                                        <td><span class="status-badge success">Online</span></td>
-                                        <td>99.5%</td>
-                                        <td>2024-01-15 14:35</td>
-                                        <td>0</td>
-                                        <td><span class="performance-badge excellent">Excellent</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>DEV-005</td>
-                                        <td>City Center</td>
-                                        <td><span class="status-badge error">Offline</span></td>
-                                        <td>89.1%</td>
-                                        <td>2024-01-14 22:15</td>
-                                        <td>5</td>
-                                        <td><span class="performance-badge fair">Fair</span></td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                
+
             </section>
         </main>
     </div>
@@ -358,7 +300,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
-        // Chart initialization
+        // Chart initialization - Dynamic Data Injection
+        const shopLabels = {{ stats.installation_data | map(attribute = 'shop_name') | list | tojson }};
+        const deviceCounts = {{ stats.installation_data | map(attribute = 'device_count') | list | tojson }};
+        const revenueData = {{ stats.installation_data | map(attribute = 'total_fee') | list | tojson }};
+
         document.addEventListener('DOMContentLoaded', function () {
             // Installation & Deployment - Devices per Shop Chart
             const installationDevicesCtx = document.getElementById('installationDevicesChart');
@@ -366,17 +312,11 @@
                 new Chart(installationDevicesCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['Makati Branch', 'Mall of Asia', 'City Center', 'Quezon City', 'Mandaluyong'],
+                        labels: shopLabels,
                         datasets: [{
                             label: 'Number of Devices Installed',
-                            data: [5, 4, 3, 4, 2],
-                            backgroundColor: [
-                                '#122D69',
-                                '#2fa35a',
-                                '#f5c04e',
-                                '#dc3545',
-                                '#4cb7d1'
-                            ],
+                            data: deviceCounts,
+                            backgroundColor: '#122D69',
                             borderRadius: 6,
                             borderSkipped: false,
                         }]
@@ -393,10 +333,7 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                max: 6,
-                                ticks: {
-                                    stepSize: 1
-                                }
+                                ticks: { stepSize: 1 }
                             }
                         }
                     }
@@ -409,15 +346,11 @@
                 new Chart(installationRevenueCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Makati Branch', 'Mall of Asia', 'City Center', 'Quezon City', 'Mandaluyong'],
+                        labels: shopLabels,
                         datasets: [{
-                            data: [250000, 200000, 150000, 200000, 100000],
+                            data: revenueData,
                             backgroundColor: [
-                                '#122D69',
-                                '#2fa35a',
-                                '#f5c04e',
-                                '#dc3545',
-                                '#4cb7d1'
+                                '#122D69', '#2fa35a', '#f5c04e', '#dc3545', '#4cb7d1', '#6c757d'
                             ],
                             borderColor: '#ffffff',
                             borderWidth: 2
@@ -429,16 +362,11 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    font: {
-                                        size: 13
-                                    }
-                                }
+                                labels: { padding: 20, font: { size: 13 } }
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         return '₱' + context.parsed.toLocaleString();
                                     }
                                 }
@@ -451,111 +379,123 @@
             // Device Uptime - Uptime Comparison Chart
             const uptimeCtx = document.getElementById('uptimeChart');
             if (uptimeCtx) {
+                const deviceLabels = {{ stats.device_labels | tojson }};
+                const deviceUptimes = {{ stats.device_uptime_percentages | tojson }};
+
+                
+                // Color code based on uptime percentage
+                const uptimeColors = deviceUptimes.map(function (uptime) {
+            if (uptime >= 98) return '#2fa35a'; // Green for high uptime
+            if (uptime >= 90) return '#f5c04e'; // Yellow for medium uptime
+            return '#dc3545'; // Red for low uptime
+        });
+
                 new Chart(uptimeCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['DEV-001', 'DEV-002', 'DEV-003', 'DEV-004', 'DEV-005'],
-                        datasets: [{
-                            label: 'Uptime Percentage (%)',
-                            data: [99.2, 98.7, 95.4, 99.5, 89.1],
-                            backgroundColor: [
-                                '#2fa35a',
-                                '#2fa35a',
-                                '#f5c04e',
-                                '#2fa35a',
-                                '#dc3545'
-                            ],
-                            borderRadius: 6,
-                            borderSkipped: false,
-                        }]
+            type: 'bar',
+            data: {
+                labels: deviceLabels,
+                datasets: [{
+                    label: 'Uptime Percentage (%)',
+                    data: deviceUptimes,
+                    backgroundColor: uptimeColors,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        indexAxis: 'y',
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top'
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.parsed.x.toFixed(2) + '%';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value + '%';
-                                    }
-                                }
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.parsed.x.toFixed(2) + '%';
                             }
                         }
                     }
-                });
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function (value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
             }
 
-            // Device Status Distribution Chart
-            const deviceStatusCtx = document.getElementById('deviceStatusChart');
-            if (deviceStatusCtx) {
+        // Device Status Distribution Chart
+        const deviceStatusCtx = document.getElementById('deviceStatusChart');
+        if (deviceStatusCtx) {
+                const statusDistribution = {{ stats.device_status_distribution | tojson }};
+
+
                 new Chart(deviceStatusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Online', 'Warning', 'Offline'],
-                        datasets: [{
-                            data: [3, 1, 1],
-                            backgroundColor: [
-                                '#2fa35a',
-                                '#f5c04e',
-                                '#dc3545'
-                            ],
-                            borderColor: '#ffffff',
-                            borderWidth: 2
-                        }]
+            type: 'doughnut',
+            data: {
+                labels: ['Online', 'Warning', 'Offline'],
+                datasets: [{
+                    data: [
+                        statusDistribution.online || 0,
+                        statusDistribution.warning || 0,
+                        statusDistribution.offline || 0
+                    ],
+                    backgroundColor: [
+                        '#2fa35a',
+                        '#f5c04e',
+                        '#dc3545'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13
+                            }
+                        }
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    font: {
-                                        size: 13
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.label + ': ' + context.parsed + ' device(s)';
-                                    }
-                                }
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.label + ': ' + context.parsed + ' device(s)';
                             }
                         }
                     }
-                });
+                }
+            }
+        });
             }
 
-            // Date filter handling
-            const dateRangeSelect = document.getElementById('dateRange');
-            if (dateRangeSelect) {
-                dateRangeSelect.addEventListener('change', function() {
-                    const customDates = document.querySelectorAll('.custom-date');
-                    if (this.value === 'custom') {
-                        customDates.forEach(el => el.classList.remove('hidden'));
-                    } else {
-                        customDates.forEach(el => el.classList.add('hidden'));
-                    }
-                });
-            }
+        // Date filter handling
+        const dateRangeSelect = document.getElementById('dateRange');
+        if (dateRangeSelect) {
+            dateRangeSelect.addEventListener('change', function () {
+                const customDates = document.querySelectorAll('.custom-date');
+                if (this.value === 'custom') {
+                    customDates.forEach(el => el.classList.remove('hidden'));
+                } else {
+                    customDates.forEach(el => el.classList.add('hidden'));
+                }
+            });
+        }
         });
 
         // Export to PDF
