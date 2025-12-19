@@ -69,7 +69,7 @@ def _ensure_default_users():
             'USERNAME': 'admin',
             'PASSWORD': 'admin123',
             'ROLE': 'admin',
-            'FULLNAME': 'Administrator',
+            'FULLNAME': 'WashMeUp',
             'DATE_CREATED': _now(),
         })
 
