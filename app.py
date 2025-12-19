@@ -5179,7 +5179,11 @@ def super_admin_reports():
     if 'user_id' not in session or session['role'] not in ['super_admin']:
         return redirect(url_for('super_admin_login'))
     
-    return render_template('super_admin_reports.html')
+    # Fetch real data
+    stats = dbhelper.get_report_stats()
+    shops = dbhelper.get_all_shops() # Re-use existing logic for device table
+    
+    return render_template('super_admin_reports.html', stats=stats, shops=shops)
 
 @app.route('/super_admin/add_shop', methods=['POST'])
 def add_shop():

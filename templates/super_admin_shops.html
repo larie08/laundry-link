@@ -87,7 +87,7 @@
                                 <tr>
                                     <td>{{ shop.SHOP_ID }}</td>
                                     <td>
-                                        {% if shop.kiosk.status == 'online' %}
+                                        {% if shop.weighing_scale.status == 'online' %}
                                         <span class="status-badge status-active">Active</span>
                                         {% else %}
                                         <span class="status-badge status-inactive">Inactive</span>
@@ -95,20 +95,21 @@
                                     </td>
                                     <td>{{ shop.SHOP_NAME }}</td>
                                     <td>
-                                        {% if shop.kiosk.status == 'online' %}
+                                        {% if shop.weighing_scale.status == 'online' %}
                                         <span class="status-badge status-online">Online</span>
                                         {% else %}
                                         <span class="status-badge status-offline">Offline</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ shop.kiosk.last_seen }}</td>
+                                    <td>{{ shop.weighing_scale.last_seen }}</td>
                                     <td>
                                         <button class="icon-btn" title="View Details" onclick="openShopModal(this)"
                                             data-shop-name="{{ shop.SHOP_NAME }}"
-                                            data-shop-status="{% if shop.kiosk.status == 'online' %}Active{% else %}Inactive{% endif %}"
-                                            data-shop-location="Cebu City" data-kiosk-status="{{ shop.kiosk.status }}"
-                                            data-last-seen="{{ shop.kiosk.last_seen }}"
-                                            data-last-seen="{{ shop.kiosk.last_seen }}"
+                                            data-shop-status="{% if shop.weighing_scale.status == 'online' %}Active{% else %}Inactive{% endif %}"
+                                            data-shop-location="Cebu City"
+                                            data-kiosk-status="{{ shop.weighing_scale.status }}"
+                                            data-last-seen="{{ shop.weighing_scale.last_seen }}"
+                                            data-last-seen="{{ shop.weighing_scale.last_seen }}"
                                             data-device-id="KIOSK-{{ '%03d'|format(shop.SHOP_ID) }}"
                                             data-user-id="{{ shop.SHOP_ID }}">
                                             <i class="fa fa-eye"></i></button>
