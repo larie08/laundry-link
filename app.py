@@ -336,6 +336,20 @@ def payments():
         qr_code_path = f"qr/{qr_filename}"
         dbhelper.update_order_qr_code(order_id, qr_code_path)
 
+        # Send SMS Notification
+        try:
+            sms_message = f"Thank you for using LaundryLink! Your Order ID is {order_id}. We will notify you once your laundry is ready."
+            if str(order_data.get('order_type', '')).lower() == 'self-service':
+                sms_message = f"Thank you for using LaundryLink! Your Self-Service Order ID is {order_id}. Happy washing!"
+            
+            customer_phone = customer_data.get('phone_number')
+            if customer_phone:
+                esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')
+                esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
+                requests.post(esp32_url, json={"phone": customer_phone, "message": sms_message}, timeout=3)
+        except Exception as e:
+            print(f"Failed to trigger SMS: {e}")
+
         # Receipt printing for all payment methods - ONLY PRINT ORDER ID
         if payment_method and payment_method.lower() in ['cash', 'gcash', 'maya']:
             try:
@@ -532,8 +546,6 @@ def new_order():
     """Backward-compatible route that now points to the thank you page."""
     order_id = request.args.get('order_id', 'N/A')
     return redirect(url_for('thank_you_page', order_id=order_id))
-
-
 
 
 
