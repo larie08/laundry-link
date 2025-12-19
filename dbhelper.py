@@ -69,7 +69,7 @@ def _ensure_default_users():
             'USERNAME': 'admin',
             'PASSWORD': 'admin123',
             'ROLE': 'admin',
-            'FULLNAME': 'Administrator',
+            'FULLNAME': 'WashMeUp',
             'DATE_CREATED': _now(),
         })
 
@@ -1285,28 +1285,50 @@ def get_all_shops() -> list:
         # Detailed "last_seen" could be updated by an actual device heartbeat API.
         
         # Default to 'offline' if not set
-        status = user.get('KIOSK_STATUS', 'offline')
+        kiosk_status = user.get('KIOSK_STATUS', 'offline')
+        gsm_status = user.get('GSM_STATUS', 'offline')
         
-        # Mocking last_seen based on status for realism if not present
-        if status == 'online':
-            last_seen = _now().strftime('%Y-%m-%d %H:%M')
-        else:
-             # Just a placeholder for offline devices
-            last_seen = (datetime.now() - timedelta(hours=4)).strftime('%Y-%m-%d %H:%M')
+        # Calculate real-time status based on heartbeat
+        # If LAST_SEEN is older than 10 seconds, consider devices offline
+        last_seen_raw = user.get('LAST_SEEN')
+        last_seen_display = 'N/A'
+        
+        is_online = False
 
-        # If the DB has a real LAST_SEEN field, use it
-        if user.get('LAST_SEEN'):
-             # Handle if it is a firestore datetime
-            ls = user.get('LAST_SEEN')
-            if hasattr(ls, 'strftime'):
-                last_seen = ls.strftime('%Y-%m-%d %H:%M')
+        if last_seen_raw:
+            # Handle Firestore timestamp or datetime
+            if hasattr(last_seen_raw, 'to_datetime'): # Firestore Timestamp
+                ls_dt = last_seen_raw.to_datetime().replace(tzinfo=None) # Make naive
+            elif isinstance(last_seen_raw, datetime):
+                # Ensure naive
+                ls_dt = last_seen_raw.replace(tzinfo=None)
             else:
-                last_seen = str(ls)
+                # Fallback purely for safety if string or other type
+                 try:
+                     ls_dt = datetime.strptime(str(last_seen_raw), '%Y-%m-%d %H:%M:%S')
+                 except:
+                     ls_dt = datetime.min
 
+            # Naive comparison (assuming server time is also naive/local for simplicity or both aware)
+            # _now() returns datetime.now() which is naive local time usually
+            time_diff = _now() - ls_dt
+            
+            # Threshold: 10 seconds
+            if time_diff.total_seconds() < 10:
+                is_online = True
+            
+            last_seen_display = ls_dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Override statuses if heartbeat is lost
+        if not is_online:
+            kiosk_status = 'offline'
+            gsm_status = 'offline'
+            
         shops.append({
             'SHOP_ID': user_id,
             'SHOP_NAME': user.get('FULLNAME', 'Unknown Shop'),
-            'kiosk': {'status': status, 'last_seen': last_seen},
+            'weighing_scale': {'status': kiosk_status, 'last_seen': last_seen_display},
+            'gsm': {'status': gsm_status, 'last_seen': last_seen_display}, 
         })
         
     return shops
@@ -1378,3 +1400,20 @@ def calculate_storage_fee(order_id: int) -> dict:
         # Handle parsing errors gracefully
         print(f"Error parsing date: {schedule_str}")
         return {'fee': 0.0, 'days_overdue': 0, 'schedule': schedule_str}
+
+def update_shop_heartbeat(shop_id: int, kiosk_status: str, gsm_status: str) -> bool:
+    """Update shop heartbeat and device statuses."""
+    _require_db()
+    
+    docs = db.collection('USER').where('USER_ID', '==', shop_id).limit(1).get()
+    if not docs:
+        return False
+    
+    update_data = {
+        'LAST_SEEN': _now(),
+        'KIOSK_STATUS': kiosk_status,
+        'GSM_STATUS': gsm_status
+    }
+    
+    db.collection('USER').document(docs[0].id).update(update_data)
+    return True

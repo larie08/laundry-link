@@ -69,9 +69,9 @@
                         <table class="devices-table">
                             <thead>
                                 <tr>
-                                    <th>Device Status</th>
                                     <th>Shop Name</th>
-                                    <th>Device Type</th>
+                                    <th>Weighing Scale</th>
+                                    <th>GSM Module</th>
                                     <th>Last Seen</th>
                                     <th>Action</th>
                                 </tr>
@@ -79,16 +79,22 @@
                             <tbody>
                                 {% for shop in shops %}
                                 <tr>
+                                    <td>{{ shop.SHOP_NAME }}</td>
                                     <td>
-                                        {% if shop.kiosk.status == 'online' %}
+                                        {% if shop.weighing_scale.status == 'online' %}
                                         <span class="status-badge status-online">Online</span>
                                         {% else %}
                                         <span class="status-badge status-offline">Offline</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ shop.SHOP_NAME }}</td>
-                                    <td>Kiosk System</td>
-                                    <td>{{ shop.kiosk.last_seen }}</td>
+                                    <td>
+                                        {% if shop.gsm.status == 'online' %}
+                                        <span class="status-badge status-online">Online</span>
+                                        {% else %}
+                                        <span class="status-badge status-offline">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.weighing_scale.last_seen }}</td>
                                     <td>
                                         <button onclick="openDeviceModal('device_modal_{{ loop.index }}')"
                                             class="icon-btn" title="View Details"><i class="fa fa-eye"></i></button>
@@ -119,8 +125,16 @@
                                                         <div class="info-title">Status Overview</div>
                                                         <ul class="info-list">
                                                             <li>
-                                                                <span class="info-label">Kiosk:</span>
-                                                                {% if shop.kiosk.status == 'online' %}
+                                                                <span class="info-label">Weighing Scale:</span>
+                                                                {% if shop.weighing_scale.status == 'online' %}
+                                                                <span class="status-badge status-online">Online</span>
+                                                                {% else %}
+                                                                <span class="status-badge status-offline">Offline</span>
+                                                                {% endif %}
+                                                            </li>
+                                                            <li>
+                                                                <span class="info-label">GSM Module:</span>
+                                                                {% if shop.gsm.status == 'online' %}
                                                                 <span class="status-badge status-online">Online</span>
                                                                 {% else %}
                                                                 <span class="status-badge status-offline">Offline</span>
@@ -128,7 +142,7 @@
                                                             </li>
                                                             <li>
                                                                 <span class="info-label">Last Seen:</span>
-                                                                {{ shop.kiosk.last_seen }}
+                                                                {{ shop.weighing_scale.last_seen }}
                                                             </li>
                                                         </ul>
                                                     </div>
@@ -136,14 +150,23 @@
                                                     <div class="info-section">
                                                         <div class="info-title">System Health</div>
                                                         <ul class="info-list">
-                                                            {% if shop.kiosk.status != 'online' %}
+                                                            {% if shop.weighing_scale.status != 'online' %}
                                                             <li style="color: var(--danger-color);">
-                                                                <i class="fa fa-exclamation-triangle"></i> Device
+                                                                <i class="fa fa-exclamation-triangle"></i> Weighing
+                                                                Scale
                                                                 Connection Lost
                                                             </li>
-                                                            {% else %}
+                                                            {% endif %}
+                                                            {% if shop.gsm.status != 'online' %}
+                                                            <li style="color: var(--danger-color);">
+                                                                <i class="fa fa-exclamation-triangle"></i> GSM Module
+                                                                Connection Lost
+                                                            </li>
+                                                            {% endif %}
+                                                            {% if shop.weighing_scale.status == 'online' and
+                                                            shop.gsm.status == 'online' %}
                                                             <li style="color: var(--success-color);">
-                                                                <i class="fa fa-check-circle"></i> System Operating
+                                                                <i class="fa fa-check-circle"></i> All Systems Operating
                                                                 Normally
                                                             </li>
                                                             {% endif %}
@@ -155,11 +178,11 @@
                                                     <div
                                                         style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px;">
                                                         <button
-                                                            onclick="toggleDeviceStatus('{{ shop.SHOP_ID }}', '{{ shop.kiosk.status }}')"
-                                                            class="btn-toggle {% if shop.kiosk.status == 'online' %}inactive-action{% else %}active-action{% endif %}"
+                                                            onclick="toggleDeviceStatus('{{ shop.SHOP_ID }}', '{{ shop.weighing_scale.status }}')"
+                                                            class="btn-toggle {% if shop.weighing_scale.status == 'online' %}inactive-action{% else %}active-action{% endif %}"
                                                             style="flex: 1;">
-                                                            {% if shop.kiosk.status == 'online' %}Deactivate
-                                                            Device{% else %}Activate Device{% endif %}
+                                                            {% if shop.weighing_scale.status == 'online' %}Deactivate
+                                                            Scale{% else %}Activate Scale{% endif %}
                                                         </button>
                                                         <button onclick="deleteDevice('{{ shop.SHOP_ID }}')"
                                                             class="btn btn-danger"

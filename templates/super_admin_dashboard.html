@@ -1,3 +1,4 @@
+E
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,7 +18,7 @@
 <body>
 
 
-    
+
     <!-- CONTAINER -->
     <div class="container">
         <!-- SIDEBAR -->
@@ -73,7 +74,7 @@
                     <!-- Calculate Active Counts -->
                     {% set ns = namespace(active_kiosks=0, active_esp32s=0) %}
                     {% for shop in shops %}
-                    {% if shop.kiosk.status|lower in ['active', 'online'] %}
+                    {% if shop.weighing_scale.status|lower in ['active', 'online'] %}
                     {% set ns.active_kiosks = ns.active_kiosks + 1 %}
                     {% endif %}
 
@@ -155,14 +156,14 @@
                                                 <td><i class="fas fa-server"
                                                         style="color: #999; margin-right: 5px;"></i> Kiosk</td>
                                                 <td style="text-align: center;">
-                                                    {% if shop.kiosk.status == 'online' %}
+                                                    {% if shop.weighing_scale.status == 'online' %}
                                                     <span class="status-badge status-online">Online</span>
                                                     {% else %}
                                                     <span class="status-badge status-offline">Offline</span>
                                                     {% endif %}
                                                 </td>
                                                 <td style="text-align: right; color: var(--text-light);">{{
-                                                    shop.kiosk.last_seen }}</td>
+                                                    shop.weighing_scale.last_seen }}</td>
                                             </tr>
                                             {% endfor %}
                                             {% if not shops %}
