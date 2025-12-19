@@ -1290,7 +1290,7 @@ def order_scan(order_id):
         customer_name = customer.get('FULLNAME') if customer else ''
         if phone:
             message = f"Hi {customer_name or ''}, your laundry (Order #{order_id}) is now ready for pick-up. Thank you for using Laundrylink!"
-            esp32_ip = os.getenv('ESP32_IP', '192.168.88.199')
+            esp32_ip = os.getenv('ESP32_IP', '192.168.1.9')
             esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
             resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
             if resp.status_code == 200:
@@ -4779,7 +4779,7 @@ def api_send_sms():
         return jsonify({'status': 'error', 'msg': 'Missing phone or message'}), 400
     try:
         # Use the correct ESP32 IP address
-        esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')  # <-- Update default IP here
+        esp32_ip = os.getenv('ESP32_IP', '192.168.1.9')  # <-- Update default IP here
         esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
         print("ESP32 URL:", esp32_url)  # Debug print
         resp = requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
@@ -5085,7 +5085,7 @@ def api_complete_pickup(order_id):
     if phone:
         message = f"Hi {customer_name}, your laundry (Order #{order_id}) has been picked up. Thank you for using Laundrylink!"
         try:
-            esp32_ip = os.getenv('ESP32_IP', '10.137.16.199')
+            esp32_ip = os.getenv('ESP32_IP', '192.168.1.9')
             esp32_url = f"http://{esp32_ip}:8080/send_sms_gsm"
             requests.post(esp32_url, json={"phone": phone, "message": message}, timeout=3)
         except Exception as e:
@@ -5143,9 +5143,10 @@ def super_admin_dashboard():
     shops = dbhelper.get_all_shops()
     installed_shops_count = len(shops)
     
-    # Kiosk (and implicitly ESP32) offline count
-    offline_kiosk_count = sum(1 for s in shops if s.get('kiosk', {}).get('status') != 'online')
-    total_offline_devices = offline_kiosk_count
+    # Kiosk (Weighing Scale) and GSM Module offline count
+    offline_kiosk_count = sum(1 for s in shops if s.get('weighing_scale', {}).get('status') != 'online')
+    offline_gsm_count = sum(1 for s in shops if s.get('gsm', {}).get('status') != 'online')
+    total_offline_devices = offline_kiosk_count + offline_gsm_count
                 
     return render_template('super_admin_dashboard.html', 
                            monthly_earnings=monthly_earnings, 
@@ -5246,5 +5247,30 @@ def update_device_status_route():
 
 
     
+@app.route('/api/heartbeat', methods=['POST'])
+def api_heartbeat():
+    """
+    Receive heartbeat from device.
+    Expected JSON: {
+        'shop_id': <int>,
+        'kiosk_status': 'online'|'offline',
+        'gsm_status': 'online'|'offline'
+    }
+    """
+    data = request.json
+    shop_id = data.get('shop_id')
+    kiosk_status = data.get('kiosk_status', 'offline')
+    gsm_status = data.get('gsm_status', 'offline')
+    
+    if not shop_id:
+        return jsonify({'success': False, 'error': 'Missing shop_id'}), 400
+        
+    success = dbhelper.update_shop_heartbeat(shop_id, kiosk_status, gsm_status)
+    
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Shop not found'}), 404
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
